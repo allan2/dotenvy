@@ -1,0 +1,5 @@
+[package]
+
+name = "rust-dotenv"
+version = "0.0.1"
+authors = ["Santiago Lapresta <santiago.lapresta@gmail.com>"]
