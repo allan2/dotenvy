@@ -3,7 +3,7 @@
 extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
 
-use std::io::{File, IoResult};
+use std::io::{File, IoResult, IoError, OtherIoError};
 use std::collections::HashMap;
 use std::default::Default;
 use std::os;
@@ -64,6 +64,17 @@ impl Dotenv {
 		)
 	}
 
+	pub fn from_filename(n: &str) -> IoResult<Dotenv> {
+		os::self_exe_path().as_mut().map(|path| {
+			path.push(n);
+			Dotenv::from_path(path)
+		}).unwrap_or(Err(IoError{
+			kind: OtherIoError,
+			desc: "Could not fetch the path of this executable",
+			detail: None
+		}))
+	}
+
 	pub fn from_path(path: &Path) -> IoResult<Dotenv> {
 		File::open(path).and_then(|file| {
 			Dotenv::from_file(file)
@@ -102,10 +113,7 @@ impl Dotenv {
 
 impl Default for Dotenv {
 	fn default() -> Dotenv {
-		os::self_exe_path().as_mut().and_then(|path| {
-			path.push(".env");
-			Dotenv::from_path(path).ok()
-		}).unwrap_or(
+		Dotenv::from_filename(".env").unwrap_or(
 			Dotenv::from_bytes(Default::default())
 		)
 	}
