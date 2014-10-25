@@ -26,6 +26,12 @@ is imitated. The methods provided by a Dotenv struct, `env`, `env_as_bytes`,
 `getenv` and `getenv_as_bytes`, carry the same signature as their standard
 library counterparts.
 
+A Dotenv struct implements the Default trait, returning an initialized Dotenv
+object using the contents of the file named `.env` at the path of your
+application binary, if it exists. If you need finer control
+about the source of the environment variables, `Dotenv` exposes the static
+methods `from_path`, `from_file`, `from_bytes` and `from_str`.
+
 Examples
 ----
 
