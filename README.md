@@ -48,7 +48,6 @@ A sample project using `rust-dotenv` would look like this:
 extern crate dotenv;
 
 use dotenv::Dotenv;
-use std::default::Default;
 
 fn main() {
     let dotenv = Dotenv::dotenv();
