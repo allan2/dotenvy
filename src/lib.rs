@@ -49,9 +49,14 @@ fn parse_env(data: Vec<u8>) -> HashMap<Vec<u8>, Vec<u8>> {
 }
 
 impl Dotenv {
+	pub fn dotenv() -> Dotenv {
+		Dotenv::from_filename(".env").ok().unwrap_or_default()
+	}
+
 	pub fn from_str(s: &str) -> Dotenv {
 		Dotenv::from_bytes(String::from_str(s).into_bytes())
 	}
+
 	pub fn from_bytes(bytes: Vec<u8>) -> Dotenv {
 		let dotenv_hash = parse_env(bytes);
 		let env_hash = os::env_as_bytes().into_iter().collect();
@@ -113,9 +118,7 @@ impl Dotenv {
 
 impl Default for Dotenv {
 	fn default() -> Dotenv {
-		Dotenv::from_filename(".env").unwrap_or(
-			Dotenv::from_bytes(Default::default())
-		)
+		Dotenv::from_bytes(Default::default())
 	}
 }
 

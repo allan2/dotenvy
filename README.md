@@ -26,10 +26,10 @@ is imitated. The methods provided by a Dotenv struct, `env`, `env_as_bytes`,
 `getenv` and `getenv_as_bytes`, carry the same signature as their standard
 library counterparts.
 
-A Dotenv struct implements the Default trait, returning a Dotenv
+A Dotenv struct implements the `dotenv` static method, returning a Dotenv
 struct using the contents of the file named `.env` at the path of your
 application binary, if it exists. If you need finer control
-about the source of the environment variables, `Dotenv` exposes the static
+about the source of the environment variables, Dotenv exposes the static
 methods `from_path`, `from_file`, `from_filename`, `from_bytes` and `from_str`.
 
 Examples
@@ -51,9 +51,18 @@ use dotenv::Dotenv;
 use std::default::Default;
 
 fn main() {
-    let dotenv: Dotenv = Default::default();
+    let dotenv = Dotenv::dotenv();
     for (key, value) in dotenv.env().into_iter() {
         println!("key: {}, value: {}", key, value)
     }
 }
+```
+
+Dotenv also implements the Default trait, which returns a Dotenv struct
+without any content of its own; that is, containing only the environment
+variables exported by the system. This makes it easy to ignore IO failures if
+the environment variable file can't be found:
+
+```rust
+let dotenv = Dotenv::from_filename("nonexisting.env").ok().unwrap_or_default();
 ```
