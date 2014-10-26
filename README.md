@@ -23,10 +23,10 @@ Usage
 The aim of this project is to be as close as possible to a drop-in replacement
 for `std::os::env`. Because of this, the API exposed by the standard library
 is imitated. The methods provided by a Dotenv struct, `env`, `env_as_bytes`,
-`getenv` and `getenv_as_bytes`, carry the same signature as their standard
+`getenv` and `getenv_as_bytes`, carry the same signatures as their standard
 library counterparts.
 
-A Dotenv struct implements the `dotenv` static method, returning a Dotenv
+Dotenv implements the `dotenv` static method, returning a Dotenv
 struct using the contents of the file named `.env` at the path of your
 application binary, if it exists. If you need finer control
 about the source of the environment variables, Dotenv exposes the static
@@ -42,7 +42,7 @@ REDIS_ADDRESS=localhost:6379
 MEANING_OF_LIFE=42
 ```
 
-A sample project using `rust-dotenv` would look like this:
+A sample project using Dotenv would look like this:
 
 ```rust
 extern crate dotenv;
@@ -57,7 +57,7 @@ fn main() {
 }
 ```
 
-Dotenv also implements the Default trait, which returns a Dotenv struct
+Dotenv also implements the `Default` trait, which returns a Dotenv struct
 without any content of its own; that is, containing only the environment
 variables exported by the system. This makes it easy to ignore IO failures if
 the environment variable file can't be found:
