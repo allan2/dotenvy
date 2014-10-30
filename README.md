@@ -1,10 +1,10 @@
 rust-dotenv
 ====
 
-**Achtung!** This is an alpha version! Expect bugs and issues all around.
+**Achtung!** This is a v0.\* version! Expect bugs and issues all around.
 Submitting pull requests and issues is highly encouraged!
 
-Quoting [bkeepers/dotenv](https://github.com/bkeepers/dotenv):
+Quoting [bkeepers/dotenv][dotenv]:
 
 > Storing [configuration in the environment](http://www.12factor.net/config)
 > is one of the tenets of a [twelve-factor app](http://www.12factor.net/).
@@ -20,17 +20,13 @@ environment variables provided by the operative system.
 Usage
 ----
 
-The aim of this project is to be as close as possible to a drop-in replacement
-for `std::os::env`. Because of this, the API exposed by the standard library
-is imitated. The methods provided by a Dotenv struct, `env`, `env_as_bytes`,
-`getenv` and `getenv_as_bytes`, carry the same signatures as their standard
-library counterparts.
+The easiest and most common usage consists on calling `dotenv::dotenv` when the
+application starts, which will load environment variables from a file named
+`.env` located wherever your application binary is located; after that, you
+can just call the environment-related method you need as provided by `std::os`.
 
-Dotenv implements the `dotenv` static method, returning a Dotenv
-struct using the contents of the file named `.env` at the path of your
-application binary, if it exists. If you need finer control
-about the source of the environment variables, Dotenv exposes the static
-methods `from_path`, `from_file`, `from_filename`, `from_bytes` and `from_str`.
+If you need finer control about the name of the file or its location, you can
+use the `from_filename` and `from_path` methods provided by the crate.
 
 Examples
 ----
@@ -38,30 +34,37 @@ Examples
 A `.env` file looks like this:
 
 ```sh
+# a comment, will be ignored
 REDIS_ADDRESS=localhost:6379
 MEANING_OF_LIFE=42
 ```
+
+You can optionally prefix each line with the word `export`, which will
+conveniently allow you to source the whole file on your shell.
 
 A sample project using Dotenv would look like this:
 
 ```rust
 extern crate dotenv;
 
-use dotenv::Dotenv;
+use dotenv::dotenv;
+use std::os::env;
 
 fn main() {
-    let dotenv = Dotenv::dotenv();
-    for (key, value) in dotenv.env().into_iter() {
+    dotenv().ok();
+
+    for (key, value) in env().into_iter() {
         println!("key: {}, value: {}", key, value)
     }
 }
 ```
 
-Dotenv also implements the `Default` trait, which returns a Dotenv struct
-without any content of its own; that is, containing only the environment
-variables exported by the system. This makes it easy to ignore IO failures if
-the environment variable file can't be found:
+Issues
+----
 
-```rust
-let dotenv = Dotenv::from_filename("nonexisting.env").ok().unwrap_or_default();
-```
+* The way errors are implemented is not as nice as it could be. Now that
+[FromError][fromerror] has landed, a better design for `DotenvError` and
+`ParseError` is possible.
+
+[dotenv]: https://github.com/bkeepers/dotenv
+[fromerror]: https://github.com/aturon/rfcs/blob/error-chaining/active/0000-error-chaining.md
