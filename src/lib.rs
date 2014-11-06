@@ -43,7 +43,7 @@ fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
 	)
 }
 
-fn from_line_iter<T: Iterator<String>>(lines: T) -> Result<(), ParseError> {
+fn parse_line_iter<T: Iterator<String>>(lines: T) -> Result<Vec<(String, String)>, ParseError> {
 	let mut parsed_lines = lines.map(parse_line);
 	let failure = parsed_lines.find(|line| line.is_err());
 
@@ -51,22 +51,24 @@ fn from_line_iter<T: Iterator<String>>(lines: T) -> Result<(), ParseError> {
 		return Err(failure.unwrap().err().unwrap());
 	}
 
-	for (key, value) in parsed_lines.filter_map(|line| {
+	Ok(parsed_lines.filter_map(|line| {
 		line.clone().unwrap()
-	}) {
+	}).collect())
+}
+
+fn lines_to_env(lines: Vec<(String, String)>) {
+	for (key, value) in lines.into_iter() {
 		setenv(key.as_slice(), value);
 	}
-
-	Ok(())
 }
 
 fn from_file(file: File) -> Result<(), DotenvError> {
 	let mut reader = BufferedReader::new(file);
 	let lines = reader.lines();
 
-	from_line_iter(lines.filter_map(|result| {
+	parse_line_iter(lines.filter_map(|result| {
 		result.ok()
-	})).map_err(|err| {
+	})).map(lines_to_env).map_err(|err| {
 		Parse(err)
 	})
 }
@@ -151,7 +153,7 @@ fn test_from_line_iter_valid() {
 		"# a comment",
 		"test_env_two=2"
 	].into_iter().map(|line| line.to_string());
-	let actual = from_line_iter(input);
+	let actual = parse_line_iter(input);
 
 	assert!(actual.is_ok())
 }
@@ -163,7 +165,7 @@ fn test_from_line_iter_invalid() {
 		"# a comment",
 		"not valid"
 	].into_iter().map(|line| line.to_string());
-	let actual = from_line_iter(input);
+	let actual = parse_line_iter(input);
 
 	assert!(actual.is_err())
 }
