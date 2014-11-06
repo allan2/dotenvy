@@ -4,7 +4,7 @@ extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
 
 use std::io::{BufferedReader, File, IoError, OtherIoError};
-use std::os::{setenv, self_exe_path};
+use std::os::{getenv, setenv, self_exe_path};
 
 #[deriving(Show, Clone)]
 pub struct ParseError {
@@ -58,7 +58,9 @@ fn parse_line_iter<T: Iterator<String>>(lines: T) -> Result<Vec<(String, String)
 
 fn lines_to_env(lines: Vec<(String, String)>) {
 	for (key, value) in lines.into_iter() {
-		setenv(key.as_slice(), value);
+		if getenv(key.as_slice()).is_none() {
+			setenv(key.as_slice(), value);
+		}
 	}
 }
 
