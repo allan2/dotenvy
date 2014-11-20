@@ -71,14 +71,14 @@ fn from_file(file: File) -> Result<(), DotenvError> {
 	parse_line_iter(lines.filter_map(|result| {
 		result.ok()
 	})).map(lines_to_env).map_err(|err| {
-		Parse(err)
+		DotenvError::Parse(err)
 	})
 }
 
 pub fn from_path(path: &Path) -> Result<(), DotenvError> {
 	match File::open(path) {
 		Ok(file) => from_file(file),
-		Err(err) => Err(Io(err))
+		Err(err) => Err(DotenvError::Io(err))
 	}
 }
 
@@ -86,7 +86,7 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 	self_exe_path().as_mut().map(|path| {
 		path.push(filename);
 		from_path(path)
-	}).unwrap_or(Err(Io(IoError{
+	}).unwrap_or(Err(DotenvError::Io(IoError{
 		kind: OtherIoError,
 		desc: "Could not fetch the path of this executable",
 		detail: None
