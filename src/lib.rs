@@ -3,207 +3,179 @@
 extern crate regex;
 #[phase(plugin)] extern crate regex_macros;
 
-use std::io::{File, IoResult, IoError, OtherIoError};
-use std::collections::HashMap;
-use std::default::Default;
-use std::os;
+use std::io::{BufferedReader, File, IoError, OtherIoError};
+use std::os::{getenv, setenv, self_exe_path};
 
-pub struct Dotenv {
-	env: HashMap<Vec<u8>, Vec<u8>>
+#[deriving(Show, Clone)]
+pub struct ParseError {
+	line: String
 }
 
-fn merge_env_hashes(
-	a: HashMap<Vec<u8>, Vec<u8>>,
-	b: HashMap<Vec<u8>, Vec<u8>>,
-) -> HashMap<Vec<u8>, Vec<u8>> {
-	let mut result = a.clone();
-	result.extend(b.into_iter());
-	result
+#[deriving(Show, Clone)]
+pub enum DotenvError {
+	Parse(ParseError),
+	Io(IoError)
 }
 
-fn parse_env(data: Vec<u8>) -> HashMap<Vec<u8>, Vec<u8>> {
-	let line_splitter = regex!(r"[\r\n]+");
-	let env_format = regex!(
-		r"^(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?P<value>.+)$"
-	);
+// for readability's sake
+type ParsedLine = Result<Option<(String, String)>, ParseError>;
+type ParsedLines = Result<Vec<(String, String)>, ParseError>;
 
-	let data_string = String::from_utf8_lossy(data.as_slice());
-	let data_slice = data_string.as_slice();
+fn parse_line(line: String) -> ParsedLine {
+	let line_regex = regex!(concat!(r"^(\s*(",
+		r"#.*|", // A comment, or...
+		r"\s*|", // ...an empty string, or...
+		r"(export\s+)?", // ...(optionally preceded by "export")...
+		r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
+		r"\s*=\s*", // ...then an equal sign,...
+		r"(?P<value>.+?)", // ...and then its corresponding value.
+	r")\s*)[\r\n]*$"));
 
-	line_splitter.split(data_slice).filter_map(|line| {
-		env_format.captures(line).and_then(|captures| {
+	line_regex.captures(line.as_slice()).map_or(
+		Err(ParseError{line: line.clone()}),
+		|captures| {
 			let key = captures.name("key");
 			let value = captures.name("value");
 
-			// regex captures return empty string on failure
 			if key == "" || value == "" {
-				None
+				// If there's no key and value, but capturing did not fail,
+				// then this means we're dealing with a comment or an empty
+				// string.
+				Ok(None)
 			} else {
-				Some((
-					String::from_str(key).into_bytes(),
-					String::from_str(value).into_bytes()
-				))
+				Ok(Some((key.to_string(), value.to_string())))
 			}
-		})
-	}).collect()
-}
-
-impl Dotenv {
-	pub fn dotenv() -> Dotenv {
-		Dotenv::from_filename(".env").ok().unwrap_or_default()
-	}
-
-	pub fn from_str(s: &str) -> Dotenv {
-		Dotenv::from_bytes(String::from_str(s).into_bytes())
-	}
-
-	pub fn from_bytes(bytes: Vec<u8>) -> Dotenv {
-		let dotenv_hash = parse_env(bytes);
-		let env_hash = os::env_as_bytes().into_iter().collect();
-		Dotenv{env: merge_env_hashes(env_hash, dotenv_hash)}
-	}
-
-	pub fn from_file(mut file: File) -> IoResult<Dotenv> {
-		file.read_to_end().map(|file_contents|
-			Dotenv::from_bytes(file_contents)
-		)
-	}
-
-	pub fn from_filename(n: &str) -> IoResult<Dotenv> {
-		os::self_exe_path().as_mut().map(|path| {
-			path.push(n);
-			Dotenv::from_path(path)
-		}).unwrap_or(Err(IoError{
-			kind: OtherIoError,
-			desc: "Could not fetch the path of this executable",
-			detail: None
-		}))
-	}
-
-	pub fn from_path(path: &Path) -> IoResult<Dotenv> {
-		File::open(path).and_then(|file| {
-			Dotenv::from_file(file)
-		})
-	}
-
-	pub fn getenv(&self, n: &str) -> Option<String> {
-		let n_bytes = &String::from_str(n).into_bytes();
-		self.env.get(n_bytes).and_then(|bytes| {
-			String::from_utf8(bytes.clone()).ok()
-		})
-	}
-
-	pub fn getenv_as_bytes(&self, n: &str) -> Option<Vec<u8>> {
-		let n_bytes = &String::from_str(n).into_bytes();
-		self.env.get(n_bytes).map(|bytes| {
-			bytes.clone()})
 		}
+	)
+}
 
-	pub fn env(&self) -> Vec<(String, String)> {
-		self.env.iter().filter_map(|(key, value)| {
-			String::from_utf8(key.clone()).ok().and_then(|key_string| {
-				String::from_utf8(value.clone()).ok().map(|value_string| {
-					(key_string.clone(), value_string)
-				})
-			})
-		}).collect()
+fn parse_line_iter<T: Iterator<String>>(lines: T) -> ParsedLines {
+	let parsed_lines: Vec<ParsedLine> =
+			lines.map(parse_line).collect();
+	let failure = parsed_lines.iter().find(|line| line.is_err());
+
+	if failure.is_some() {
+		return Err(failure.unwrap().clone().err().unwrap());
 	}
 
-	pub fn env_as_bytes(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
-		self.env.iter().map(|(key, value)| {
-			(key.clone(), value.clone())
-		}).collect()
+	Ok(parsed_lines.iter().filter_map(|line| {
+		line.clone().unwrap()
+	}).collect())
+}
+
+fn lines_to_env(lines: Vec<(String, String)>) {
+	for (key, value) in lines.into_iter() {
+		if getenv(key.as_slice()).is_none() {
+			setenv(key.as_slice(), value);
+		}
 	}
 }
 
-impl Default for Dotenv {
-	fn default() -> Dotenv {
-		Dotenv::from_bytes(Default::default())
+fn from_file(file: File) -> Result<(), DotenvError> {
+	let mut reader = BufferedReader::new(file);
+	let lines = reader.lines();
+
+	parse_line_iter(lines.filter_map(|result| {
+		result.ok()
+	})).map(lines_to_env).map_err(|err| {
+		DotenvError::Parse(err)
+	})
+}
+
+pub fn from_path(path: &Path) -> Result<(), DotenvError> {
+	match File::open(path) {
+		Ok(file) => from_file(file),
+		Err(err) => Err(DotenvError::Io(err))
+	}
+}
+
+pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
+	self_exe_path().as_mut().map(|path| {
+		path.push(filename);
+		from_path(path)
+	}).unwrap_or(Err(DotenvError::Io(IoError{
+		kind: OtherIoError,
+		desc: "Could not fetch the path of this executable",
+		detail: None
+	})))
+}
+
+pub fn dotenv() -> Result<(), DotenvError> {
+	from_filename(".env")
+}
+
+#[test]
+fn test_parse_line_env() {
+	let input_iter = vec![
+		"THIS_IS_KEY=hi this is value",
+		"   many_spaces  =   wow a  maze   ",
+		"export   SHELL_LOVER=1"
+	].into_iter().map(|input| input.to_string());
+	let actual_iter = input_iter.map(|input| parse_line(input));
+
+	let expected_iter = vec![
+		("THIS_IS_KEY", "hi this is value"),
+		("many_spaces", "wow a  maze"),
+		("SHELL_LOVER", "1")
+	].into_iter().map(|(key, value)| (key.to_string(), value.to_string()));
+
+	for (expected, actual) in expected_iter.zip(actual_iter) {
+		assert!(actual.is_ok());
+		assert!(actual.clone().ok().unwrap().is_some())
+		assert_eq!(expected, actual.ok().unwrap().unwrap())
 	}
 }
 
 #[test]
-fn merge_env_hashes_test() {
-	let hash_a: HashMap<Vec<u8>, Vec<u8>> = vec![
-		(
-			String::from_str("bacon").into_bytes(),
-			String::from_str("bad").into_bytes()
-		), (
-			String::from_str("cabbage").into_bytes(),
-			String::from_str("neutral").into_bytes()
-		)
-	].into_iter().collect();
+fn test_parse_line_comment() {
+	let input_iter = vec![
+		"# foo=bar",
+		"    #    "
+	].into_iter().map(|input| input.to_string());
+	let mut actual_iter = input_iter.map(|input| parse_line(input));
 
-	let hash_b: HashMap<Vec<u8>, Vec<u8>> = vec![
-		(
-			String::from_str("bacon").into_bytes(),
-			String::from_str("good").into_bytes()
-		)
-	].into_iter().collect();
-
-	let expected_hash: HashMap<Vec<u8>, Vec<u8>> = vec![
-		(
-			String::from_str("bacon").into_bytes(),
-			String::from_str("good").into_bytes()
-		), (
-			String::from_str("cabbage").into_bytes(),
-			String::from_str("neutral").into_bytes()
-		)
-	].into_iter().collect();
-
-	let actual_hash = merge_env_hashes(hash_a, hash_b);
-
-	assert_eq!(expected_hash, actual_hash)
+	for actual in actual_iter {
+		assert!(actual.is_ok());
+		assert!(actual.ok().unwrap().is_none());
+	}
 }
 
 #[test]
-fn parse_env_test_basic() {
-	let input = String::from_str(concat!(
-		"bacon=good", "\n",
-		"cabbage=neutral", "\n"
-	)).into_bytes();
+fn test_parse_line_invalid() {
+	let input_iter = vec![
+		"  invalid    ",
+		"very bacon = yes indeed",
+		"key=",
+		"=value"
+	].into_iter().map(|input| input.to_string());
+	let mut actual_iter = input_iter.map(|input| parse_line(input));
 
-	let expected_hash: HashMap<Vec<u8>, Vec<u8>> = vec![
-		(
-			String::from_str("bacon").into_bytes(),
-			String::from_str("good").into_bytes()
-		), (
-			String::from_str("cabbage").into_bytes(),
-			String::from_str("neutral").into_bytes()
-		)
-	].into_iter().collect();
-
-	let actual_hash = parse_env(input);
-
-	assert_eq!(expected_hash, actual_hash);
+	for actual in actual_iter {
+		assert!(actual.is_err());
+	}
 }
 
 #[test]
-fn parse_env_test_edges() {
-	let input = String::from_str(concat!(
-		"chili=spicy=EVIL", "\n",       // equals on value, uppercase on value
-		"to_MAH_to=okay", "\n",         // uppercase and underscores on key
-		"bacon   =  good", "\n\r\n\r",  // spaces around equal, newlines
-		"cabbage=not evil"              // space on value, no final newline
-	)).into_bytes();
+fn test_from_line_iter_valid() {
+	let input = vec![
+		"test_env_one=1",
+		"# a comment",
+		"", "\n",
+		"test_env_two=2"
+	].into_iter().map(|line| line.to_string());
+	let actual = parse_line_iter(input);
 
-	let expected_hash: HashMap<Vec<u8>, Vec<u8>> = vec![
-		(
-			String::from_str("chili").into_bytes(),
-			String::from_str("spicy=EVIL").into_bytes()
-		), (
-			String::from_str("to_MAH_to").into_bytes(),
-			String::from_str("okay").into_bytes()
-		), (
-			String::from_str("bacon").into_bytes(),
-			String::from_str("good").into_bytes()
-		), (
-			String::from_str("cabbage").into_bytes(),
-			String::from_str("not evil").into_bytes()
-		)
-	].into_iter().collect();
+	assert!(actual.is_ok())
+}
 
-	let actual_hash = parse_env(input);
+#[test]
+fn test_from_line_iter_invalid() {
+	let input = vec![
+		"test_env_one=1",
+		"# a comment",
+		"not valid"
+	].into_iter().map(|line| line.to_string());
+	let actual = parse_line_iter(input);
 
-	assert_eq!(expected_hash, actual_hash);
+	assert!(actual.is_err())
 }
