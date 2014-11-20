@@ -3,3 +3,9 @@
 name = "dotenv"
 version = "0.1.1"
 authors = ["Santiago Lapresta <santiago.lapresta@gmail.com>"]
+readme = "README.md"
+keywords = ["environment", "env", "dotenv", "settings", "config"]
+license = "MIT"
+homepage = "https://github.com/slapresta/rust-dotenv"
+repository = "https://github.com/slapresta/rust-dotenv"
+description = "A `dotenv` implementation for Rust"
