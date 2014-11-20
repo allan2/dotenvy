@@ -88,14 +88,14 @@ impl Dotenv {
 
 	pub fn getenv(&self, n: &str) -> Option<String> {
 		let n_bytes = &String::from_str(n).into_bytes();
-		self.env.find(n_bytes).and_then(|bytes| {
+		self.env.get(n_bytes).and_then(|bytes| {
 			String::from_utf8(bytes.clone()).ok()
 		})
 	}
 
 	pub fn getenv_as_bytes(&self, n: &str) -> Option<Vec<u8>> {
 		let n_bytes = &String::from_str(n).into_bytes();
-		self.env.find(n_bytes).map(|bytes| {
+		self.env.get(n_bytes).map(|bytes| {
 			bytes.clone()})
 		}
 
