@@ -20,11 +20,12 @@ pub enum DotenvError {
 fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
 	let line_regex = regex!(concat!(r"^(\s*(",
 		r"#.*|", // A comment, or...
+		r"\s*|", // ...an empty string, or...
 		r"(export\s+)?", // ...(optionally preceded by "export")...
 		r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
 		r"\s*=\s*", // ...then an equal sign,...
 		r"(?P<value>.+?)", // ...and then its corresponding value.
-	r")\s*)$"));
+	r")\s*)[\r\n]*$"));
 
 	line_regex.captures(line.as_slice()).map_or(
 		Err(ParseError{line: line.clone()}),
@@ -34,7 +35,8 @@ fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
 
 			if key == "" || value == "" {
 				// If there's no key and value, but capturing did not fail,
-				// then this means we're dealing with a comment.
+				// then this means we're dealing with a comment or an empty
+				// string.
 				Ok(None)
 			} else {
 				Ok(Some((key.to_string(), value.to_string())))
