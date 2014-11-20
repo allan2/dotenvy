@@ -160,6 +160,7 @@ fn test_from_line_iter_valid() {
 	let input = vec![
 		"test_env_one=1",
 		"# a comment",
+		"", "\n",
 		"test_env_two=2"
 	].into_iter().map(|line| line.to_string());
 	let actual = parse_line_iter(input);
