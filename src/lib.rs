@@ -17,7 +17,11 @@ pub enum DotenvError {
 	Io(IoError)
 }
 
-fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
+// for readability's sake
+type ParsedLine = Result<Option<(String, String)>, ParseError>;
+type ParsedLines = Result<Vec<(String, String)>, ParseError>;
+
+fn parse_line(line: String) -> ParsedLine {
 	let line_regex = regex!(concat!(r"^(\s*(",
 		r"#.*|", // A comment, or...
 		r"\s*|", // ...an empty string, or...
@@ -45,8 +49,9 @@ fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
 	)
 }
 
-fn parse_line_iter<T: Iterator<String>>(lines: T) -> Result<Vec<(String, String)>, ParseError> {
-	let parsed_lines: Vec<Result<Option<(String, String)>, ParseError>> = lines.map(parse_line).collect();
+fn parse_line_iter<T: Iterator<String>>(lines: T) -> ParsedLines {
+	let parsed_lines: Vec<ParsedLine> =
+			lines.map(parse_line).collect();
 	let failure = parsed_lines.iter().find(|line| line.is_err());
 
 	if failure.is_some() {
