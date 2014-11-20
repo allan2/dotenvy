@@ -46,14 +46,14 @@ fn parse_line(line: String) -> Result<Option<(String, String)>, ParseError> {
 }
 
 fn parse_line_iter<T: Iterator<String>>(lines: T) -> Result<Vec<(String, String)>, ParseError> {
-	let mut parsed_lines = lines.map(parse_line);
-	let failure = parsed_lines.find(|line| line.is_err());
+	let parsed_lines: Vec<Result<Option<(String, String)>, ParseError>> = lines.map(parse_line).collect();
+	let failure = parsed_lines.iter().find(|line| line.is_err());
 
 	if failure.is_some() {
-		return Err(failure.unwrap().err().unwrap());
+		return Err(failure.unwrap().clone().err().unwrap());
 	}
 
-	Ok(parsed_lines.filter_map(|line| {
+	Ok(parsed_lines.iter().filter_map(|line| {
 		line.clone().unwrap()
 	}).collect())
 }
