@@ -50,8 +50,7 @@ fn parse_line(line: String) -> ParsedLine {
 }
 
 fn parse_line_iter<T: Iterator<String>>(lines: T) -> ParsedLines {
-	let parsed_lines: Vec<ParsedLine> =
-			lines.map(parse_line).collect();
+	let parsed_lines: Vec<ParsedLine> = lines.map(parse_line).collect();
 	let failure = parsed_lines.iter().find(|line| line.is_err());
 
 	if failure.is_some() {
