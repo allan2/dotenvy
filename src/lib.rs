@@ -37,13 +37,13 @@ fn parse_line(line: String) -> ParsedLine {
 			let key = captures.name("key");
 			let value = captures.name("value");
 
-			if key == "" || value == "" {
+			if key.is_some() && value.is_some() {
+				Ok(Some((key.unwrap().to_string(), value.unwrap().to_string())))
+			} else {
 				// If there's no key and value, but capturing did not fail,
 				// then this means we're dealing with a comment or an empty
 				// string.
 				Ok(None)
-			} else {
-				Ok(Some((key.to_string(), value.to_string())))
 			}
 		}
 	)
@@ -120,8 +120,8 @@ fn test_parse_line_env() {
 
 	for (expected, actual) in expected_iter.zip(actual_iter) {
 		assert!(actual.is_ok());
-		assert!(actual.clone().ok().unwrap().is_some())
-		assert_eq!(expected, actual.ok().unwrap().unwrap())
+		assert!(actual.clone().ok().unwrap().is_some());
+		assert_eq!(expected, actual.ok().unwrap().unwrap());
 	}
 }
 
@@ -164,7 +164,7 @@ fn test_from_line_iter_valid() {
 	].into_iter().map(|line| line.to_string());
 	let actual = parse_line_iter(input);
 
-	assert!(actual.is_ok())
+	assert!(actual.is_ok());
 }
 
 #[test]
@@ -176,5 +176,5 @@ fn test_from_line_iter_invalid() {
 	].into_iter().map(|line| line.to_string());
 	let actual = parse_line_iter(input);
 
-	assert!(actual.is_err())
+	assert!(actual.is_err());
 }
