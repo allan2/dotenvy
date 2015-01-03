@@ -6,12 +6,12 @@ extern crate regex;
 use std::io::{BufferedReader, File, IoError, OtherIoError};
 use std::os::{getenv, setenv, self_exe_path};
 
-#[deriving(Show, Clone)]
+#[derive(Show, Clone)]
 pub struct ParseError {
 	line: String
 }
 
-#[deriving(Show, Clone)]
+#[derive(Show, Clone)]
 pub enum DotenvError {
 	Parse(ParseError),
 	Io(IoError)
