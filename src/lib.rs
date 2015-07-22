@@ -1,20 +1,15 @@
-#![feature(phase)]
-
 extern crate regex;
-#[phase(plugin)] extern crate regex_macros;
 
-use std::io::{BufferedReader, File, IoError, OtherIoError};
-use std::os::{getenv, setenv, self_exe_path};
+use std::fs::File;
+use std::io::{BufReader, BufRead};
+use std::env;
+use std::result::Result;
+use std::path::Path;
+use regex::Regex;
 
-#[derive(Show, Clone)]
+#[derive(Debug, Clone)]
 pub struct ParseError {
-	line: String
-}
-
-#[derive(Show, Clone)]
-pub enum DotenvError {
-	Parse(ParseError),
-	Io(IoError)
+    line: String
 }
 
 // for readability's sake
@@ -22,159 +17,116 @@ type ParsedLine = Result<Option<(String, String)>, ParseError>;
 type ParsedLines = Result<Vec<(String, String)>, ParseError>;
 
 fn parse_line(line: String) -> ParsedLine {
-	let line_regex = regex!(concat!(r"^(\s*(",
-		r"#.*|", // A comment, or...
-		r"\s*|", // ...an empty string, or...
-		r"(export\s+)?", // ...(optionally preceded by "export")...
-		r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
-		r"\s*=\s*", // ...then an equal sign,...
-		r"(?P<value>.+?)", // ...and then its corresponding value.
-	r")\s*)[\r\n]*$"));
+    let line_regex = Regex::new(concat!(r"^(\s*(",
+                                        r"#.*|", // A comment, or...
+                                        r"\s*|", // ...an empty string, or...
+                                        r"(export\s+)?", // ...(optionally preceded by "export")...
+                                        r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
+                                        r"\s*=\s*", // ...then an equal sign,...
+                                        r"(?P<value>.+?)", // ...and then its corresponding value.
+                                        r")\s*)[\r\n]*$")).unwrap();
 
-	line_regex.captures(line.as_slice()).map_or(
-		Err(ParseError{line: line.clone()}),
-		|captures| {
-			let key = captures.name("key");
-			let value = captures.name("value");
+    line_regex.captures(&line).map_or(
+        Err(ParseError{line: line.clone()}),
+        |captures| {
+            let key = captures.name("key");
+            let value = captures.name("value");
 
-			if key.is_some() && value.is_some() {
-				Ok(Some((key.unwrap().to_string(), value.unwrap().to_string())))
-			} else {
-				// If there's no key and value, but capturing did not fail,
-				// then this means we're dealing with a comment or an empty
-				// string.
-				Ok(None)
-			}
-		}
-	)
+            if key.is_some() && value.is_some() {
+                Ok(Some((key.unwrap().to_string(), value.unwrap().to_string())))
+            } else {
+                // If there's no key and value, but capturing did not fail,
+                // then this means we're dealing with a comment or an empty
+                // string.
+                Ok(None)
+            }
+        }
+        )
 }
 
-fn parse_line_iter<T: Iterator<String>>(lines: T) -> ParsedLines {
-	let parsed_lines: Vec<ParsedLine> = lines.map(parse_line).collect();
-	let failure = parsed_lines.iter().find(|line| line.is_err());
-
-	if failure.is_some() {
-		return Err(failure.unwrap().clone().err().unwrap());
-	}
-
-	Ok(parsed_lines.iter().filter_map(|line| {
-		line.clone().unwrap()
-	}).collect())
+fn from_file(file: File) -> Result<(), ParseError> {
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        let line = line.unwrap();
+        let parsed = parse_line(line).unwrap();
+        match parsed {
+            Some((key, value)) => {
+                if env::var(&key).is_err() {
+                    env::set_var(&key, value);
+                }
+                ()
+            },
+            None => ()
+        }
+    }
+    Ok(())
 }
 
-fn lines_to_env(lines: Vec<(String, String)>) {
-	for (key, value) in lines.into_iter() {
-		if getenv(key.as_slice()).is_none() {
-			setenv(key.as_slice(), value);
-		}
-	}
+pub fn from_path(path: &Path) -> Result<(), ParseError> {
+    match File::open(path) {
+        Ok(file) => from_file(file),
+        Err(_) => Err(ParseError {line: "IO error".to_string()})
+    }
 }
 
-fn from_file(file: File) -> Result<(), DotenvError> {
-	let mut reader = BufferedReader::new(file);
-	let lines = reader.lines();
-
-	parse_line_iter(lines.filter_map(|result| {
-		result.ok()
-	})).map(lines_to_env).map_err(|err| {
-		DotenvError::Parse(err)
-	})
+pub fn from_filename(filename: &str) -> Result<(), ParseError> {
+    match env::current_exe() {
+        Ok(path) => from_path(path.with_file_name(filename).as_path()),
+        Err(_) => Err(ParseError {line: "Could not fetch the path of this executable".to_string()})
+    }
 }
 
-pub fn from_path(path: &Path) -> Result<(), DotenvError> {
-	match File::open(path) {
-		Ok(file) => from_file(file),
-		Err(err) => Err(DotenvError::Io(err))
-	}
-}
-
-pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
-	self_exe_path().as_mut().map(|path| {
-		path.push(filename);
-		from_path(path)
-	}).unwrap_or(Err(DotenvError::Io(IoError{
-		kind: OtherIoError,
-		desc: "Could not fetch the path of this executable",
-		detail: None
-	})))
-}
-
-pub fn dotenv() -> Result<(), DotenvError> {
-	from_filename(".env")
+pub fn dotenv() -> Result<(), ParseError> {
+    from_filename(".env")
 }
 
 #[test]
 fn test_parse_line_env() {
-	let input_iter = vec![
-		"THIS_IS_KEY=hi this is value",
-		"   many_spaces  =   wow a  maze   ",
-		"export   SHELL_LOVER=1"
-	].into_iter().map(|input| input.to_string());
-	let actual_iter = input_iter.map(|input| parse_line(input));
+    let input_iter = vec![
+        "THIS_IS_KEY=hi this is value",
+        "   many_spaces  =   wow a  maze   ",
+        "export   SHELL_LOVER=1"
+    ].into_iter().map(|input| input.to_string());
+    let actual_iter = input_iter.map(|input| parse_line(input));
 
-	let expected_iter = vec![
-		("THIS_IS_KEY", "hi this is value"),
-		("many_spaces", "wow a  maze"),
-		("SHELL_LOVER", "1")
-	].into_iter().map(|(key, value)| (key.to_string(), value.to_string()));
+    let expected_iter = vec![
+        ("THIS_IS_KEY", "hi this is value"),
+        ("many_spaces", "wow a  maze"),
+        ("SHELL_LOVER", "1")
+    ].into_iter().map(|(key, value)| (key.to_string(), value.to_string()));
 
-	for (expected, actual) in expected_iter.zip(actual_iter) {
-		assert!(actual.is_ok());
-		assert!(actual.clone().ok().unwrap().is_some());
-		assert_eq!(expected, actual.ok().unwrap().unwrap());
-	}
+    for (expected, actual) in expected_iter.zip(actual_iter) {
+        assert!(actual.is_ok());
+        assert!(actual.clone().ok().unwrap().is_some());
+        assert_eq!(expected, actual.ok().unwrap().unwrap());
+    }
 }
 
 #[test]
 fn test_parse_line_comment() {
-	let input_iter = vec![
-		"# foo=bar",
-		"    #    "
-	].into_iter().map(|input| input.to_string());
-	let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let input_iter = vec![
+        "# foo=bar",
+        "    #    "
+    ].into_iter().map(|input| input.to_string());
+    let mut actual_iter = input_iter.map(|input| parse_line(input));
 
-	for actual in actual_iter {
-		assert!(actual.is_ok());
-		assert!(actual.ok().unwrap().is_none());
-	}
+    for actual in actual_iter {
+        assert!(actual.is_ok());
+        assert!(actual.ok().unwrap().is_none());
+    }
 }
 
 #[test]
 fn test_parse_line_invalid() {
-	let input_iter = vec![
-		"  invalid    ",
-		"very bacon = yes indeed",
-		"key=",
-		"=value"
-	].into_iter().map(|input| input.to_string());
-	let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let input_iter = vec![
+        "  invalid    ",
+        "very bacon = yes indeed",
+        "key=",
+        "=value"
+    ].into_iter().map(|input| input.to_string());
+    let mut actual_iter = input_iter.map(|input| parse_line(input));
 
-	for actual in actual_iter {
-		assert!(actual.is_err());
-	}
-}
-
-#[test]
-fn test_from_line_iter_valid() {
-	let input = vec![
-		"test_env_one=1",
-		"# a comment",
-		"", "\n",
-		"test_env_two=2"
-	].into_iter().map(|line| line.to_string());
-	let actual = parse_line_iter(input);
-
-	assert!(actual.is_ok());
-}
-
-#[test]
-fn test_from_line_iter_invalid() {
-	let input = vec![
-		"test_env_one=1",
-		"# a comment",
-		"not valid"
-	].into_iter().map(|line| line.to_string());
-	let actual = parse_line_iter(input);
-
-	assert!(actual.is_err());
+    for actual in actual_iter {
+        assert!(actual.is_err());
+    }
 }
