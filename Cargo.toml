@@ -9,3 +9,6 @@ license = "MIT"
 homepage = "https://github.com/slapresta/rust-dotenv"
 repository = "https://github.com/slapresta/rust-dotenv"
 description = "A `dotenv` implementation for Rust"
+
+[dependencies]
+regex = "*"
