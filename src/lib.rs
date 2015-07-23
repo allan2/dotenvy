@@ -12,16 +12,31 @@ use std::io::{BufReader, BufRead};
 use std::env;
 use std::result::Result;
 use std::path::Path;
-use regex::Regex;
+use regex::{Regex, Error};
 
 #[derive(Debug, Clone)]
-pub struct ParseError {
-    line: String
+pub enum DotenvError {
+    Parsing {line: String},
+    ParseFormatter,
+    Io,
+    ExecutableNotFound
+}
+
+impl From<regex::Error> for DotenvError {
+    fn from(_: regex::Error) -> DotenvError {
+        DotenvError::ParseFormatter
+    }
+}
+
+impl From<std::io::Error> for DotenvError {
+    fn from(_: std::io::Error) -> DotenvError {
+        DotenvError::Io
+    }
 }
 
 // for readability's sake
-type ParsedLine = Result<Option<(String, String)>, ParseError>;
-type ParsedLines = Result<Vec<(String, String)>, ParseError>;
+type ParsedLine = Result<Option<(String, String)>, DotenvError>;
+type ParsedLines = Result<Vec<(String, String)>, DotenvError>;
 
 fn parse_line(line: String) -> ParsedLine {
     let line_regex = Regex::new(concat!(r"^(\s*(",
@@ -34,7 +49,7 @@ fn parse_line(line: String) -> ParsedLine {
                                         r")\s*)[\r\n]*$")).unwrap();
 
     line_regex.captures(&line).map_or(
-        Err(ParseError{line: line.clone()}),
+        Err(DotenvError::Parsing {line: line.clone()}),
         |captures| {
             let key = captures.name("key");
             let value = captures.name("value");
@@ -51,11 +66,11 @@ fn parse_line(line: String) -> ParsedLine {
         )
 }
 
-fn from_file(file: File) -> Result<(), ParseError> {
+fn from_file(file: File) -> Result<(), DotenvError> {
     let reader = BufReader::new(file);
     for line in reader.lines() {
-        let line = line.unwrap();
-        let parsed = parse_line(line).unwrap();
+        let line = try!(line);
+        let parsed = try!(parse_line(line));
         match parsed {
             Some((key, value)) => {
                 if env::var(&key).is_err() {
@@ -70,24 +85,24 @@ fn from_file(file: File) -> Result<(), ParseError> {
 }
 
 /// Loads the file at the specified path.
-pub fn from_path(path: &Path) -> Result<(), ParseError> {
+pub fn from_path(path: &Path) -> Result<(), DotenvError> {
     match File::open(path) {
         Ok(file) => from_file(file),
-        Err(_) => Err(ParseError {line: "IO error".to_string()})
+        Err(_) => Err(DotenvError::Io)
     }
 }
 
 /// Loads the specified file from the same directory as the current executable.
-pub fn from_filename(filename: &str) -> Result<(), ParseError> {
+pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
     match env::current_exe() {
         Ok(path) => from_path(path.with_file_name(filename).as_path()),
-        Err(_) => Err(ParseError {line: "Could not fetch the path of this executable".to_string()})
+        Err(_) => Err(DotenvError::ExecutableNotFound)
     }
 }
 
 /// This is usually what you want.
 /// It loads the .env file located in the same directory as the current executable.
-pub fn dotenv() -> Result<(), ParseError> {
+pub fn dotenv() -> Result<(), DotenvError> {
     from_filename(".env")
 }
 
@@ -119,7 +134,7 @@ fn test_parse_line_comment() {
         "# foo=bar",
         "    #    "
     ].into_iter().map(|input| input.to_string());
-    let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
         assert!(actual.is_ok());
@@ -135,7 +150,7 @@ fn test_parse_line_invalid() {
         "key=",
         "=value"
     ].into_iter().map(|input| input.to_string());
-    let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
         assert!(actual.is_err());
