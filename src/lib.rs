@@ -1,3 +1,10 @@
+/*!
+This crate provides a configuration loader in the style of the [ruby dotenv gem](https://github.com/bkeepers/dotenv).
+This library is meant to be used on development or testing environments in which setting environment
+variables is not practical. It loads environment variables from a .env file, if available, and
+mashes those with the actual environment variables provided by the operative system.
+*/
+
 extern crate regex;
 
 use std::fs::File;
@@ -62,6 +69,7 @@ fn from_file(file: File) -> Result<(), ParseError> {
     Ok(())
 }
 
+/// Loads the file at the specified path.
 pub fn from_path(path: &Path) -> Result<(), ParseError> {
     match File::open(path) {
         Ok(file) => from_file(file),
@@ -69,6 +77,7 @@ pub fn from_path(path: &Path) -> Result<(), ParseError> {
     }
 }
 
+/// Loads the specified file from the same directory as the current executable.
 pub fn from_filename(filename: &str) -> Result<(), ParseError> {
     match env::current_exe() {
         Ok(path) => from_path(path.with_file_name(filename).as_path()),
@@ -76,6 +85,8 @@ pub fn from_filename(filename: &str) -> Result<(), ParseError> {
     }
 }
 
+/// This is usually what you want.
+/// It loads the .env file located in the same directory as the current executable.
 pub fn dotenv() -> Result<(), ParseError> {
     from_filename(".env")
 }
