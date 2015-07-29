@@ -51,6 +51,7 @@ fn parse_line(line: String) -> ParsedLine {
         )
 }
 
+/// Loads the specified file.
 fn from_file(file: File) -> Result<(), ParseError> {
     let reader = BufReader::new(file);
     for line in reader.lines() {
@@ -70,6 +71,17 @@ fn from_file(file: File) -> Result<(), ParseError> {
 }
 
 /// Loads the file at the specified path.
+///
+/// Examples
+///
+/// ```
+/// use dotenv;
+/// use std::env;
+/// use std::path::{Path};
+///
+/// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
+/// dotenv::from_path(my_path.as_path());
+/// ```
 pub fn from_path(path: &Path) -> Result<(), ParseError> {
     match File::open(path) {
         Ok(file) => from_file(file),
@@ -78,6 +90,20 @@ pub fn from_path(path: &Path) -> Result<(), ParseError> {
 }
 
 /// Loads the specified file from the same directory as the current executable.
+///
+/// # Examples
+/// ```
+/// use dotenv;
+/// dotenv::from_filename("custom.env").ok();
+/// ```
+///
+/// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which is
+/// preferred.
+///
+/// ```
+/// use dotenv;
+/// dotenv::from_filename(".env").ok();
+/// ```
 pub fn from_filename(filename: &str) -> Result<(), ParseError> {
     match env::current_exe() {
         Ok(path) => from_path(path.with_file_name(filename).as_path()),
@@ -87,6 +113,12 @@ pub fn from_filename(filename: &str) -> Result<(), ParseError> {
 
 /// This is usually what you want.
 /// It loads the .env file located in the same directory as the current executable.
+///
+/// # Examples
+/// ```
+/// use dotenv;
+/// dotenv::dotenv().ok();
+/// ```
 pub fn dotenv() -> Result<(), ParseError> {
     from_filename(".env")
 }
@@ -119,7 +151,7 @@ fn test_parse_line_comment() {
         "# foo=bar",
         "    #    "
     ].into_iter().map(|input| input.to_string());
-    let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
         assert!(actual.is_ok());
@@ -135,7 +167,7 @@ fn test_parse_line_invalid() {
         "key=",
         "=value"
     ].into_iter().map(|input| input.to_string());
-    let mut actual_iter = input_iter.map(|input| parse_line(input));
+    let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
         assert!(actual.is_err());
