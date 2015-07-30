@@ -66,6 +66,7 @@ fn parse_line(line: String) -> ParsedLine {
         )
 }
 
+/// Loads the specified file.
 fn from_file(file: File) -> Result<(), DotenvError> {
     let reader = BufReader::new(file);
     for line in reader.lines() {
@@ -85,6 +86,17 @@ fn from_file(file: File) -> Result<(), DotenvError> {
 }
 
 /// Loads the file at the specified path.
+///
+/// Examples
+///
+/// ```
+/// use dotenv;
+/// use std::env;
+/// use std::path::{Path};
+///
+/// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
+/// dotenv::from_path(my_path.as_path());
+/// ```
 pub fn from_path(path: &Path) -> Result<(), DotenvError> {
     match File::open(path) {
         Ok(file) => from_file(file),
@@ -93,6 +105,20 @@ pub fn from_path(path: &Path) -> Result<(), DotenvError> {
 }
 
 /// Loads the specified file from the same directory as the current executable.
+///
+/// # Examples
+/// ```
+/// use dotenv;
+/// dotenv::from_filename("custom.env").ok();
+/// ```
+///
+/// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which is
+/// preferred.
+///
+/// ```
+/// use dotenv;
+/// dotenv::from_filename(".env").ok();
+/// ```
 pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
     match env::current_exe() {
         Ok(path) => from_path(path.with_file_name(filename).as_path()),
@@ -102,6 +128,12 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 
 /// This is usually what you want.
 /// It loads the .env file located in the same directory as the current executable.
+///
+/// # Examples
+/// ```
+/// use dotenv;
+/// dotenv::dotenv().ok();
+/// ```
 pub fn dotenv() -> Result<(), DotenvError> {
     from_filename(".env")
 }
