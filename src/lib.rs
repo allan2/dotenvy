@@ -137,7 +137,7 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 /// dotenv::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<(), DotenvError> {
-    from_filename(".env")
+    from_filename(concat!(env!("PWD"), "/.env"))
 }
 
 #[test]
