@@ -5,6 +5,7 @@ version = "0.3.0"
 authors = [
 	"Santiago Lapresta <santiago.lapresta@gmail.com>",
 	"Craig Hills <chills@gmail.com>",
+	"Mike Piccolo <mfpiccolo@gmail.com>",
 ]
 readme = "README.md"
 keywords = ["environment", "env", "dotenv", "settings", "config"]
