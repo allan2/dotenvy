@@ -137,7 +137,10 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 /// dotenv::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<(), DotenvError> {
-    from_filename(".env")
+    match env::current_dir() {
+       Ok(path) => from_path(path.join(".env").as_path()),
+       Err(_) => Err(DotenvError::Io),
+    }
 }
 
 #[test]
