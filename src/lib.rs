@@ -1,9 +1,9 @@
-//! This crate provides a configuration loader in the style of the
-//! [ruby dotenv gem](https://github.com/bkeepers/dotenv).
-//! This library is meant to be used on development or testing environments in which setting
-//! environment variables is not practical. It loads environment variables from a .env file, if
-//! available, and mashes those with the actual environment variables provided by the operative
-//! system.
+//! This crate provides a configuration loader in the style of the [ruby dotenv
+//! gem](https://github.com/bkeepers/dotenv). This library is meant to be used
+//! on development or testing environments in which setting environment
+//! variables is not practical. It loads environment variables from a .env
+//! file, if available, and mashes those with the actual environment variables
+//! provided by the operating system.
 
 extern crate regex;
 
@@ -12,7 +12,7 @@ use std::io::{BufReader, BufRead};
 use std::env;
 use std::result::Result;
 use std::path::Path;
-use regex::{Regex, Error};
+use regex::{Captures, Regex, Error};
 
 #[derive(Debug, Clone)]
 pub enum DotenvError {
@@ -40,32 +40,35 @@ impl From<std::io::Error> for DotenvError {
 type ParsedLine = Result<Option<(String, String)>, DotenvError>;
 type ParsedLines = Result<Vec<(String, String)>, DotenvError>;
 
+fn named_string(captures: &Captures, name: &str) -> Option<String> {
+    captures.name(name).and_then(|v| Some(v.to_string()))
+}
+
 fn parse_line(line: String) -> ParsedLine {
-    let line_regex = Regex::new(concat!(r"^(\s*(",
+    let line_regex = try!(Regex::new(concat!(r"^(\s*(",
                                         r"#.*|", // A comment, or...
                                         r"\s*|", // ...an empty string, or...
                                         r"(export\s+)?", // ...(optionally preceded by "export")...
                                         r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
                                         r"\s*=\s*", // ...then an equal sign,...
                                         r"(?P<value>.+?)", // ...and then its corresponding value.
-                                        r")\s*)[\r\n]*$"))
-                         .unwrap();
+                                        r")\s*)[\r\n]*$")));
 
-    line_regex.captures(&line).map_or(Err(DotenvError::Parsing { line: line.clone() }),
-                                      |captures| {
-                                          let key = captures.name("key");
-                                          let value = captures.name("value");
+    line_regex.captures(&line)
+              .map_or(Err(DotenvError::Parsing { line: line.clone() }),
+                      |captures| {
+                          let key = named_string(&captures, "key");
+                          let value = named_string(&captures, "value");
 
-                                          if key.is_some() && value.is_some() {
-                                              Ok(Some((key.unwrap().to_string(),
-                                                       value.unwrap().to_string())))
-                                          } else {
-                // If there's no key and value, but capturing did not fail,
-                // then this means we're dealing with a comment or an empty
-                // string.
-                                              Ok(None)
-                                          }
-                                      })
+                          if key.is_some() && value.is_some() {
+                              Ok(Some((key.unwrap(), value.unwrap())))
+                          } else {
+                              // If there's no key and value, but capturing did not
+                              // fail, then this means we're dealing with a comment
+                              // or an empty string.
+                              Ok(None)
+                          }
+                      })
 }
 
 /// Loads the specified file.
@@ -138,8 +141,8 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 /// ```
 pub fn dotenv() -> Result<(), DotenvError> {
     match env::current_dir() {
-       Ok(path) => from_path(path.join(".env").as_path()),
-       Err(_) => Err(DotenvError::Io),
+        Ok(path) => from_path(path.join(".env").as_path()),
+        Err(_) => Err(DotenvError::Io),
     }
 }
 
