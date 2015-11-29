@@ -132,7 +132,8 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 }
 
 /// This is usually what you want.
-/// It loads the .env file located in the same directory as the current executable.
+/// It loads the .env file located in the environment's current directory.
+/// If it cannot find one, it tries the directory where cargo found Cargo.toml.
 ///
 /// # Examples
 /// ```
@@ -140,8 +141,15 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 /// dotenv::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<(), DotenvError> {
-    match env::current_dir() {
-        Ok(path) => from_path(path.join(".env").as_path()),
+    match env::current_dir().map(|path| path.join(".env")) {
+        Ok(path) => match from_path(path.as_path()) {
+            Ok(file) => Ok(file),
+            Err(_) => match env::var("CARGO_MANIFEST_DIR").map(|var|
+                        Path::new(&var).to_owned().join(".env")) {
+                Ok(path) => from_path(path.as_path()),
+                Err(_) => Err(DotenvError::Io)
+            },
+        },
         Err(_) => Err(DotenvError::Io),
     }
 }
