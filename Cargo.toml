@@ -6,6 +6,7 @@ authors = [
 	"Santiago Lapresta <santiago.lapresta@gmail.com>",
 	"Craig Hills <chills@gmail.com>",
 	"Mike Piccolo <mfpiccolo@gmail.com>",
+	"Alice Maz <alice@alicemaz.com>",
 ]
 readme = "README.md"
 keywords = ["environment", "env", "dotenv", "settings", "config"]
