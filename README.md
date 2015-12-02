@@ -22,8 +22,8 @@ Usage
 
 The easiest and most common usage consists on calling `dotenv::dotenv` when the
 application starts, which will load environment variables from a file named
-`.env` in the root directory; after that, you can just call the
-environment-related method you need as provided by `std::os`.
+`.env` in the current directory or any of its parents; after that, you can just call
+the environment-related method you need as provided by `std::os`.
 
 If you need finer control about the name of the file or its location, you can
 use the `from_filename` and `from_path` methods provided by the crate.
