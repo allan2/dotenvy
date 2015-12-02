@@ -90,7 +90,20 @@ fn from_file(file: File) -> Result<(), DotenvError> {
     Ok(())
 }
 
-/// Loads the file at the specified path.
+/// Attempts to load from parent directories until file is found or root is reached.
+fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
+    match path.parent() {
+        Some(parent) => {
+            match from_path(&parent.join(filename)) {
+                Ok(file) => Ok(file),
+                Err(_) => try_parent(parent, filename)
+            }
+        },
+        None => Err(DotenvError::Io)
+    }
+}
+
+/// Loads the file at the specified absolute path.
 ///
 /// Examples
 ///
@@ -109,7 +122,7 @@ pub fn from_path(path: &Path) -> Result<(), DotenvError> {
     }
 }
 
-/// Loads the specified file from the same directory as the current executable.
+/// Loads the specified file from the environment's current directory or its parents in sequence.
 ///
 /// # Examples
 /// ```
@@ -125,22 +138,19 @@ pub fn from_path(path: &Path) -> Result<(), DotenvError> {
 /// dotenv::from_filename(".env").ok();
 /// ```
 pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
-    match env::current_dir().map(|path| path.join(filename)) {
-        Ok(path) => match from_path(path.as_path()) {
-            Ok(file) => Ok(file),
-            Err(_) => match env::var("CARGO_MANIFEST_DIR").map(|var|
-                        Path::new(&var).to_owned().join(filename)) {
-                Ok(path) => from_path(path.as_path()),
-                Err(_) => Err(DotenvError::Io)
-            },
-        },
-        Err(_) => Err(DotenvError::Io),
+    let path = match env::current_dir() {
+        Ok(path) => path,
+        Err(_) => return Err(DotenvError::Io)
+    };
+
+    match from_path(&path.join(filename)) {
+        Ok(file) => Ok(file),
+        Err(_) => try_parent(&path, filename)
     }
 }
 
 /// This is usually what you want.
-/// It loads the .env file located in the environment's current directory.
-/// If it cannot find one, it tries the directory where cargo found Cargo.toml.
+/// It loads the .env file located in the environment's current directory or its parents in sequence.
 ///
 /// # Examples
 /// ```
