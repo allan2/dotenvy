@@ -1,0 +1,16 @@
+[package]
+name = "dotenv_macros"
+version = "0.1.0"
+authors = [
+    "Santiago Lapresta <santiago.lapresta@gmail.com>",
+    "Craig Hills <chills@gmail.com>",
+    "Mike Piccolo <mfpiccolo@gmail.com>",
+    "Alice Maz <alice@alicemaz.com>",
+]
+
+[dependencies]
+dotenv_codegen = { version = "^0.1.0", default-features = false }
+
+[lib]
+name = "dotenv_macros"
+plugin = true

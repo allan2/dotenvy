@@ -28,6 +28,10 @@ the environment-related method you need as provided by `std::os`.
 If you need finer control about the name of the file or its location, you can
 use the `from_filename` and `from_path` methods provided by the crate.
 
+`dotenv_codegen` and `dotenv_macros` also provide the `dotenv!` macro, which
+behaves identically to `env!`, but first tries to load a `.env` file at compile
+time.
+
 Examples
 ----
 
@@ -57,6 +61,59 @@ fn main() {
         println!("{}: {}", key, value);
     }
 }
+```
+
+Using the `dotenv!` macro on nightly
+------------------------------------
+
+Add `dotenv_macros` to your dependencies, and add `#![plugin(dotenv_macros)]` to
+the top of your crate.
+
+Using the `dotenv!` macro on stable
+-----------------------------------
+
+You can use `dotenv!` on stable using `syntex`. You'll need to add
+`dotenv_codegen` and `syntex` to your build dependencies.
+
+#### In `main.rs`:
+
+```rust
+include!(concat!(env!("OUT_DIR"), "/main.rs"));
+```
+
+#### In `main.in.rs`:
+
+```rust
+fn main() {
+    println!("{}", &dotenv!("MEANING_OF_LIFE"));
+}
+```
+
+#### In `build.rs`:
+
+```rust
+extern crate syntex;
+extern crate dotenv_codegen;
+
+use std::env;
+use std::path::Path;
+
+pub fn main() {
+    let out_dir = env::var_os("OUT_DIR").unwrap();
+    let mut registry = syntex::Registry::new();
+    dotenv_codegen::register(&mut registry);
+
+    let src = Path::new("tests/main.in.rs");
+    let dst = Path::new(&out_dir).join("main.rs");
+
+    registry.expand("", &src, &dst).unwrap();
+}
+```
+
+#### In `.env`:
+
+```sh
+MEANING_OF_LIFE=42
 ```
 
 Issues
