@@ -1,13 +1,20 @@
 [package]
+
 name = "dotenv_macros"
 version = "0.7.0"
 authors = [
-    "Santiago Lapresta <santiago.lapresta@gmail.com>",
-    "Craig Hills <chills@gmail.com>",
-    "Mike Piccolo <mfpiccolo@gmail.com>",
-    "Alice Maz <alice@alicemaz.com>",
-    "Sean Griffin <sean@seantheprogrammer.com>",
+  "Santiago Lapresta <santiago.lapresta@gmail.com>",
+  "Craig Hills <chills@gmail.com>",
+  "Mike Piccolo <mfpiccolo@gmail.com>",
+  "Alice Maz <alice@alicemaz.com>",
+  "Sean Griffin <sean@seantheprogrammer.com>",
 ]
+readme = "README.md"
+keywords = ["environment", "env", "dotenv", "settings", "config"]
+license = "MIT"
+homepage = "https://github.com/slapresta/rust-dotenv"
+repository = "https://github.com/slapresta/rust-dotenv"
+description = "A `dotenv` implementation for Rust"
 
 [dependencies]
 dotenv_codegen = { version = "^0.7.0", default-features = false }
