@@ -1,11 +1,12 @@
 [package]
 name = "dotenv_codegen"
-version = "0.1.0"
+version = "0.7.0"
 authors = [
     "Santiago Lapresta <santiago.lapresta@gmail.com>",
     "Craig Hills <chills@gmail.com>",
     "Mike Piccolo <mfpiccolo@gmail.com>",
     "Alice Maz <alice@alicemaz.com>",
+    "Sean Griffin <sean@seantheprogrammer.com>",
 ]
 
 [build-dependencies]
@@ -14,7 +15,7 @@ syntex = { version = "^0.22.0", optional = true }
 [dependencies]
 syntex = { version = "^0.22.0", optional = true }
 syntex_syntax = { version = "^0.22.0", optional = true }
-dotenv = "^0.6.0"
+dotenv = "^0.7.0"
 
 [features]
 default = ["with-syntex"]
