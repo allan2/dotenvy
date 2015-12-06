@@ -96,7 +96,8 @@ fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
         Some(parent) => {
             match from_path(&parent.join(filename)) {
                 Ok(file) => Ok(file),
-                Err(_) => try_parent(parent, filename)
+                Err(DotenvError::Io) => try_parent(parent, filename),
+                err => err
             }
         },
         None => Err(DotenvError::Io)
@@ -145,7 +146,8 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 
     match from_path(&path.join(filename)) {
         Ok(file) => Ok(file),
-        Err(_) => try_parent(&path, filename)
+        Err(DotenvError::Io) => try_parent(&path, filename),
+        err => err
     }
 }
 
