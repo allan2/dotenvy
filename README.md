@@ -116,12 +116,4 @@ pub fn main() {
 MEANING_OF_LIFE=42
 ```
 
-Issues
-----
-
-* The way errors are implemented is not as nice as it could be. Now that
-[FromError][fromerror] has landed, a better design for `DotenvError` and
-`ParseError` is possible.
-
 [dotenv]: https://github.com/bkeepers/dotenv
-[fromerror]: https://github.com/aturon/rfcs/blob/error-chaining/active/0000-error-chaining.md
