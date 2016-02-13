@@ -44,6 +44,96 @@ fn named_string(captures: &Captures, name: &str) -> Option<String> {
     captures.name(name).and_then(|v| Some(v.to_string()))
 }
 
+fn parse_value(input: &str) -> Result<String, DotenvError> {
+    let mut strong_quote = false; // '
+    let mut weak_quote = false; // "
+    let mut escaped = false;
+    let mut expecting_end = false;
+
+    //FIXME can this be done without yet another allocation per line?
+    let mut output = String::new();
+
+    for c in input.chars() {
+        //the regex _should_ already trim whitespace off the end
+        //expecting_end is meant to permit: k=v #comment
+        //without affecting: k=v#comment
+        //and throwing on: k=v w
+        if expecting_end {
+            if c == ' ' || c == '\t' {
+                continue;
+            } else if c == '#' {
+                break;
+            } else {
+                return Err(DotenvError::Parsing { line: input.to_owned() });
+            }
+        } else if strong_quote {
+            if c == '\'' {
+                strong_quote = false;
+            } else {
+                output.push(c);
+            }
+        } else if weak_quote {
+            if escaped {
+                //TODO variable expansion perhaps
+                //not in this update but in the future
+                //$ requires escape anyway for conformance
+                //and so as not to make that future change breaking
+                //TODO I tried handling literal \n \r but various issues
+                //imo not worth worrying about until there's a use case
+                //(actually handling backslash 0x10 would be a whole other matter)
+                //then there's \v \f bell hex... etc
+                match c {
+                    '\\' => output.push(c),
+                    '"' => output.push(c),
+                    '$' => output.push(c),
+                    _ => return Err(DotenvError::Parsing { line: input.to_owned() })
+                }
+
+                escaped = false;
+            } else if c == '"' {
+                    weak_quote = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else {
+                output.push(c);
+            }
+        } else {
+            if escaped {
+                match c {
+                    '\\' => output.push(c),
+                    '\'' => output.push(c),
+                    '"' => output.push(c),
+                    '$' => output.push(c),
+                    ' ' => output.push(c),
+                    _ => return Err(DotenvError::Parsing { line: input.to_owned() })
+                }
+
+                escaped = false;
+            } else if c == '\'' {
+                strong_quote = true;
+            } else if c == '"' {
+                weak_quote = true;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == '$' {
+                //variable interpolation goes here later
+                return Err(DotenvError::Parsing { line: input.to_owned() });
+            } else if c == ' ' || c == '\t' {
+                expecting_end = true;
+            } else {
+                output.push(c);
+            }
+        }
+    }
+
+    //XXX also fail if escaped? or...
+    if strong_quote || weak_quote {
+        Err(DotenvError::Parsing { line: input.to_owned() })
+    } else {
+        Ok(output)
+    }
+}
+
 fn parse_line(line: String) -> ParsedLine {
     let line_regex = try!(Regex::new(concat!(r"^(\s*(",
                                         r"#.*|", // A comment, or...
@@ -61,7 +151,10 @@ fn parse_line(line: String) -> ParsedLine {
                           let value = named_string(&captures, "value");
 
                           if key.is_some() && value.is_some() {
-                              Ok(Some((key.unwrap(), value.unwrap())))
+                              let value = value.unwrap();
+                              let parsed_value = try!(parse_value(&value));
+
+                              Ok(Some((key.unwrap(), parsed_value)))
                           } else {
                               // If there's no key and value, but capturing did not
                               // fail, then this means we're dealing with a comment
@@ -165,15 +258,20 @@ pub fn dotenv() -> Result<(), DotenvError> {
 
 #[test]
 fn test_parse_line_env() {
-    let input_iter = vec!["THIS_IS_KEY=hi this is value",
-                          "   many_spaces  =   wow a  maze   ",
+                          //FIXME discuss whether this behavior is desirable
+    let input_iter = vec![//"THIS_IS_KEY=hi this is value",
+                          //currently the spaces around the = are fine
+                          //(though I would be happy breaking that as well)
+                          //and the trailing space is fine
+                          //but the spaces inside the key error out
+                          //"   many_spaces  =   wow a  maze   ",
                           "export   SHELL_LOVER=1"]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
-    let expected_iter = vec![("THIS_IS_KEY", "hi this is value"),
-                             ("many_spaces", "wow a  maze"),
+    let expected_iter = vec![//("THIS_IS_KEY", "hi this is value"),
+                             //("many_spaces", "wow a  maze"),
                              ("SHELL_LOVER", "1")]
                             .into_iter()
                             .map(|(key, value)| (key.to_string(), value.to_string()));
@@ -201,6 +299,50 @@ fn test_parse_line_comment() {
 #[test]
 fn test_parse_line_invalid() {
     let input_iter = vec!["  invalid    ", "very bacon = yes indeed", "key=", "=value"]
+                         .into_iter()
+                         .map(|input| input.to_string());
+    let actual_iter = input_iter.map(|input| parse_line(input));
+
+    for actual in actual_iter {
+        assert!(actual.is_err());
+    }
+}
+
+#[test]
+fn test_parse_value_escapes () {
+    let input_iter = vec![r#"KEY=my\ cool\ value"#,
+                          r#"KEY2=\$sweet"#,
+                          r#"KEY3="awesome stuff \"mang\"""#,
+                          r#"KEY4='sweet $\fgs'\''fds'"#,
+                          r#"KEY5="'\"yay\\"\ "stuff""#,
+                          r##"KEY6="lol" #well you see when I say lol wh"##]
+                         .into_iter()
+                         .map(|input| input.to_string());
+    let actual_iter = input_iter.map(|input| parse_line(input));
+
+    let expected_iter = vec![("KEY", r#"my cool value"#),
+                             ("KEY2", r#"$sweet"#),
+                             ("KEY3", r#"awesome stuff "mang""#),
+                             ("KEY4", r#"sweet $\fgs'fds"#),
+                             ("KEY5", r#"'"yay\ stuff"#),
+                             ("KEY6", "lol")]
+                            .into_iter()
+                            .map(|(key, value)| (key.to_string(), value.to_string()));
+
+    for (expected, actual) in expected_iter.zip(actual_iter) {
+        assert!(actual.is_ok());
+        assert!(actual.clone().ok().unwrap().is_some());
+        assert_eq!(expected, actual.ok().unwrap().unwrap());
+    }
+}
+
+#[test]
+fn test_parse_value_escapes_invalid() {
+    let input_iter = vec![r#"KEY=my uncool value"#,
+                          r#"KEY2=$notcool"#,
+                          r#"KEY3="why"#,
+                          r#"KEY4='please stop''"#,
+                          r#"KEY5=h\8u"#]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
