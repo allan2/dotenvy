@@ -83,9 +83,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
                 //(actually handling backslash 0x10 would be a whole other matter)
                 //then there's \v \f bell hex... etc
                 match c {
-                    '\\' => output.push(c),
-                    '"' => output.push(c),
-                    '$' => output.push(c),
+                    '\\' | '"' | '$' => output.push(c),
                     _ => return Err(DotenvError::Parsing { line: input.to_owned() })
                 }
 
@@ -100,11 +98,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
         } else {
             if escaped {
                 match c {
-                    '\\' => output.push(c),
-                    '\'' => output.push(c),
-                    '"' => output.push(c),
-                    '$' => output.push(c),
-                    ' ' => output.push(c),
+                    '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
                     _ => return Err(DotenvError::Parsing { line: input.to_owned() })
                 }
 
@@ -140,7 +134,7 @@ fn parse_line(line: String) -> ParsedLine {
                                         r"\s*|", // ...an empty string, or...
                                         r"(export\s+)?", // ...(optionally preceded by "export")...
                                         r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
-                                        r"\s*=\s*", // ...then an equal sign,...
+                                        r"=", // ...then an equal sign,...
                                         r"(?P<value>.+?)", // ...and then its corresponding value.
                                         r")\s*)[\r\n]*$")));
 
@@ -258,20 +252,23 @@ pub fn dotenv() -> Result<(), DotenvError> {
 
 #[test]
 fn test_parse_line_env() {
-                          //FIXME discuss whether this behavior is desirable
-    let input_iter = vec![//"THIS_IS_KEY=hi this is value",
-                          //currently the spaces around the = are fine
-                          //(though I would be happy breaking that as well)
-                          //and the trailing space is fine
-                          //but the spaces inside the key error out
-                          //"   many_spaces  =   wow a  maze   ",
+    let input_iter = vec!["KEY=1",
+                          r#"KEY2="2""#,
+                          "KEY3='3'",
+                          "KEY4='fo ur'",
+                          r#"KEY5="fi ve""#,
+                          r"KEY6=s\ ix",
                           "export   SHELL_LOVER=1"]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
-    let expected_iter = vec![//("THIS_IS_KEY", "hi this is value"),
-                             //("many_spaces", "wow a  maze"),
+    let expected_iter = vec![("KEY", "1"),
+                             ("KEY2", "2"),
+                             ("KEY3", "3"),
+                             ("KEY4", "fo ur"),
+                             ("KEY5", "fi ve"),
+                             ("KEY6", "s ix"),
                              ("SHELL_LOVER", "1")]
                             .into_iter()
                             .map(|(key, value)| (key.to_string(), value.to_string()));
@@ -298,7 +295,7 @@ fn test_parse_line_comment() {
 
 #[test]
 fn test_parse_line_invalid() {
-    let input_iter = vec!["  invalid    ", "very bacon = yes indeed", "key=", "=value"]
+    let input_iter = vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "key=", "=value"]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
