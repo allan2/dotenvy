@@ -164,14 +164,10 @@ fn from_file(file: File) -> Result<(), DotenvError> {
     for line in reader.lines() {
         let line = try!(line);
         let parsed = try!(parse_line(line));
-        match parsed {
-            Some((key, value)) => {
-                if env::var(&key).is_err() {
-                    env::set_var(&key, value);
-                }
-                ()
+        if let Some((key, value)) = parsed {
+            if env::var(&key).is_err() {
+                env::set_var(&key, value);
             }
-            None => (),
         }
     }
     Ok(())
