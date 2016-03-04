@@ -12,7 +12,7 @@ use std::io::{BufReader, BufRead};
 use std::env;
 use std::result::Result;
 use std::path::Path;
-use regex::{Captures, Regex, Error};
+use regex::{Captures, Regex};
 
 #[derive(Debug, Clone)]
 pub enum DotenvError {
