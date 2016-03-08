@@ -38,7 +38,6 @@ impl From<std::io::Error> for DotenvError {
 
 // for readability's sake
 type ParsedLine = Result<Option<(String, String)>, DotenvError>;
-type ParsedLines = Result<Vec<(String, String)>, DotenvError>;
 
 fn named_string(captures: &Captures, name: &str) -> Option<String> {
     captures.name(name).and_then(|v| Some(v.to_string()))
