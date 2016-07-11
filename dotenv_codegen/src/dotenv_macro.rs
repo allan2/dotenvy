@@ -1,16 +1,16 @@
 use dotenv::DotenvError::Parsing;
 use dotenv::dotenv;
 
-use syntax::ast;
 use syntax::codemap::Span;
 use syntax::ext::base::*;
 use syntax::ext::base;
 use syntax::ext::build::AstBuilder;
 use syntax::parse::token;
+use syntax::tokenstream;
 
 use std::env;
 
-pub fn expand_dotenv<'cx>(cx: &'cx mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
+pub fn expand_dotenv<'cx>(cx: &'cx mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenTree])
                        -> Box<MacResult+'cx> {
     match dotenv() {
         Err(Parsing { line }) => {
@@ -22,7 +22,7 @@ pub fn expand_dotenv<'cx>(cx: &'cx mut ExtCtxt, sp: Span, tts: &[ast::TokenTree]
     expand_env(cx, sp, tts)
 }
 
-fn expand_env(cx: &mut ExtCtxt, sp: Span, tts: &[ast::TokenTree])
+fn expand_env(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenTree])
     -> Box<base::MacResult>
 {
     let mut exprs = match get_exprs_from_tts(cx, sp, tts) {
