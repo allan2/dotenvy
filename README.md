@@ -1,4 +1,4 @@
-rust-dotenv
+rust-dotenv [![Build Status](https://travis-ci.org/slapresta/rust-dotenv.svg?branch=master)](https://travis-ci.org/slapresta/rust-dotenv)
 ====
 
 **Achtung!** This is a v0.\* version! Expect bugs and issues all around.
