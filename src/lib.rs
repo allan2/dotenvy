@@ -10,9 +10,29 @@ extern crate regex;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::env;
+use std::env::VarError;
+use std::ffi::OsStr;
 use std::result::Result;
 use std::path::Path;
 use regex::{Captures, Regex};
+use std::sync::{Once, ONCE_INIT};
+use std::env::Vars;
+
+static START: Once = ONCE_INIT;
+
+pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
+  START.call_once(|| {
+      dotenv().ok();
+  });
+  env::var(key)
+}
+
+pub fn vars() -> Vars {
+  START.call_once(|| {
+      dotenv().ok();
+  });
+  env::vars()
+}
 
 #[derive(Debug, Clone)]
 pub enum DotenvError {
