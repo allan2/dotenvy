@@ -7,19 +7,22 @@
 
 extern crate regex;
 
+use std::env;
+use std::env::{VarError, Vars};
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
-use std::env;
-use std::env::VarError;
-use std::ffi::OsStr;
-use std::result::Result;
 use std::path::Path;
-use regex::{Captures, Regex};
+use std::result::Result;
 use std::sync::{Once, ONCE_INIT};
-use std::env::Vars;
+use regex::{Captures, Regex};
 
 static START: Once = ONCE_INIT;
 
+/// After loading the dotenv file, fetches the environment variable key from the current process.
+///
+/// The returned result is Ok(s) if the environment variable is present and is valid unicode. If the
+/// environment variable is not present, or it is not valid unicode, then Err will be returned.
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
   START.call_once(|| {
       dotenv().ok();
@@ -27,6 +30,12 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
   env::var(key)
 }
 
+/// After loading the dotenv file, returns an iterator of (variable, value) pairs of strings,
+/// for all the environment variables of the current process.
+///
+/// The returned iterator contains a snapshot of the process's environment variables at the
+/// time of this invocation, modifications to environment variables afterwards will not be
+/// reflected in the returned iterator.
 pub fn vars() -> Vars {
   START.call_once(|| {
       dotenv().ok();
