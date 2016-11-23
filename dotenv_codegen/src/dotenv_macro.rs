@@ -5,8 +5,8 @@ use syntax::codemap::Span;
 use syntax::ext::base::*;
 use syntax::ext::base;
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token;
 use syntax::tokenstream;
+use syntax::symbol::Symbol;
 
 use std::env;
 
@@ -42,7 +42,7 @@ fn expand_env(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenTree])
     };
     let msg = match exprs.next() {
         None => {
-            token::intern_and_get_ident(&format!("environment variable `{}` \
+            Symbol::intern(&format!("environment variable `{}` \
                                                  not defined",
                                                  var))
         }
@@ -62,12 +62,12 @@ fn expand_env(cx: &mut ExtCtxt, sp: Span, tts: &[tokenstream::TokenTree])
         }
     }
 
-    let e = match env::var(&var[..]) {
+    let e = match env::var(&var.as_str()[..]) {
         Err(_) => {
-            cx.span_err(sp, &msg);
+            cx.span_err(sp, &*msg.as_str());
             cx.expr_usize(sp, 0)
         }
-        Ok(s) => cx.expr_str(sp, token::intern_and_get_ident(&s))
+        Ok(s) => cx.expr_str(sp, Symbol::intern(&s))
     };
     MacEager::expr(e)
 }
