@@ -7,9 +7,10 @@
 
 extern crate regex;
 
-use std::env;
-use std::env::{VarError, Vars};
+use std::env::{self, VarError, Vars};
+use std::error::Error;
 use std::ffi::OsStr;
+use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::path::Path;
@@ -43,25 +44,52 @@ pub fn vars() -> Vars {
   env::vars()
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum DotenvError {
     Parsing {
         line: String,
     },
-    ParseFormatter,
-    Io,
-    ExecutableNotFound,
+    ParseFormatter(regex::Error),
+    Io(std::io::Error),
 }
 
 impl From<regex::Error> for DotenvError {
-    fn from(_: regex::Error) -> DotenvError {
-        DotenvError::ParseFormatter
+    fn from(err: regex::Error) -> DotenvError {
+        DotenvError::ParseFormatter(err)
     }
 }
 
 impl From<std::io::Error> for DotenvError {
-    fn from(_: std::io::Error) -> DotenvError {
-        DotenvError::Io
+    fn from(err: std::io::Error) -> DotenvError {
+        DotenvError::Io(err)
+    }
+}
+
+impl fmt::Display for DotenvError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DotenvError::Parsing { ref line } => write!(f, "{}", line),
+            DotenvError::ParseFormatter(ref err) => err.fmt(f),
+            DotenvError::Io(ref err) => err.fmt(f),
+        }
+    }
+}
+
+impl Error for DotenvError {
+    fn description(&self) -> &str {
+        match *self {
+            DotenvError::Parsing{ .. } => "Parsing Error",
+            DotenvError::ParseFormatter(_) => "Parse Formatter Error",
+            DotenvError::Io(_) => "I/O Error",
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            DotenvError::Parsing { .. } => None,
+            DotenvError::ParseFormatter(ref err) => Some(err),
+            DotenvError::Io(ref err) => Some(err),
+        }
     }
 }
 
@@ -207,11 +235,11 @@ fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
         Some(parent) => {
             match from_path(&parent.join(filename)) {
                 Ok(file) => Ok(file),
-                Err(DotenvError::Io) => try_parent(parent, filename),
+                Err(DotenvError::Io(_)) => try_parent(parent, filename),
                 err => err
             }
         },
-        None => Err(DotenvError::Io)
+        None => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into())
     }
 }
 
@@ -228,10 +256,7 @@ fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
 /// dotenv::from_path(my_path.as_path());
 /// ```
 pub fn from_path(path: &Path) -> Result<(), DotenvError> {
-    match File::open(path) {
-        Ok(file) => from_file(file),
-        Err(_) => Err(DotenvError::Io),
-    }
+    File::open(path).map(from_file)?
 }
 
 /// Loads the specified file from the environment's current directory or its parents in sequence.
@@ -250,15 +275,11 @@ pub fn from_path(path: &Path) -> Result<(), DotenvError> {
 /// dotenv::from_filename(".env").ok();
 /// ```
 pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
-    let path = match env::current_dir() {
-        Ok(path) => path,
-        Err(_) => return Err(DotenvError::Io)
-    };
+    let path = env::current_dir()?;
 
     match from_path(&path.join(filename)) {
-        Ok(file) => Ok(file),
-        Err(DotenvError::Io) => try_parent(&path, filename),
-        err => err
+        Err(DotenvError::Io(_)) => try_parent(&path, filename),
+        other => other
     }
 }
 
@@ -299,7 +320,7 @@ fn test_parse_line_env() {
 
     for (expected, actual) in expected_iter.zip(actual_iter) {
         assert!(actual.is_ok());
-        assert!(actual.clone().ok().unwrap().is_some());
+        assert!(actual.as_ref().unwrap().is_some());
         assert_eq!(expected, actual.ok().unwrap().unwrap());
     }
 }
@@ -352,8 +373,8 @@ fn test_parse_value_escapes () {
 
     for (expected, actual) in expected_iter.zip(actual_iter) {
         assert!(actual.is_ok());
-        assert!(actual.clone().ok().unwrap().is_some());
-        assert_eq!(expected, actual.ok().unwrap().unwrap());
+        assert!(actual.as_ref().unwrap().is_some());
+        assert_eq!(expected, actual.unwrap().unwrap());
     }
 }
 
