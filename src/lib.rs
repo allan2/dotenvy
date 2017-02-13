@@ -69,7 +69,7 @@ impl From<std::io::Error> for DotenvError {
 type ParsedLine = Result<Option<(String, String)>, DotenvError>;
 
 fn named_string(captures: &Captures, name: &str) -> Option<String> {
-    captures.name(name).and_then(|v| Some(v.to_string()))
+    captures.name(name).and_then(|v| Some(v.as_str().to_owned()))
 }
 
 fn parse_value(input: &str) -> Result<String, DotenvError> {
