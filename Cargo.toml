@@ -17,4 +17,4 @@ repository = "https://github.com/slapresta/rust-dotenv"
 description = "A `dotenv` implementation for Rust"
 
 [dependencies]
-regex = "< 0.2"
+regex = "0.2.1"
