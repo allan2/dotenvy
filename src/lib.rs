@@ -5,18 +5,35 @@
 //! file, if available, and mashes those with the actual environment variables
 //! provided by the operating system.
 
+#[macro_use]
+extern crate error_chain;
+#[macro_use]
+extern crate derive_error_chain;
 extern crate regex;
 
-use std::env::{self, VarError, Vars};
-use std::error::Error;
+use std::env::{self, Vars};
 use std::ffi::OsStr;
-use std::fmt;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
 use std::path::Path;
-use std::result::Result;
 use std::sync::{Once, ONCE_INIT};
 use regex::{Captures, Regex};
+
+#[derive(Debug, error_chain)]
+pub enum ErrorKind {
+    // generic error string, required by derive_error_chain
+    Msg(String),
+    #[error_chain(custom)]
+    #[error_chain(description = r#"|_| "Parsing Error""#)]
+    #[error_chain(display = r#"|l| write!(f, "Error parsing line: '{}'", l)"#)]
+    Parsing { line: String },
+    #[error_chain(foreign)]
+    ParseFormatter(::regex::Error),
+    #[error_chain(foreign)]
+    Io(::std::io::Error),
+    #[error_chain(foreign)]
+    EnvVar(::std::env::VarError),
+}
 
 static START: Once = ONCE_INIT;
 
@@ -24,9 +41,9 @@ static START: Once = ONCE_INIT;
 ///
 /// The returned result is Ok(s) if the environment variable is present and is valid unicode. If the
 /// environment variable is not present, or it is not valid unicode, then Err will be returned.
-pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
+pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| { dotenv().ok(); });
-    env::var(key)
+    env::var(key).map_err(Error::from)
 }
 
 /// After loading the dotenv file, returns an iterator of (variable, value) pairs of strings,
@@ -40,61 +57,14 @@ pub fn vars() -> Vars {
     env::vars()
 }
 
-#[derive(Debug)]
-pub enum DotenvError {
-    Parsing { line: String },
-    ParseFormatter(regex::Error),
-    Io(std::io::Error),
-}
-
-impl From<regex::Error> for DotenvError {
-    fn from(err: regex::Error) -> DotenvError {
-        DotenvError::ParseFormatter(err)
-    }
-}
-
-impl From<std::io::Error> for DotenvError {
-    fn from(err: std::io::Error) -> DotenvError {
-        DotenvError::Io(err)
-    }
-}
-
-impl fmt::Display for DotenvError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            DotenvError::Parsing { ref line } => write!(f, "{}", line),
-            DotenvError::ParseFormatter(ref err) => err.fmt(f),
-            DotenvError::Io(ref err) => err.fmt(f),
-        }
-    }
-}
-
-impl Error for DotenvError {
-    fn description(&self) -> &str {
-        match *self {
-            DotenvError::Parsing { .. } => "Parsing Error",
-            DotenvError::ParseFormatter(_) => "Parse Formatter Error",
-            DotenvError::Io(_) => "I/O Error",
-        }
-    }
-
-    fn cause(&self) -> Option<&Error> {
-        match *self {
-            DotenvError::Parsing { .. } => None,
-            DotenvError::ParseFormatter(ref err) => Some(err),
-            DotenvError::Io(ref err) => Some(err),
-        }
-    }
-}
-
 // for readability's sake
-type ParsedLine = Result<Option<(String, String)>, DotenvError>;
+type ParsedLine = Result<Option<(String, String)>>;
 
 fn named_string(captures: &Captures, name: &str) -> Option<String> {
     captures.name(name).and_then(|v| Some(v.as_str().to_owned()))
 }
 
-fn parse_value(input: &str) -> Result<String, DotenvError> {
+fn parse_value(input: &str) -> Result<String> {
     let mut strong_quote = false; // '
     let mut weak_quote = false; // "
     let mut escaped = false;
@@ -114,7 +84,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
             } else if c == '#' {
                 break;
             } else {
-                return Err(DotenvError::Parsing { line: input.to_owned() });
+                return Err(ErrorKind::Parsing { line: input.to_owned() }.into());
             }
         } else if strong_quote {
             if c == '\'' {
@@ -134,7 +104,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
                 //then there's \v \f bell hex... etc
                 match c {
                     '\\' | '"' | '$' => output.push(c),
-                    _ => return Err(DotenvError::Parsing { line: input.to_owned() }),
+                    _ => return Err(ErrorKind::Parsing { line: input.to_owned() }.into()),
                 }
 
                 escaped = false;
@@ -149,7 +119,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
             if escaped {
                 match c {
                     '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                    _ => return Err(DotenvError::Parsing { line: input.to_owned() }),
+                    _ => return Err(ErrorKind::Parsing { line: input.to_owned() }.into()),
                 }
 
                 escaped = false;
@@ -161,7 +131,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
                 escaped = true;
             } else if c == '$' {
                 //variable interpolation goes here later
-                return Err(DotenvError::Parsing { line: input.to_owned() });
+                return Err(ErrorKind::Parsing { line: input.to_owned() }.into());
             } else if c == ' ' || c == '\t' {
                 expecting_end = true;
             } else {
@@ -172,7 +142,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
 
     //XXX also fail if escaped? or...
     if strong_quote || weak_quote {
-        Err(DotenvError::Parsing { line: input.to_owned() })
+        Err(ErrorKind::Parsing { line: input.to_owned() }.into())
     } else {
         Ok(output)
     }
@@ -189,7 +159,7 @@ fn parse_line(line: String) -> ParsedLine {
                                              r")\s*)[\r\n]*$")));
 
     line_regex.captures(&line)
-        .map_or(Err(DotenvError::Parsing { line: line.clone() }),
+        .map_or(Err(ErrorKind::Parsing { line: line.clone() }.into()),
                 |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
@@ -214,7 +184,7 @@ fn parse_line(line: String) -> ParsedLine {
 }
 
 /// Loads the specified file.
-fn from_file(file: File) -> Result<(), DotenvError> {
+fn from_file(file: File) -> Result<()> {
     let reader = BufReader::new(file);
     for line in reader.lines() {
         let line = try!(line);
@@ -229,12 +199,12 @@ fn from_file(file: File) -> Result<(), DotenvError> {
 }
 
 /// Attempts to load from parent directories until file is found or root is reached.
-fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
+fn try_parent(path: &Path, filename: &str) -> Result<()> {
     match path.parent() {
         Some(parent) => {
             match from_path(&parent.join(filename)) {
                 Ok(file) => Ok(file),
-                Err(DotenvError::Io(_)) => try_parent(parent, filename),
+                Err(Error(ErrorKind::Io(_), _)) => try_parent(parent, filename),
                 err => err,
             }
         }
@@ -254,7 +224,7 @@ fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
 /// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
 /// dotenv::from_path(my_path.as_path());
 /// ```
-pub fn from_path(path: &Path) -> Result<(), DotenvError> {
+pub fn from_path(path: &Path) -> Result<()> {
     File::open(path).map(from_file)?
 }
 
@@ -273,11 +243,11 @@ pub fn from_path(path: &Path) -> Result<(), DotenvError> {
 /// use dotenv;
 /// dotenv::from_filename(".env").ok();
 /// ```
-pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
+pub fn from_filename(filename: &str) -> Result<()> {
     let path = env::current_dir()?;
 
     match from_path(&path.join(filename)) {
-        Err(DotenvError::Io(_)) => try_parent(&path, filename),
+        Err(Error(ErrorKind::Io(_), _)) => try_parent(&path, filename),
         other => other,
     }
 }
@@ -290,7 +260,7 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 /// use dotenv;
 /// dotenv::dotenv().ok();
 /// ```
-pub fn dotenv() -> Result<(), DotenvError> {
+pub fn dotenv() -> Result<()> {
     from_filename(&".env")
 }
 
