@@ -84,7 +84,7 @@ fn parse_value(input: &str) -> Result<String> {
             } else if c == '#' {
                 break;
             } else {
-                return Err(ErrorKind::LineParse(input.to_owned()).into());
+                bail!(ErrorKind::LineParse(input.to_owned()));
             }
         } else if strong_quote {
             if c == '\'' {
@@ -104,7 +104,7 @@ fn parse_value(input: &str) -> Result<String> {
                 //then there's \v \f bell hex... etc
                 match c {
                     '\\' | '"' | '$' => output.push(c),
-                    _ => return Err(ErrorKind::LineParse(input.to_owned()).into()),
+                    _ => bail!(ErrorKind::LineParse(input.to_owned())),
                 }
 
                 escaped = false;
@@ -119,7 +119,7 @@ fn parse_value(input: &str) -> Result<String> {
             if escaped {
                 match c {
                     '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                    _ => return Err(ErrorKind::LineParse(input.to_owned()).into()),
+                    _ => bail!(ErrorKind::LineParse(input.to_owned())),
                 }
 
                 escaped = false;
@@ -131,7 +131,7 @@ fn parse_value(input: &str) -> Result<String> {
                 escaped = true;
             } else if c == '$' {
                 //variable interpolation goes here later
-                return Err(ErrorKind::LineParse(input.to_owned()).into());
+                bail!(ErrorKind::LineParse(input.to_owned()));
             } else if c == ' ' || c == '\t' {
                 expecting_end = true;
             } else {
