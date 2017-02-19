@@ -26,7 +26,7 @@ pub enum ErrorKind {
     #[error_chain(custom)]
     #[error_chain(description = r#"|_| "Parsing Error""#)]
     #[error_chain(display = r#"|l| write!(f, "Error parsing line: '{}'", l)"#)]
-    Parsing { line: String },
+    LineParse(String),
     #[error_chain(foreign)]
     ParseFormatter(::regex::Error),
     #[error_chain(foreign)]
@@ -84,7 +84,7 @@ fn parse_value(input: &str) -> Result<String> {
             } else if c == '#' {
                 break;
             } else {
-                return Err(ErrorKind::Parsing { line: input.to_owned() }.into());
+                return Err(ErrorKind::LineParse(input.to_owned()).into());
             }
         } else if strong_quote {
             if c == '\'' {
@@ -104,7 +104,7 @@ fn parse_value(input: &str) -> Result<String> {
                 //then there's \v \f bell hex... etc
                 match c {
                     '\\' | '"' | '$' => output.push(c),
-                    _ => return Err(ErrorKind::Parsing { line: input.to_owned() }.into()),
+                    _ => return Err(ErrorKind::LineParse(input.to_owned()).into()),
                 }
 
                 escaped = false;
@@ -119,7 +119,7 @@ fn parse_value(input: &str) -> Result<String> {
             if escaped {
                 match c {
                     '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                    _ => return Err(ErrorKind::Parsing { line: input.to_owned() }.into()),
+                    _ => return Err(ErrorKind::LineParse(input.to_owned()).into()),
                 }
 
                 escaped = false;
@@ -131,7 +131,7 @@ fn parse_value(input: &str) -> Result<String> {
                 escaped = true;
             } else if c == '$' {
                 //variable interpolation goes here later
-                return Err(ErrorKind::Parsing { line: input.to_owned() }.into());
+                return Err(ErrorKind::LineParse(input.to_owned()).into());
             } else if c == ' ' || c == '\t' {
                 expecting_end = true;
             } else {
@@ -142,7 +142,7 @@ fn parse_value(input: &str) -> Result<String> {
 
     //XXX also fail if escaped? or...
     if strong_quote || weak_quote {
-        Err(ErrorKind::Parsing { line: input.to_owned() }.into())
+        Err(ErrorKind::LineParse(input.to_owned()).into())
     } else {
         Ok(output)
     }
@@ -159,8 +159,7 @@ fn parse_line(line: String) -> ParsedLine {
                                              r")\s*)[\r\n]*$")));
 
     line_regex.captures(&line)
-        .map_or(Err(ErrorKind::Parsing { line: line.clone() }.into()),
-                |captures| {
+        .map_or(Err(ErrorKind::LineParse(line.clone()).into()), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
 
