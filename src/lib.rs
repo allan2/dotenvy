@@ -191,7 +191,7 @@ fn parse_line(line: String) -> ParsedLine {
                                         r"(export\s+)?", // ...(optionally preceded by "export")...
                                         r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
                                         r"=", // ...then an equal sign,...
-                                        r"(?P<value>.+?)", // ...and then its corresponding value.
+                                        r"(?P<value>.+?)?", // ...and then its corresponding value.
                                         r")\s*)[\r\n]*$")));
 
     line_regex.captures(&line)
@@ -200,16 +200,21 @@ fn parse_line(line: String) -> ParsedLine {
                           let key = named_string(&captures, "key");
                           let value = named_string(&captures, "value");
 
-                          if key.is_some() && value.is_some() {
-                              let value = value.unwrap();
-                              let parsed_value = try!(parse_value(&value));
+                          match (key, value) {
+                              (Some(k), Some(v)) => {
+                                  let parsed_value = try!(parse_value(&v));
 
-                              Ok(Some((key.unwrap(), parsed_value)))
-                          } else {
-                              // If there's no key and value, but capturing did not
-                              // fail, then this means we're dealing with a comment
-                              // or an empty string.
-                              Ok(None)
+                                  Ok(Some((k, parsed_value)))
+                              },
+                              (Some(k), None) => {
+                                  // Empty string for value.
+                                  Ok(Some((k, String::from(""))))
+                              },
+                              _ => {
+                                  // If there's no key, but capturing did not
+                                  // fail, we're dealing with a comment
+                                  Ok(None)
+                              }
                           }
                       })
 }
@@ -303,7 +308,10 @@ fn test_parse_line_env() {
                           "KEY4='fo ur'",
                           r#"KEY5="fi ve""#,
                           r"KEY6=s\ ix",
-                          "export   SHELL_LOVER=1"]
+                          "KEY7=",
+                          "KEY8=     ",
+                          "KEY9=   # foo",
+                          "export   SHELL_LOVER=1",]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
@@ -314,6 +322,9 @@ fn test_parse_line_env() {
                              ("KEY4", "fo ur"),
                              ("KEY5", "fi ve"),
                              ("KEY6", "s ix"),
+                             ("KEY7", ""),
+                             ("KEY8", ""),
+                             ("KEY9", ""),
                              ("SHELL_LOVER", "1")]
                             .into_iter()
                             .map(|(key, value)| (key.to_string(), value.to_string()));
@@ -340,7 +351,7 @@ fn test_parse_line_comment() {
 
 #[test]
 fn test_parse_line_invalid() {
-    let input_iter = vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "key=", "=value"]
+    let input_iter = vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "=value"]
                          .into_iter()
                          .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
