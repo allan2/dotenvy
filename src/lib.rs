@@ -25,10 +25,8 @@ static START: Once = ONCE_INIT;
 /// The returned result is Ok(s) if the environment variable is present and is valid unicode. If the
 /// environment variable is not present, or it is not valid unicode, then Err will be returned.
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
-  START.call_once(|| {
-      dotenv().ok();
-  });
-  env::var(key)
+    START.call_once(|| { dotenv().ok(); });
+    env::var(key)
 }
 
 /// After loading the dotenv file, returns an iterator of (variable, value) pairs of strings,
@@ -38,17 +36,13 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String, VarError> {
 /// time of this invocation, modifications to environment variables afterwards will not be
 /// reflected in the returned iterator.
 pub fn vars() -> Vars {
-  START.call_once(|| {
-      dotenv().ok();
-  });
-  env::vars()
+    START.call_once(|| { dotenv().ok(); });
+    env::vars()
 }
 
 #[derive(Debug)]
 pub enum DotenvError {
-    Parsing {
-        line: String,
-    },
+    Parsing { line: String },
     ParseFormatter(regex::Error),
     Io(std::io::Error),
 }
@@ -78,7 +72,7 @@ impl fmt::Display for DotenvError {
 impl Error for DotenvError {
     fn description(&self) -> &str {
         match *self {
-            DotenvError::Parsing{ .. } => "Parsing Error",
+            DotenvError::Parsing { .. } => "Parsing Error",
             DotenvError::ParseFormatter(_) => "Parse Formatter Error",
             DotenvError::Io(_) => "I/O Error",
         }
@@ -140,12 +134,12 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
                 //then there's \v \f bell hex... etc
                 match c {
                     '\\' | '"' | '$' => output.push(c),
-                    _ => return Err(DotenvError::Parsing { line: input.to_owned() })
+                    _ => return Err(DotenvError::Parsing { line: input.to_owned() }),
                 }
 
                 escaped = false;
             } else if c == '"' {
-                    weak_quote = false;
+                weak_quote = false;
             } else if c == '\\' {
                 escaped = true;
             } else {
@@ -155,7 +149,7 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
             if escaped {
                 match c {
                     '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                    _ => return Err(DotenvError::Parsing { line: input.to_owned() })
+                    _ => return Err(DotenvError::Parsing { line: input.to_owned() }),
                 }
 
                 escaped = false;
@@ -186,37 +180,37 @@ fn parse_value(input: &str) -> Result<String, DotenvError> {
 
 fn parse_line(line: String) -> ParsedLine {
     let line_regex = try!(Regex::new(concat!(r"^(\s*(",
-                                        r"#.*|", // A comment, or...
-                                        r"\s*|", // ...an empty string, or...
-                                        r"(export\s+)?", // ...(optionally preceded by "export")...
-                                        r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
-                                        r"=", // ...then an equal sign,...
-                                        r"(?P<value>.+?)?", // ...and then its corresponding value.
-                                        r")\s*)[\r\n]*$")));
+                                             r"#.*|", // A comment, or...
+                                             r"\s*|", // ...an empty string, or...
+                                             r"(export\s+)?", // ...(optionally preceded by "export")...
+                                             r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
+                                             r"=", // ...then an equal sign,...
+                                             r"(?P<value>.+?)?", // ...and then its corresponding value.
+                                             r")\s*)[\r\n]*$")));
 
     line_regex.captures(&line)
-              .map_or(Err(DotenvError::Parsing { line: line.clone() }),
-                      |captures| {
-                          let key = named_string(&captures, "key");
-                          let value = named_string(&captures, "value");
+        .map_or(Err(DotenvError::Parsing { line: line.clone() }),
+                |captures| {
+            let key = named_string(&captures, "key");
+            let value = named_string(&captures, "value");
 
-                          match (key, value) {
-                              (Some(k), Some(v)) => {
-                                  let parsed_value = try!(parse_value(&v));
+            match (key, value) {
+                (Some(k), Some(v)) => {
+                    let parsed_value = try!(parse_value(&v));
 
-                                  Ok(Some((k, parsed_value)))
-                              },
-                              (Some(k), None) => {
-                                  // Empty string for value.
-                                  Ok(Some((k, String::from(""))))
-                              },
-                              _ => {
-                                  // If there's no key, but capturing did not
-                                  // fail, we're dealing with a comment
-                                  Ok(None)
-                              }
-                          }
-                      })
+                    Ok(Some((k, parsed_value)))
+                }
+                (Some(k), None) => {
+                    // Empty string for value.
+                    Ok(Some((k, String::from(""))))
+                }
+                _ => {
+                    // If there's no key, but capturing did not
+                    // fail, we're dealing with a comment
+                    Ok(None)
+                }
+            }
+        })
 }
 
 /// Loads the specified file.
@@ -241,10 +235,10 @@ fn try_parent(path: &Path, filename: &str) -> Result<(), DotenvError> {
             match from_path(&parent.join(filename)) {
                 Ok(file) => Ok(file),
                 Err(DotenvError::Io(_)) => try_parent(parent, filename),
-                err => err
+                err => err,
             }
-        },
-        None => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into())
+        }
+        None => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into()),
     }
 }
 
@@ -284,7 +278,7 @@ pub fn from_filename(filename: &str) -> Result<(), DotenvError> {
 
     match from_path(&path.join(filename)) {
         Err(DotenvError::Io(_)) => try_parent(&path, filename),
-        other => other
+        other => other,
     }
 }
 
@@ -311,9 +305,9 @@ fn test_parse_line_env() {
                           "KEY7=",
                           "KEY8=     ",
                           "KEY9=   # foo",
-                          "export   SHELL_LOVER=1",]
-                         .into_iter()
-                         .map(|input| input.to_string());
+                          "export   SHELL_LOVER=1"]
+        .into_iter()
+        .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
     let expected_iter = vec![("KEY", "1"),
@@ -326,8 +320,8 @@ fn test_parse_line_env() {
                              ("KEY8", ""),
                              ("KEY9", ""),
                              ("SHELL_LOVER", "1")]
-                            .into_iter()
-                            .map(|(key, value)| (key.to_string(), value.to_string()));
+        .into_iter()
+        .map(|(key, value)| (key.to_string(), value.to_string()));
 
     for (expected, actual) in expected_iter.zip(actual_iter) {
         assert!(actual.is_ok());
@@ -339,8 +333,8 @@ fn test_parse_line_env() {
 #[test]
 fn test_parse_line_comment() {
     let input_iter = vec!["# foo=bar", "    #    "]
-                         .into_iter()
-                         .map(|input| input.to_string());
+        .into_iter()
+        .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
@@ -351,9 +345,10 @@ fn test_parse_line_comment() {
 
 #[test]
 fn test_parse_line_invalid() {
-    let input_iter = vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "=value"]
-                         .into_iter()
-                         .map(|input| input.to_string());
+    let input_iter =
+        vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "=value"]
+            .into_iter()
+            .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
@@ -362,15 +357,15 @@ fn test_parse_line_invalid() {
 }
 
 #[test]
-fn test_parse_value_escapes () {
+fn test_parse_value_escapes() {
     let input_iter = vec![r#"KEY=my\ cool\ value"#,
                           r#"KEY2=\$sweet"#,
                           r#"KEY3="awesome stuff \"mang\"""#,
                           r#"KEY4='sweet $\fgs'\''fds'"#,
                           r#"KEY5="'\"yay\\"\ "stuff""#,
                           r##"KEY6="lol" #well you see when I say lol wh"##]
-                         .into_iter()
-                         .map(|input| input.to_string());
+        .into_iter()
+        .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
     let expected_iter = vec![("KEY", r#"my cool value"#),
@@ -379,8 +374,8 @@ fn test_parse_value_escapes () {
                              ("KEY4", r#"sweet $\fgs'fds"#),
                              ("KEY5", r#"'"yay\ stuff"#),
                              ("KEY6", "lol")]
-                            .into_iter()
-                            .map(|(key, value)| (key.to_string(), value.to_string()));
+        .into_iter()
+        .map(|(key, value)| (key.to_string(), value.to_string()));
 
     for (expected, actual) in expected_iter.zip(actual_iter) {
         assert!(actual.is_ok());
@@ -396,8 +391,8 @@ fn test_parse_value_escapes_invalid() {
                           r#"KEY3="why"#,
                           r#"KEY4='please stop''"#,
                           r#"KEY5=h\8u"#]
-                         .into_iter()
-                         .map(|input| input.to_string());
+        .into_iter()
+        .map(|input| input.to_string());
     let actual_iter = input_iter.map(|input| parse_line(input));
 
     for actual in actual_iter {
