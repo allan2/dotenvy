@@ -15,7 +15,7 @@ use std::env::{self, Vars};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, BufRead};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 use regex::{Captures, Regex};
 
@@ -198,13 +198,14 @@ fn from_file(file: File) -> Result<()> {
 }
 
 /// Attempts to load from parent directories until file is found or root is reached.
-fn try_parent(path: &Path, filename: &str) -> Result<()> {
+fn try_parent(path: &Path, filename: &str) -> Result<PathBuf> {
     match path.parent() {
         Some(parent) => {
-            match from_path(&parent.join(filename)) {
-                Ok(file) => Ok(file),
+            let env_path = parent.join(filename);
+            match from_path(&env_path) {
+                Ok(()) => Ok(env_path),
                 Err(Error(ErrorKind::Io(_), _)) => try_parent(parent, filename),
-                err => err,
+                Err(other) => Err(other),
             }
         }
         None => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into()),
@@ -242,12 +243,15 @@ pub fn from_path(path: &Path) -> Result<()> {
 /// use dotenv;
 /// dotenv::from_filename(".env").ok();
 /// ```
-pub fn from_filename(filename: &str) -> Result<()> {
+pub fn from_filename(filename: &str) -> Result<PathBuf> {
     let path = env::current_dir()?;
 
-    match from_path(&path.join(filename)) {
+    let env_path = path.join(filename);
+
+    match from_path(&env_path) {
         Err(Error(ErrorKind::Io(_), _)) => try_parent(&path, filename),
-        other => other,
+        Err(other) => Err(other),
+        Ok(()) => Ok(env_path),
     }
 }
 
@@ -259,7 +263,7 @@ pub fn from_filename(filename: &str) -> Result<()> {
 /// use dotenv;
 /// dotenv::dotenv().ok();
 /// ```
-pub fn dotenv() -> Result<()> {
+pub fn dotenv() -> Result<PathBuf> {
     from_filename(&".env")
 }
 
