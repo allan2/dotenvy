@@ -204,7 +204,12 @@ fn try_parent(path: &Path, filename: &str) -> Result<PathBuf> {
             let env_path = parent.join(filename);
             match from_path(&env_path) {
                 Ok(()) => Ok(env_path),
-                Err(Error(ErrorKind::Io(_), _)) => try_parent(parent, filename),
+                Err(Error(ErrorKind::Io(io_error), err_data)) => {
+                    match io_error.kind() {
+                        std::io::ErrorKind::NotFound => try_parent(parent, filename),
+                        _ => Err(Error(ErrorKind::Io(io_error), err_data)),
+                    }
+                },
                 Err(other) => Err(other),
             }
         }
@@ -249,7 +254,12 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
     let env_path = path.join(filename);
 
     match from_path(&env_path) {
-        Err(Error(ErrorKind::Io(_), _)) => try_parent(&path, filename),
+        Err(Error(ErrorKind::Io(io_error), err_data)) => {
+            match io_error.kind() {
+                std::io::ErrorKind::NotFound => try_parent(&path, filename),
+                _ => Err(Error(ErrorKind::Io(io_error), err_data)),
+            }
+        },
         Err(other) => Err(other),
         Ok(()) => Ok(env_path),
     }
