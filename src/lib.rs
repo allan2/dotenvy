@@ -197,23 +197,26 @@ fn from_file(file: File) -> Result<()> {
     Ok(())
 }
 
-/// Attempts to load from parent directories until file is found or root is reached.
-fn try_parent(path: &Path, filename: &str) -> Result<PathBuf> {
-    match path.parent() {
-        Some(parent) => {
-            let env_path = parent.join(filename);
-            match from_path(&env_path) {
-                Ok(()) => Ok(env_path),
-                Err(Error(ErrorKind::Io(io_error), err_data)) => {
-                    match io_error.kind() {
-                        std::io::ErrorKind::NotFound => try_parent(parent, filename),
-                        _ => Err(Error(ErrorKind::Io(io_error), err_data)),
+/// Attempts to load from given directory and parent directories until file is found or root is reached.
+fn try_dir_with_parents(mut dir: PathBuf, filename: &str) -> Result<PathBuf> {
+    let env_path = dir.join(filename);
+
+    match from_path(&env_path) {
+        Ok(()) => Ok(env_path),
+        Err(Error(ErrorKind::Io(io_error), err_data)) => {
+            match io_error.kind() {
+                std::io::ErrorKind::NotFound => {
+                    // Reuse allocation of parent path directory.
+                    if dir.pop() {
+                        try_dir_with_parents(dir, filename)
+                    } else {
+                        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into())
                     }
                 },
-                Err(other) => Err(other),
+                _ => Err(Error(ErrorKind::Io(io_error), err_data)),
             }
-        }
-        None => Err(std::io::Error::new(std::io::ErrorKind::NotFound, "path not found").into()),
+        },
+        Err(other) => Err(other),
     }
 }
 
@@ -251,18 +254,7 @@ pub fn from_path(path: &Path) -> Result<()> {
 pub fn from_filename(filename: &str) -> Result<PathBuf> {
     let path = env::current_dir()?;
 
-    let env_path = path.join(filename);
-
-    match from_path(&env_path) {
-        Err(Error(ErrorKind::Io(io_error), err_data)) => {
-            match io_error.kind() {
-                std::io::ErrorKind::NotFound => try_parent(&path, filename),
-                _ => Err(Error(ErrorKind::Io(io_error), err_data)),
-            }
-        },
-        Err(other) => Err(other),
-        Ok(()) => Ok(env_path),
-    }
+    try_dir_with_parents(path, filename)
 }
 
 /// This is usually what you want.
