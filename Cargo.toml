@@ -18,5 +18,9 @@ description = "A `dotenv` implementation for Rust"
 
 [dependencies]
 derive-error-chain = "0.10.0"
-error-chain = "0.10.0"
+error-chain = { version = "0.10.0", default-features = false }
 regex = "0.2.1"
+
+[features]
+backtrace = ["error-chain/backtrace"]
+default = ["backtrace"]
