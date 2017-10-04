@@ -17,8 +17,8 @@ repository = "https://github.com/purpliminal/rust-dotenv"
 description = "A `dotenv` implementation for Rust"
 
 [dependencies]
-derive-error-chain = "0.10.0"
-error-chain = { version = "0.10.0", default-features = false }
+derive-error-chain = "0.11.0"
+error-chain = { version = "0.11.0", default-features = false }
 regex = "0.2.1"
 
 [features]

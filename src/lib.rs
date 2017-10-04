@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 use regex::{Captures, Regex};
 
-#[derive(Debug, error_chain)]
+#[derive(Debug, ErrorChain)]
 #[cfg_attr(not(feature = "backtrace"), error_chain(backtrace = "false"))]
 pub enum ErrorKind {
     // generic error string, required by derive_error_chain
