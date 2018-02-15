@@ -5,16 +5,19 @@ use errors::*;
 pub type ParsedLine = Result<Option<(String, String)>>;
 
 pub fn parse_line(line: String) -> ParsedLine {
-    let line_regex = try!(Regex::new(concat!(r"^(\s*(",
-                                             r"#.*|", // A comment, or...
-                                             r"\s*|", // ...an empty string, or...
-                                             r"(export\s+)?", // ...(optionally preceded by "export")...
-                                             r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
-                                             r"=", // ...then an equal sign,...
-                                             r"(?P<value>.+?)?", // ...and then its corresponding value.
-                                             r")\s*)[\r\n]*$")));
+    let line_regex = try!(Regex::new(concat!(
+        r"^(\s*(",
+        r"#.*|",                            // A comment, or...
+        r"\s*|",                            // ...an empty string, or...
+        r"(export\s+)?",                    // ...(optionally preceded by "export")...
+        r"(?P<key>[A-Za-z_][A-Za-z0-9_]*)", // ...a key,...
+        r"=",                               // ...then an equal sign,...
+        r"(?P<value>.+?)?",                 // ...and then its corresponding value.
+        r")\s*)[\r\n]*$"
+    )));
 
-    line_regex.captures(&line)
+    line_regex
+        .captures(&line)
         .map_or(Err(ErrorKind::LineParse(line.clone()).into()), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
@@ -38,9 +41,10 @@ pub fn parse_line(line: String) -> ParsedLine {
         })
 }
 
-
 fn named_string(captures: &Captures, name: &str) -> Option<String> {
-    captures.name(name).and_then(|v| Some(v.as_str().to_owned()))
+    captures
+        .name(name)
+        .and_then(|v| Some(v.as_str().to_owned()))
 }
 
 fn parse_value(input: &str) -> Result<String> {
@@ -133,31 +137,33 @@ mod test {
 
     #[test]
     fn test_parse_line_env() {
-        let input_iter = vec!["KEY=1",
-                              r#"KEY2="2""#,
-                              "KEY3='3'",
-                              "KEY4='fo ur'",
-                              r#"KEY5="fi ve""#,
-                              r"KEY6=s\ ix",
-                              "KEY7=",
-                              "KEY8=     ",
-                              "KEY9=   # foo",
-                              "export   SHELL_LOVER=1"]
-            .into_iter()
+        let input_iter = vec![
+            "KEY=1",
+            r#"KEY2="2""#,
+            "KEY3='3'",
+            "KEY4='fo ur'",
+            r#"KEY5="fi ve""#,
+            r"KEY6=s\ ix",
+            "KEY7=",
+            "KEY8=     ",
+            "KEY9=   # foo",
+            "export   SHELL_LOVER=1",
+        ].into_iter()
             .map(|input| input.to_string());
         let actual_iter = input_iter.map(|input| parse_line(input));
 
-        let expected_iter = vec![("KEY", "1"),
-                                ("KEY2", "2"),
-                                ("KEY3", "3"),
-                                ("KEY4", "fo ur"),
-                                ("KEY5", "fi ve"),
-                                ("KEY6", "s ix"),
-                                ("KEY7", ""),
-                                ("KEY8", ""),
-                                ("KEY9", ""),
-                                ("SHELL_LOVER", "1")]
-            .into_iter()
+        let expected_iter = vec![
+            ("KEY", "1"),
+            ("KEY2", "2"),
+            ("KEY3", "3"),
+            ("KEY4", "fo ur"),
+            ("KEY5", "fi ve"),
+            ("KEY6", "s ix"),
+            ("KEY7", ""),
+            ("KEY8", ""),
+            ("KEY9", ""),
+            ("SHELL_LOVER", "1"),
+        ].into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string()));
 
         for (expected, actual) in expected_iter.zip(actual_iter) {
@@ -182,10 +188,14 @@ mod test {
 
     #[test]
     fn test_parse_line_invalid() {
-        let input_iter =
-            vec!["  invalid    ", "KEY =val", "KEY2= val", "very bacon = yes indeed", "=value"]
-                .into_iter()
-                .map(|input| input.to_string());
+        let input_iter = vec![
+            "  invalid    ",
+            "KEY =val",
+            "KEY2= val",
+            "very bacon = yes indeed",
+            "=value",
+        ].into_iter()
+            .map(|input| input.to_string());
         let actual_iter = input_iter.map(|input| parse_line(input));
 
         for actual in actual_iter {
@@ -195,23 +205,25 @@ mod test {
 
     #[test]
     fn test_parse_value_escapes() {
-        let input_iter = vec![r#"KEY=my\ cool\ value"#,
-                              r#"KEY2=\$sweet"#,
-                              r#"KEY3="awesome stuff \"mang\"""#,
-                              r#"KEY4='sweet $\fgs'\''fds'"#,
-                              r#"KEY5="'\"yay\\"\ "stuff""#,
-                              r##"KEY6="lol" #well you see when I say lol wh"##]
-            .into_iter()
+        let input_iter = vec![
+            r#"KEY=my\ cool\ value"#,
+            r#"KEY2=\$sweet"#,
+            r#"KEY3="awesome stuff \"mang\"""#,
+            r#"KEY4='sweet $\fgs'\''fds'"#,
+            r#"KEY5="'\"yay\\"\ "stuff""#,
+            r##"KEY6="lol" #well you see when I say lol wh"##,
+        ].into_iter()
             .map(|input| input.to_string());
         let actual_iter = input_iter.map(|input| parse_line(input));
 
-        let expected_iter = vec![("KEY", r#"my cool value"#),
-                                ("KEY2", r#"$sweet"#),
-                                ("KEY3", r#"awesome stuff "mang""#),
-                                ("KEY4", r#"sweet $\fgs'fds"#),
-                                ("KEY5", r#"'"yay\ stuff"#),
-                                ("KEY6", "lol")]
-            .into_iter()
+        let expected_iter = vec![
+            ("KEY", r#"my cool value"#),
+            ("KEY2", r#"$sweet"#),
+            ("KEY3", r#"awesome stuff "mang""#),
+            ("KEY4", r#"sweet $\fgs'fds"#),
+            ("KEY5", r#"'"yay\ stuff"#),
+            ("KEY6", "lol"),
+        ].into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string()));
 
         for (expected, actual) in expected_iter.zip(actual_iter) {
@@ -223,12 +235,13 @@ mod test {
 
     #[test]
     fn test_parse_value_escapes_invalid() {
-        let input_iter = vec![r#"KEY=my uncool value"#,
-                              r#"KEY2=$notcool"#,
-                              r#"KEY3="why"#,
-                              r#"KEY4='please stop''"#,
-                              r#"KEY5=h\8u"#]
-            .into_iter()
+        let input_iter = vec![
+            r#"KEY=my uncool value"#,
+            r#"KEY2=$notcool"#,
+            r#"KEY3="why"#,
+            r#"KEY4='please stop''"#,
+            r#"KEY5=h\8u"#,
+        ].into_iter()
             .map(|input| input.to_string());
         let actual_iter = input_iter.map(|input| parse_line(input));
 

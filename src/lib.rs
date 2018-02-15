@@ -6,9 +6,9 @@
 //! provided by the operating system.
 
 #[macro_use]
-extern crate error_chain;
-#[macro_use]
 extern crate derive_error_chain;
+#[macro_use]
+extern crate error_chain;
 extern crate regex;
 
 mod parse;
@@ -31,7 +31,9 @@ static START: Once = ONCE_INIT;
 /// The returned result is Ok(s) if the environment variable is present and is valid unicode. If the
 /// environment variable is not present, or it is not valid unicode, then Err will be returned.
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
-    START.call_once(|| { dotenv().ok(); });
+    START.call_once(|| {
+        dotenv().ok();
+    });
     env::var(key).map_err(Error::from)
 }
 
@@ -42,7 +44,9 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// time of this invocation, modifications to environment variables afterwards will not be
 /// reflected in the returned iterator.
 pub fn vars() -> Vars {
-    START.call_once(|| { dotenv().ok(); });
+    START.call_once(|| {
+        dotenv().ok();
+    });
     env::vars()
 }
 
@@ -98,7 +102,6 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
 pub fn dotenv() -> Result<PathBuf> {
     from_filename(&".env")
 }
-
 
 /// Like `dotenv`, but returns an iterator over variables instead of loading into environment.
 ///

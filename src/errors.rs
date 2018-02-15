@@ -18,10 +18,10 @@ pub enum ErrorKind {
 }
 
 impl Error {
-  pub fn not_found(&self) -> bool {
-    if let &ErrorKind::Io(ref io_error) = self.kind() {
-      return io_error.kind() == io::ErrorKind::NotFound;
+    pub fn not_found(&self) -> bool {
+        if let &ErrorKind::Io(ref io_error) = self.kind() {
+            return io_error.kind() == io::ErrorKind::NotFound;
+        }
+        false
     }
-    false
-  }
 }
