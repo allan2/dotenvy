@@ -13,11 +13,11 @@ extern crate regex;
 
 mod parse;
 mod errors;
+mod iter;
 
 use std::env::{self, Vars};
 use std::ffi::OsStr;
 use std::fs::File;
-use std::io::{BufReader, BufRead};
 use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 
@@ -45,19 +45,16 @@ pub fn vars() -> Vars {
     env::vars()
 }
 
-
 /// Loads the specified file.
 fn from_file(file: File) -> Result<()> {
-    let reader = BufReader::new(file);
-    for line in reader.lines() {
-        let line = try!(line);
-        let parsed = try!(parse::parse_line(line));
-        if let Some((key, value)) = parsed {
-            if env::var(&key).is_err() {
-                env::set_var(&key, value);
-            }
-        }
+    for parsed_line in iter::Iter::new(file) {
+      if let Some((key, value)) = parsed_line? {
+          if env::var(&key).is_err() {
+              env::set_var(&key, value);
+          }
+      }
     }
+
     Ok(())
 }
 

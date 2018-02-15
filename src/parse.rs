@@ -2,7 +2,7 @@ use regex::{Captures, Regex};
 use errors::*;
 
 // for readability's sake
-type ParsedLine = Result<Option<(String, String)>>;
+pub type ParsedLine = Result<Option<(String, String)>>;
 
 pub fn parse_line(line: String) -> ParsedLine {
     let line_regex = try!(Regex::new(concat!(r"^(\s*(",
