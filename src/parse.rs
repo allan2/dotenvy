@@ -135,22 +135,22 @@ fn parse_value(input: &str) -> Result<String> {
 mod test {
     use super::*;
 
+    use iter::Iter;
+
     #[test]
     fn test_parse_line_env() {
-        let input_iter = vec![
-            "KEY=1",
-            r#"KEY2="2""#,
-            "KEY3='3'",
-            "KEY4='fo ur'",
-            r#"KEY5="fi ve""#,
-            r"KEY6=s\ ix",
-            "KEY7=",
-            "KEY8=     ",
-            "KEY9=   # foo",
-            "export   SHELL_LOVER=1",
-        ].into_iter()
-            .map(|input| input.to_string());
-        let actual_iter = input_iter.map(|input| parse_line(input));
+        let actual_iter = Iter::new(r#"
+KEY=1
+KEY2="2"
+KEY3='3'
+KEY4='fo ur'
+KEY5="fi ve"
+KEY6=s\ ix
+KEY7=
+KEY8=     
+KEY9=   # foo
+export   SHELL_LOVER=1
+"#.as_bytes());
 
         let expected_iter = vec![
             ("KEY", "1"),
@@ -166,55 +166,51 @@ mod test {
         ].into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string()));
 
+        let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
             assert!(actual.is_ok());
-            assert!(actual.as_ref().unwrap().is_some());
-            assert_eq!(expected, actual.ok().unwrap().unwrap());
+            assert_eq!(expected, actual.ok().unwrap());
+            count += 1;
         }
+
+        assert_eq!(count, 10);
     }
 
     #[test]
     fn test_parse_line_comment() {
-        let input_iter = vec!["# foo=bar", "    #    "]
-            .into_iter()
-            .map(|input| input.to_string());
-        let actual_iter = input_iter.map(|input| parse_line(input));
-
-        for actual in actual_iter {
-            assert!(actual.is_ok());
-            assert!(actual.ok().unwrap().is_none());
-        }
+        let result: Result<Vec<(String, String)>> = Iter::new(r#"
+# foo=bar
+#    "#.as_bytes()).collect();
+        assert!(result.unwrap().is_empty());
     }
 
     #[test]
     fn test_parse_line_invalid() {
-        let input_iter = vec![
-            "  invalid    ",
-            "KEY =val",
-            "KEY2= val",
-            "very bacon = yes indeed",
-            "=value",
-        ].into_iter()
-            .map(|input| input.to_string());
-        let actual_iter = input_iter.map(|input| parse_line(input));
+        let actual_iter = Iter::new(r#"
+  invalid    
+KEY =val
+KEY2= val
+very bacon = yes indeed
+=value"#.as_bytes());
 
+        let mut count = 0;
         for actual in actual_iter {
             assert!(actual.is_err());
+            count += 1;
         }
+        assert_eq!(count, 5);
     }
 
     #[test]
     fn test_parse_value_escapes() {
-        let input_iter = vec![
-            r#"KEY=my\ cool\ value"#,
-            r#"KEY2=\$sweet"#,
-            r#"KEY3="awesome stuff \"mang\"""#,
-            r#"KEY4='sweet $\fgs'\''fds'"#,
-            r#"KEY5="'\"yay\\"\ "stuff""#,
-            r##"KEY6="lol" #well you see when I say lol wh"##,
-        ].into_iter()
-            .map(|input| input.to_string());
-        let actual_iter = input_iter.map(|input| parse_line(input));
+        let actual_iter = Iter::new(r#"
+KEY=my\ cool\ value
+KEY2=\$sweet
+KEY3="awesome stuff \"mang\""
+KEY4='sweet $\fgs'\''fds'
+KEY5="'\"yay\\"\ "stuff"
+KEY6="lol" #well you see when I say lol wh
+"#.as_bytes());
 
         let expected_iter = vec![
             ("KEY", r#"my cool value"#),
@@ -228,22 +224,19 @@ mod test {
 
         for (expected, actual) in expected_iter.zip(actual_iter) {
             assert!(actual.is_ok());
-            assert!(actual.as_ref().unwrap().is_some());
-            assert_eq!(expected, actual.unwrap().unwrap());
+            assert_eq!(expected, actual.unwrap());
         }
     }
 
     #[test]
     fn test_parse_value_escapes_invalid() {
-        let input_iter = vec![
-            r#"KEY=my uncool value"#,
-            r#"KEY2=$notcool"#,
-            r#"KEY3="why"#,
-            r#"KEY4='please stop''"#,
-            r#"KEY5=h\8u"#,
-        ].into_iter()
-            .map(|input| input.to_string());
-        let actual_iter = input_iter.map(|input| parse_line(input));
+        let actual_iter = Iter::new(r#"
+KEY=my uncool value
+KEY2=$notcool
+KEY3="why
+KEY4='please stop''
+KEY5=h\8u
+"#.as_bytes());
 
         for actual in actual_iter {
             assert!(actual.is_err());
