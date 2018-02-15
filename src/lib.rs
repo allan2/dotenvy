@@ -46,19 +46,6 @@ pub fn vars() -> Vars {
     env::vars()
 }
 
-/// Loads the specified file.
-fn from_file(file: File) -> Result<()> {
-    for parsed_line in iter::Iter::new(file) {
-      if let Some((key, value)) = parsed_line? {
-          if env::var(&key).is_err() {
-              env::set_var(&key, value);
-          }
-      }
-    }
-
-    Ok(())
-}
-
 /// Loads the file at the specified absolute path.
 ///
 /// Examples
@@ -72,7 +59,7 @@ fn from_file(file: File) -> Result<()> {
 /// dotenv::from_path(my_path.as_path());
 /// ```
 pub fn from_path(path: &Path) -> Result<()> {
-    File::open(path).map(from_file)?
+    iter::Iter::new(File::open(path)?).load()
 }
 
 /// Loads the specified file from the environment's current directory or its parents in sequence.

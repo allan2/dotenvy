@@ -24,4 +24,3 @@ pub fn find(mut directory: PathBuf, filename: &str) -> Result<PathBuf> {
       Err(io::Error::new(io::ErrorKind::NotFound, "path not found").into())
     }
 }
-
