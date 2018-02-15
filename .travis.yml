@@ -2,6 +2,7 @@ language: rust
 sudo: false
 script:
   - cargo build --verbose
-  - cargo test --verbose --lib --doc
+  - cargo test --verbose --lib
+  - cargo test --verbose --doc
   - cd tests
   - cargo test --verbose
