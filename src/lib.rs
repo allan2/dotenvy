@@ -22,7 +22,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 
-use errors::*;
+pub use errors::*;
 
 static START: Once = ONCE_INIT;
 
@@ -97,4 +97,24 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
 /// ```
 pub fn dotenv() -> Result<PathBuf> {
     from_filename(&".env")
+}
+
+
+/// Like `dotenv`, but returns an iterator over variables instead of loading into environment.
+///
+/// # Examples
+/// ```no_run
+/// use dotenv;
+///
+/// for item in dotenv::dotenv_iter().unwrap() {
+///   let (key, val) = item.unwrap();
+///   println!("{}={}", key, val);
+/// }
+/// ```
+pub fn dotenv_iter() -> Result<iter::Iter<File>> {
+    let directory = env::current_dir()?;
+
+    let path = find::find(directory, ".env")?;
+
+    Ok(iter::Iter::new(File::open(path)?))
 }

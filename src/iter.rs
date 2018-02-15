@@ -17,24 +17,33 @@ impl<R: Read> Iter<R> {
     }
 
     pub fn load(self) -> Result<()> {
-        for parsed_line in self {
-          if let Some((key, value)) = parsed_line? {
-              if env::var(&key).is_err() {
-                  env::set_var(&key, value);
-              }
-          }
+      for item in self {
+        let (key, value) = item?;
+        if env::var(&key).is_err() {
+            env::set_var(&key, value);
         }
+      }
 
-        Ok(())
+      Ok(())
     }
 }
 
 impl<R: Read> Iterator for Iter<R> {
-  type Item = parse::ParsedLine;
+  type Item = Result<(String, String)>;
 
   fn next(&mut self) -> Option<Self::Item> {
-    self.lines.next().map(|line| {
-      parse::parse_line(line?)
-    })
+    loop {
+      let line = match self.lines.next() {
+        Some(Ok(line)) => line,
+        Some(Err(err)) => return Some(Err(err.into())),
+        None => return None,
+      };
+
+      match parse::parse_line(line) {
+        Ok(Some(result)) => return Some(Ok(result)),
+        Ok(None) => {},
+        Err(err) => return Some(Err(err.into())),
+      }
+    }
   }
 }

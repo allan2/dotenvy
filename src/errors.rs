@@ -1,3 +1,5 @@
+use std::io;
+
 #[derive(Debug, ErrorChain)]
 #[cfg_attr(not(feature = "backtrace"), error_chain(backtrace = "false"))]
 pub enum ErrorKind {
@@ -15,3 +17,11 @@ pub enum ErrorKind {
     EnvVar(::std::env::VarError),
 }
 
+impl Error {
+  pub fn not_found(&self) -> bool {
+    if let &ErrorKind::Io(ref io_error) = self.kind() {
+      return io_error.kind() == io::ErrorKind::NotFound;
+    }
+    false
+  }
+}
