@@ -23,6 +23,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 
 pub use errors::*;
+use iter::Iter;
+use find::Finder;
 
 static START: Once = ONCE_INIT;
 
@@ -63,7 +65,23 @@ pub fn vars() -> Vars {
 /// dotenv::from_path(my_path.as_path());
 /// ```
 pub fn from_path(path: &Path) -> Result<()> {
-    iter::Iter::new(File::open(path)?).load()
+    from_path_iter(path)?.load()
+}
+
+/// Like `from_path`, but returns an iterator over variables instead of loading into environment.
+///
+/// Examples
+///
+/// ```
+/// use dotenv;
+/// use std::env;
+/// use std::path::{Path};
+///
+/// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
+/// dotenv::from_path(my_path.as_path());
+/// ```
+pub fn from_path_iter(path: &Path) -> Result<Iter<File>> {
+    Ok(Iter::new(File::open(path)?))
 }
 
 /// Loads the specified file from the environment's current directory or its parents in sequence.
@@ -82,13 +100,29 @@ pub fn from_path(path: &Path) -> Result<()> {
 /// dotenv::from_filename(".env").ok();
 /// ```
 pub fn from_filename(filename: &str) -> Result<PathBuf> {
-    let directory = env::current_dir()?;
-
-    let path = find::find(directory, filename)?;
-
-    from_path(&path)?;
-
+    let (path, iter) = Finder::new().filename(filename).find()?;
+    iter.load()?;
     Ok(path)
+}
+
+/// Loads the specified file from the environment's current directory or its parents in sequence.
+///
+/// # Examples
+/// ```
+/// use dotenv;
+/// dotenv::from_filename("custom.env").ok();
+/// ```
+///
+/// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which
+/// is preferred.
+///
+/// ```
+/// use dotenv;
+/// dotenv::from_filename(".env").ok();
+/// ```
+pub fn from_filename_iter(filename: &str) -> Result<Iter<File>> {
+    let (_, iter) = Finder::new().filename(filename).find()?;
+    Ok(iter)
 }
 
 /// This is usually what you want.
@@ -100,7 +134,9 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
 /// dotenv::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<PathBuf> {
-    from_filename(&".env")
+    let (path, iter) = Finder::new().find()?;
+    iter.load()?;
+    Ok(path)
 }
 
 /// Like `dotenv`, but returns an iterator over variables instead of loading into environment.
@@ -115,9 +151,6 @@ pub fn dotenv() -> Result<PathBuf> {
 /// }
 /// ```
 pub fn dotenv_iter() -> Result<iter::Iter<File>> {
-    let directory = env::current_dir()?;
-
-    let path = find::find(directory, ".env")?;
-
-    Ok(iter::Iter::new(File::open(path)?))
+    let (_, iter) = Finder::new().find()?;
+    Ok(iter)
 }
