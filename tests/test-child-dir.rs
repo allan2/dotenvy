@@ -3,14 +3,14 @@ extern crate tempdir;
 
 mod common;
 
-use dotenv::*;
 use std::{env, fs};
+use dotenv::*;
 
-use common::tempdir_with_dotenv;
+use common::*;
 
 #[test]
-fn child_dir() {
-    let dir = tempdir_with_dotenv("TESTKEY=test_val").unwrap();
+fn test_child_dir() {
+    let dir = make_test_dotenv().unwrap();
 
     fs::create_dir("child").unwrap();
 

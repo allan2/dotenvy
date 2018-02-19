@@ -3,16 +3,17 @@ extern crate tempdir;
 
 mod common;
 
-use dotenv::*;
 use std::env;
+use dotenv::*;
 
-use common::tempdir_with_dotenv;
+use common::*;
 
 #[test]
-fn default_location() {
-    let dir = tempdir_with_dotenv("TESTKEY=test_val").unwrap();
+fn test_from_filename() {
+    let dir = make_test_dotenv().unwrap();
 
-    dotenv().ok();
+    from_filename(".env").ok();
+
     assert_eq!(env::var("TESTKEY").unwrap(), "test_val");
 
     dir.close().unwrap();
