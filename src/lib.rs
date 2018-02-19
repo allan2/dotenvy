@@ -32,6 +32,16 @@ static START: Once = ONCE_INIT;
 ///
 /// The returned result is Ok(s) if the environment variable is present and is valid unicode. If the
 /// environment variable is not present, or it is not valid unicode, then Err will be returned.
+///
+/// Examples:
+///
+/// ```no_run
+///
+/// use dotenv;
+///
+/// let key = "FOO";
+/// let value= dotenv::var(key).unwrap();
+/// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
         dotenv().ok();
@@ -45,6 +55,16 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// The returned iterator contains a snapshot of the process's environment variables at the
 /// time of this invocation, modifications to environment variables afterwards will not be
 /// reflected in the returned iterator.
+/// 
+/// Examples:
+///
+/// ```no_run
+///
+/// use dotenv;
+/// use std::io;
+///
+/// let result: Vec<(String, String)> = dotenv::vars().collect();
+/// ```
 pub fn vars() -> Vars {
     START.call_once(|| {
         dotenv().ok();
@@ -72,13 +92,18 @@ pub fn from_path(path: &Path) -> Result<()> {
 ///
 /// Examples
 ///
-/// ```
+/// ```no_run
 /// use dotenv;
 /// use std::env;
 /// use std::path::{Path};
 ///
 /// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
-/// dotenv::from_path(my_path.as_path());
+/// let iter = dotenv::from_path_iter(my_path.as_path()).unwrap();
+///
+/// for item in iter {
+///   let (key, val) = item.unwrap();
+///   println!("{}={}", key, val);
+/// }
 /// ```
 pub fn from_path_iter(path: &Path) -> Result<Iter<File>> {
     Ok(Iter::new(File::open(path)?))
@@ -105,7 +130,7 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Loads the specified file from the environment's current directory or its parents in sequence.
+/// Like `from_filename`, but returns an iterator over variables instead of loading into environment.
 ///
 /// # Examples
 /// ```
@@ -116,9 +141,14 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
 /// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which
 /// is preferred.
 ///
-/// ```
+/// ```no_run
 /// use dotenv;
-/// dotenv::from_filename(".env").ok();
+/// let iter = dotenv::from_filename_iter(".env").unwrap();
+///
+/// for item in iter {
+///   let (key, val) = item.unwrap();
+///   println!("{}={}", key, val);
+/// }
 /// ```
 pub fn from_filename_iter(filename: &str) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename).find()?;
