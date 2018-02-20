@@ -1,25 +1,25 @@
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
 use errors::*;
 use iter::Iter;
 
-pub struct Finder<'a> {
+pub struct Finder {
   directory: Option<PathBuf>,
-  filename:  Option<&'a str>,
+  filename:  PathBuf,
 }
 
-impl<'a> Finder<'a> {
-  pub fn new() -> Finder<'a> {
+impl Finder {
+  pub fn new() -> Self {
     Finder {
       directory: None,
-      filename:  None,
+      filename:  ".env".into(),
     }
   }
 
-  pub fn filename(mut self, filename: &'a str) -> Finder<'a> {
-    self.filename = Some(filename);
+  pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Finder {
+    self.filename = filename.as_ref().into();
     self
   }
 
@@ -30,13 +30,7 @@ impl<'a> Finder<'a> {
       env::current_dir()?
     };
 
-    let filename = if let Some(filename) = self.filename {
-      filename
-    } else {
-      ".env"
-    };
-
-    let path = find(directory, PathBuf::from(filename))?;
+    let path = find(directory, self.filename)?;
     let file = File::open(&path)?;
     let iter = Iter::new(file);
     Ok((path, iter))
@@ -44,8 +38,8 @@ impl<'a> Finder<'a> {
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
-pub fn find(mut directory: PathBuf, filename: PathBuf) -> Result<PathBuf> {
-    let candidate = directory.join(&filename);
+pub fn find<P: AsRef<Path>>(directory: P, filename: P) -> Result<PathBuf> {
+    let candidate = directory.as_ref().join(filename.as_ref());
 
     match fs::metadata(&candidate) {
         Ok(metadata) => if metadata.is_file() {
@@ -58,8 +52,8 @@ pub fn find(mut directory: PathBuf, filename: PathBuf) -> Result<PathBuf> {
         }
     }
 
-    if directory.pop() {
-        find(directory, filename)
+    if let Some(parent) = directory.as_ref().parent() {
+        find(parent, filename.as_ref())
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "path not found").into())
     }

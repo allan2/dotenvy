@@ -84,7 +84,7 @@ pub fn vars() -> Vars {
 /// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
 /// dotenv::from_path(my_path.as_path());
 /// ```
-pub fn from_path(path: &Path) -> Result<()> {
+pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     from_path_iter(path)?.load()
 }
 
@@ -105,7 +105,7 @@ pub fn from_path(path: &Path) -> Result<()> {
 ///   println!("{}={}", key, val);
 /// }
 /// ```
-pub fn from_path_iter(path: &Path) -> Result<Iter<File>> {
+pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
     Ok(Iter::new(File::open(path)?))
 }
 
@@ -124,7 +124,7 @@ pub fn from_path_iter(path: &Path) -> Result<Iter<File>> {
 /// use dotenv;
 /// dotenv::from_filename(".env").ok();
 /// ```
-pub fn from_filename(filename: &str) -> Result<PathBuf> {
+pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename).find()?;
     iter.load()?;
     Ok(path)
@@ -150,7 +150,7 @@ pub fn from_filename(filename: &str) -> Result<PathBuf> {
 ///   println!("{}={}", key, val);
 /// }
 /// ```
-pub fn from_filename_iter(filename: &str) -> Result<Iter<File>> {
+pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename).find()?;
     Ok(iter)
 }
