@@ -9,7 +9,7 @@ use dotenv::*;
 use common::*;
 
 #[test]
-fn test_from_path() {
+fn test_from_filename_iter() {
     let dir = make_test_dotenv().unwrap();
 
     let iter = from_filename_iter(".env").unwrap();
