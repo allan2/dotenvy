@@ -125,7 +125,7 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// dotenv::from_filename(".env").ok();
 /// ```
 pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
-    let (path, iter) = Finder::new().filename(filename).find()?;
+    let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
     iter.load()?;
     Ok(path)
 }
@@ -151,7 +151,7 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// }
 /// ```
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
-    let (_, iter) = Finder::new().filename(filename).find()?;
+    let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
     Ok(iter)
 }
 

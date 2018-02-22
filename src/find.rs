@@ -5,21 +5,21 @@ use std::{env, fs, io};
 use errors::*;
 use iter::Iter;
 
-pub struct Finder {
+pub struct Finder<'a> {
   directory: Option<PathBuf>,
-  filename:  PathBuf,
+  filename:  &'a Path,
 }
 
-impl Finder {
+impl<'a> Finder<'a> {
     pub fn new() -> Self {
         Finder {
             directory: None,
-            filename: ".env".into(),
+            filename: Path::new(".env"),
         }
     }
 
-    pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Self {
-        self.filename = filename.as_ref().into();
+    pub fn filename(mut self, filename: &'a Path) -> Self {
+        self.filename = filename;
         self
     }
 
@@ -38,8 +38,8 @@ impl Finder {
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
-pub fn find<P: AsRef<Path>>(directory: P, filename: P) -> Result<PathBuf> {
-    let candidate = directory.as_ref().join(filename.as_ref());
+pub fn find<P: AsRef<Path>>(directory: P, filename: &Path) -> Result<PathBuf> {
+    let candidate = directory.as_ref().join(filename);
 
     match fs::metadata(&candidate) {
         Ok(metadata) => if metadata.is_file() {
