@@ -18,7 +18,7 @@ impl Finder {
     }
   }
 
-  pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Finder {
+  pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Self {
     self.filename = filename.as_ref().into();
     self
   }
