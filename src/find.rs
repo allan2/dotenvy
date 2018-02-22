@@ -30,7 +30,7 @@ impl<'a> Finder<'a> {
             env::current_dir()?
         };
 
-        let path = find(directory, self.filename)?;
+        let path = find(&directory, self.filename)?;
         let file = File::open(&path)?;
         let iter = Iter::new(file);
         Ok((path, iter))
@@ -38,8 +38,8 @@ impl<'a> Finder<'a> {
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
-pub fn find<P: AsRef<Path>>(directory: P, filename: &Path) -> Result<PathBuf> {
-    let candidate = directory.as_ref().join(filename);
+pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
+    let candidate = directory.join(filename);
 
     match fs::metadata(&candidate) {
         Ok(metadata) => if metadata.is_file() {
@@ -52,7 +52,7 @@ pub fn find<P: AsRef<Path>>(directory: P, filename: &Path) -> Result<PathBuf> {
         }
     }
 
-    if let Some(parent) = directory.as_ref().parent() {
+    if let Some(parent) = directory.parent() {
         find(parent, filename)
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "path not found").into())
