@@ -11,30 +11,30 @@ pub struct Finder {
 }
 
 impl Finder {
-  pub fn new() -> Self {
-    Finder {
-      directory: None,
-      filename:  ".env".into(),
+    pub fn new() -> Self {
+        Finder {
+            directory: None,
+            filename: ".env".into(),
+        }
     }
-  }
 
-  pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Self {
-    self.filename = filename.as_ref().into();
-    self
-  }
+    pub fn filename<P: AsRef<Path>>(mut self, filename: P) -> Self {
+        self.filename = filename.as_ref().into();
+        self
+    }
 
-  pub fn find(self) -> Result<(PathBuf, Iter<File>)> {
-    let directory = if let Some(directory) = self.directory {
-      directory
-    } else {
-      env::current_dir()?
-    };
+    pub fn find(self) -> Result<(PathBuf, Iter<File>)> {
+        let directory = if let Some(directory) = self.directory {
+            directory
+        } else {
+            env::current_dir()?
+        };
 
-    let path = find(directory, self.filename)?;
-    let file = File::open(&path)?;
-    let iter = Iter::new(file);
-    Ok((path, iter))
-  }
+        let path = find(directory, self.filename)?;
+        let file = File::open(&path)?;
+        let iter = Iter::new(file);
+        Ok((path, iter))
+    }
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
