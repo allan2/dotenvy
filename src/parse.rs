@@ -5,7 +5,8 @@ use errors::*;
 pub type ParsedLine = Result<Option<(String, String)>>;
 
 pub fn parse_line(line: String) -> ParsedLine {
-    let line_regex = try!(Regex::new(concat!(
+    lazy_static! {
+      static ref LINE_REGEX: Regex = Regex::new(concat!(
         r"^(\s*(",
         r"#.*|",                            // A comment, or...
         r"\s*|",                            // ...an empty string, or...
@@ -14,9 +15,10 @@ pub fn parse_line(line: String) -> ParsedLine {
         r"=",                               // ...then an equal sign,...
         r"(?P<value>.+?)?",                 // ...and then its corresponding value.
         r")\s*)[\r\n]*$"
-    )));
+      )).unwrap();
+    }
 
-    line_regex
+    LINE_REGEX
         .captures(&line)
         .map_or(Err(ErrorKind::LineParse(line.clone()).into()), |captures| {
             let key = named_string(&captures, "key");
