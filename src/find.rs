@@ -53,7 +53,7 @@ pub fn find<P: AsRef<Path>>(directory: P, filename: &Path) -> Result<PathBuf> {
     }
 
     if let Some(parent) = directory.as_ref().parent() {
-        find(parent, filename.as_ref())
+        find(parent, filename)
     } else {
         Err(io::Error::new(io::ErrorKind::NotFound, "path not found").into())
     }
