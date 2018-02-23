@@ -1,19 +1,18 @@
 extern crate clap;
 extern crate dotenv;
-extern crate exec;
 
 use clap::{App, AppSettings, Arg};
-use exec::Command;
-use std::process;
+use std::os::unix::process::CommandExt;
+use std::process::{Command, exit};
 
 macro_rules! die {
     ($fmt:expr) => ({
         eprintln!($fmt);
-        process::exit(1);
+        exit(1);
     });
     ($fmt:expr, $($arg:tt)*) => ({
         eprintln!($fmt, $($arg)*);
-        process::exit(1);
+        exit(1);
     });
 }
 
