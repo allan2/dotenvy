@@ -56,6 +56,13 @@ fn main() {
         _ => die!("error: missing required argument <COMMAND>"),
     };
 
-    let error = command.exec();
-    die!("fatal: {}", error);
+    if cfg!(target_os = "windows") {
+        match command.spawn().and_then(|mut child| child.wait()) {
+            Ok(status) => exit(status.code().unwrap_or(1)),
+            Err(error) => die!("fatal: {}", error),
+        };
+    } else {
+        let error = command.exec();
+        die!("fatal: {}", error);
+    };
 }
