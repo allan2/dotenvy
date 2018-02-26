@@ -5,12 +5,18 @@ extern crate proc_macro_hack;
 extern crate quote;
 
 extern crate dotenv;
+
+extern crate proc_macro2;
+
+#[macro_use]
 extern crate syn;
 
 use std::env;
 
 use dotenv::dotenv;
-use syn::{TokenTree, Token, Lit};
+
+use syn::punctuated::Punctuated;
+use syn::buffer::TokenBuffer;
 
 proc_macro_expr_impl! {
     pub fn expand_dotenv(input: &str) -> String {
@@ -25,36 +31,37 @@ proc_macro_expr_impl! {
     }
 }
 
-fn expand_env(input: &str) -> String {
-    let tts = syn::parse_token_trees(input).unwrap();
+fn expand_env(input_raw: &str) -> String {
+    // we include () so that we can parse it as a tuple. `syn` 0.12
+    let stream = input_raw
+        .parse()
+        .expect("expected macro usage to be valid rust code, but it was not");
 
-    if tts.is_empty() {
-        panic!("dotenv! takes 1 or 2 arguments");
-    }
+    let buf = TokenBuffer::new2(stream);
 
-    let mut tts = tts.into_iter();
+    let args: Punctuated<syn::LitStr, Token![,]> = Punctuated::parse_terminated(buf.begin())
+        .expect(
+            "expected macro to be called with a comma-separated list of string literals",
+        )
+        .0;
 
-    let var = match tts.next().unwrap() {
-        TokenTree::Token(Token::Literal(Lit::Str(s, _))) => s,
-        _ => panic!("expected a string literal as the first argument"),
+    let mut iter = args.iter();
+
+    let var_name = match iter.next() {
+        Some(s) => s.value(),
+        None => panic!("expected 1 or 2 arguments, found none"),
     };
 
-    match tts.next() {
-        Some(TokenTree::Token(Token::Comma)) | None => (),
-        _ => panic!("expected a comma-separated list of expressions"),
-    }
-
-    let err_msg = match tts.next() {
-        Some(TokenTree::Token(Token::Literal(Lit::Str(s, _)))) => s,
-        None => format!("environment variable `{}` not defined", var),
-        _ => panic!("expected a string literal as the second argument"),
+    let err_msg = match iter.next() {
+        Some(lit) => lit.value(),
+        None => format!("environment variable `{}` not defined", var_name).into(),
     };
 
-    if tts.next().is_some() {
-        panic!("dotenv! takes 1 or 2 arguments");
+    if iter.next().is_some() {
+        panic!("expected 1 or 2 arguments, found 3 or more");
     }
 
-    match env::var(&var) {
+    match env::var(var_name) {
         Ok(val) => quote!(#val).to_string(),
         Err(_) => panic!("{}", err_msg),
     }

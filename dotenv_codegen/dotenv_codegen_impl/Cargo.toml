@@ -21,5 +21,6 @@ proc-macro = true
 [dependencies]
 dotenv = "0.11.0"
 proc-macro-hack = "0.4"
-quote = "0.3"
-syn = "0.11"
+proc-macro2 = "0.2"
+quote = "0.4"
+syn = "0.12"
