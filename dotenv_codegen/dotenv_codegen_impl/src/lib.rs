@@ -9,14 +9,15 @@ extern crate syn;
 
 use std::env;
 
-use dotenv::DotenvError::Parsing;
 use dotenv::dotenv;
 use syn::{TokenTree, Token, Lit};
 
 proc_macro_expr_impl! {
     pub fn expand_dotenv(input: &str) -> String {
-        if let Err(Parsing { line }) = dotenv() {
-            panic!("Error parsing .env file: {}", line);
+        if let Err(err) = dotenv() {
+            if let &dotenv::ErrorKind::LineParse(ref line) = err.kind() {
+                panic!("Error parsing .env file: {}", line);
+            }
         }
 
         // Either everything was fine, or we didn't find an .env file (which we ignore)
