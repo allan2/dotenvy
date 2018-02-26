@@ -42,9 +42,7 @@ fn expand_env(input_raw: &str) -> String {
     let buf = TokenBuffer::new2(stream);
 
     let args: Punctuated<syn::LitStr, Token![,]> = Punctuated::parse_terminated(buf.begin())
-        .expect(
-            "expected macro to be called with a comma-separated list of string literals",
-        )
+        .expect("expected macro to be called with a comma-separated list of string literals")
         .0;
 
     let mut iter = args.iter();
