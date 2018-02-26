@@ -19,6 +19,5 @@ description = "A `dotenv` implementation for Rust"
 [workspace]
 
 [dependencies]
-dotenv = "^0.8.0"
-proc-macro-hack = "0.4"
 dotenv_codegen_impl = { version = "0.1", path = "dotenv_codegen_impl" }
+proc-macro-hack = "0.4"
