@@ -23,6 +23,8 @@ proc_macro_expr_impl! {
         if let Err(err) = dotenv() {
             if let &dotenv::ErrorKind::LineParse(ref line) = err.kind() {
                 panic!("Error parsing .env file: {}", line);
+            } else {
+                panic!("Error loading .env file: {}", err);
             }
         }
 
