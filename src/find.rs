@@ -6,14 +6,12 @@ use errors::*;
 use iter::Iter;
 
 pub struct Finder<'a> {
-  directory: Option<PathBuf>,
   filename:  &'a Path,
 }
 
 impl<'a> Finder<'a> {
     pub fn new() -> Self {
         Finder {
-            directory: None,
             filename: Path::new(".env"),
         }
     }
@@ -24,13 +22,7 @@ impl<'a> Finder<'a> {
     }
 
     pub fn find(self) -> Result<(PathBuf, Iter<File>)> {
-        let directory = if let Some(directory) = self.directory {
-            directory
-        } else {
-            env::current_dir()?
-        };
-
-        let path = find(&directory, self.filename)?;
+        let path = find(&env::current_dir()?, self.filename)?;
         let file = File::open(&path)?;
         let iter = Iter::new(file);
         Ok((path, iter))
