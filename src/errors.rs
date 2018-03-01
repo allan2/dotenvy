@@ -10,8 +10,6 @@ pub enum ErrorKind {
     #[error_chain(display = r#"|l| write!(f, "Error parsing line: '{}'", l)"#)]
     LineParse(String),
     #[error_chain(foreign)]
-    ParseFormatter(::regex::Error),
-    #[error_chain(foreign)]
     Io(::std::io::Error),
     #[error_chain(foreign)]
     EnvVar(::std::env::VarError),
