@@ -4,7 +4,7 @@ use errors::*;
 // for readability's sake
 pub type ParsedLine = Result<Option<(String, String)>>;
 
-pub fn parse_line(line: String) -> ParsedLine {
+pub fn parse_line(line: &str) -> ParsedLine {
     lazy_static! {
       static ref LINE_REGEX: Regex = Regex::new(concat!(
         r"^(\s*(",
@@ -19,8 +19,8 @@ pub fn parse_line(line: String) -> ParsedLine {
     }
 
     LINE_REGEX
-        .captures(&line)
-        .map_or(Err(ErrorKind::LineParse(line.clone()).into()), |captures| {
+        .captures(line)
+        .map_or(Err(ErrorKind::LineParse(line.into()).into()), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
 
@@ -100,28 +100,26 @@ fn parse_value(input: &str) -> Result<String> {
             } else {
                 output.push(c);
             }
-        } else {
-            if escaped {
-                match c {
-                    '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                    _ => bail!(ErrorKind::LineParse(input.to_owned())),
-                }
-
-                escaped = false;
-            } else if c == '\'' {
-                strong_quote = true;
-            } else if c == '"' {
-                weak_quote = true;
-            } else if c == '\\' {
-                escaped = true;
-            } else if c == '$' {
-                //variable interpolation goes here later
-                bail!(ErrorKind::LineParse(input.to_owned()));
-            } else if c == ' ' || c == '\t' {
-                expecting_end = true;
-            } else {
-                output.push(c);
+        } else if escaped {
+            match c {
+                '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
+                _ => bail!(ErrorKind::LineParse(input.to_owned())),
             }
+
+            escaped = false;
+        } else if c == '\'' {
+            strong_quote = true;
+        } else if c == '"' {
+            weak_quote = true;
+        } else if c == '\\' {
+            escaped = true;
+        } else if c == '$' {
+            //variable interpolation goes here later
+            bail!(ErrorKind::LineParse(input.to_owned()));
+        } else if c == ' ' || c == '\t' {
+            expecting_end = true;
+        } else {
+            output.push(c);
         }
     }
 

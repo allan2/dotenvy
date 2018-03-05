@@ -119,8 +119,8 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// dotenv::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which
-/// is preferred.
+/// It is also possible to do the following, but it is equivalent to using `dotenv::dotenv()`,
+/// which is preferred.
 ///
 /// ```
 /// use dotenv;
@@ -140,8 +140,8 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// dotenv::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using dotenv::dotenv(), which
-/// is preferred.
+/// It is also possible to do the following, but it is equivalent to using `dotenv::dotenv()`,
+/// which is preferred.
 ///
 /// ```no_run
 /// use dotenv;
