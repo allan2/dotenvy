@@ -39,10 +39,10 @@ impl<R: Read> Iterator for Iter<R> {
                 None => return None,
             };
 
-            match parse::parse_line(line) {
+            match parse::parse_line(&line) {
                 Ok(Some(result)) => return Some(Ok(result)),
                 Ok(None) => {}
-                Err(err) => return Some(Err(err.into())),
+                Err(err) => return Some(Err(err)),
             }
         }
     }
