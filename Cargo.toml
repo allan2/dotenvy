@@ -8,6 +8,7 @@ authors = [
 	"Mike Piccolo <mfpiccolo@gmail.com>",
 	"Alice Maz <alice@alicemaz.com>",
 	"Sean Griffin <sean@seantheprogrammer.com>",
+	"Adam Sharp <adam@sharplet.me>",
 ]
 readme = "README.md"
 keywords = ["environment", "env", "dotenv", "settings", "config"]
@@ -22,9 +23,16 @@ error-chain = { version = "0.11.0", default-features = false }
 lazy_static = "1.0.0"
 regex = "0.2.1"
 
+clap = { version = "2", optional = true }
+
 [dev-dependencies]
 tempdir = "0.3.0"
 
 [features]
 backtrace = ["error-chain/backtrace"]
+cli = ["clap"]
 default = ["backtrace"]
+
+[[bin]]
+name = "dotenv"
+required-features = ["cli"]
