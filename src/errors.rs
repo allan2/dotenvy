@@ -1,25 +1,22 @@
 use std::io;
 
-#[derive(Debug, ErrorChain)]
-#[cfg_attr(not(feature = "backtrace"), error_chain(backtrace = "false"))]
-pub enum ErrorKind {
-    // generic error string, required by derive_error_chain
-    Msg(String),
-    #[error_chain(custom)]
-    #[error_chain(description = r#"|_| "Parsing Error""#)]
-    #[error_chain(display = r#"|l| write!(f, "Error parsing line: '{}'", l)"#)]
+#[derive(Debug, Fail)]
+pub enum Error {
+    #[fail(display = "Error parsing line: '{}'", _0)]
     LineParse(String),
-    #[error_chain(foreign)]
-    Io(::std::io::Error),
-    #[error_chain(foreign)]
-    EnvVar(::std::env::VarError),
+    #[fail(display = "{}", _0)]
+    Io(#[cfg_attr(backtrace, cause)] ::std::io::Error),
+    #[fail(display = "{}", _0)]
+    EnvVar(#[cfg_attr(backtrace, cause)] ::std::env::VarError),
 }
 
 impl Error {
     pub fn not_found(&self) -> bool {
-        if let ErrorKind::Io(ref io_error) = *self.kind() {
+        if let Error::Io(ref io_error) = *self {
             return io_error.kind() == io::ErrorKind::NotFound;
         }
         false
     }
 }
+
+pub type Result<T> = ::std::result::Result<T, Error>;

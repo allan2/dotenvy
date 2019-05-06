@@ -6,9 +6,7 @@
 //! provided by the operating system.
 
 #[macro_use]
-extern crate derive_error_chain;
-#[macro_use]
-extern crate error_chain;
+extern crate failure;
 #[macro_use]
 extern crate lazy_static;
 extern crate regex;
@@ -48,7 +46,7 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
         dotenv().ok();
     });
-    env::var(key).map_err(Error::from)
+    env::var(key).map_err(Error::EnvVar)
 }
 
 /// After loading the dotenv file, returns an iterator of (variable, value) pairs of strings,
@@ -108,7 +106,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// }
 /// ```
 pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
-    Ok(Iter::new(File::open(path)?))
+    Ok(Iter::new(File::open(path).map_err(Error::Io)?))
 }
 
 /// Loads the specified file from the environment's current directory or its parents in sequence.

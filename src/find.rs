@@ -22,8 +22,8 @@ impl<'a> Finder<'a> {
     }
 
     pub fn find(self) -> Result<(PathBuf, Iter<File>)> {
-        let path = find(&env::current_dir()?, self.filename)?;
-        let file = File::open(&path)?;
+        let path = find(&env::current_dir().map_err(Error::Io)?, self.filename)?;
+        let file = File::open(&path).map_err(Error::Io)?;
         let iter = Iter::new(file);
         Ok((path, iter))
     }
@@ -39,7 +39,7 @@ pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
         },
         Err(error) => {
             if error.kind() != io::ErrorKind::NotFound {
-                return Err(error.into());
+                return Err(Error::Io(error));
             }
         }
     }
@@ -47,6 +47,6 @@ pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
     if let Some(parent) = directory.parent() {
         find(parent, filename)
     } else {
-        Err(io::Error::new(io::ErrorKind::NotFound, "path not found").into())
+        Err(Error::Io(io::Error::new(io::ErrorKind::NotFound, "path not found")))
     }
 }

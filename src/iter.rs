@@ -35,7 +35,7 @@ impl<R: Read> Iterator for Iter<R> {
         loop {
             let line = match self.lines.next() {
                 Some(Ok(line)) => line,
-                Some(Err(err)) => return Some(Err(err.into())),
+                Some(Err(err)) => return Some(Err(Error::Io(err))),
                 None => return None,
             };
 

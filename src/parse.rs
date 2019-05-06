@@ -25,7 +25,7 @@ pub fn parse_line(line: &str) -> ParsedLine {
 
     LINE_REGEX
         .captures(line)
-        .map_or(Err(ErrorKind::LineParse(line.into()).into()), |captures| {
+        .map_or(Err(Error::LineParse(line.into()).into()), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
 
@@ -74,7 +74,7 @@ fn parse_value(input: &str) -> Result<String> {
             } else if c == '#' {
                 break;
             } else {
-                bail!(ErrorKind::LineParse(input.to_owned()));
+                return Err(Error::LineParse(input.to_owned()));
             }
         } else if strong_quote {
             if c == '\'' {
@@ -94,7 +94,7 @@ fn parse_value(input: &str) -> Result<String> {
                 //then there's \v \f bell hex... etc
                 match c {
                     '\\' | '"' | '$' => output.push(c),
-                    _ => bail!(ErrorKind::LineParse(input.to_owned())),
+                    _ => return Err(Error::LineParse(input.to_owned())),
                 }
 
                 escaped = false;
@@ -108,7 +108,7 @@ fn parse_value(input: &str) -> Result<String> {
         } else if escaped {
             match c {
                 '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                _ => bail!(ErrorKind::LineParse(input.to_owned())),
+                _ => return Err(Error::LineParse(input.to_owned())),
             }
 
             escaped = false;
@@ -120,7 +120,7 @@ fn parse_value(input: &str) -> Result<String> {
             escaped = true;
         } else if c == '$' {
             //variable interpolation goes here later
-            bail!(ErrorKind::LineParse(input.to_owned()));
+            return Err(Error::LineParse(input.to_owned()));
         } else if c == ' ' || c == '\t' {
             expecting_end = true;
         } else {
@@ -130,7 +130,7 @@ fn parse_value(input: &str) -> Result<String> {
 
     //XXX also fail if escaped? or...
     if strong_quote || weak_quote {
-        Err(ErrorKind::LineParse(input.to_owned()).into())
+        Err(Error::LineParse(input.to_owned()).into())
     } else {
         Ok(output)
     }
