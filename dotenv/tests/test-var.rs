@@ -1,7 +1,9 @@
 extern crate dotenv;
-extern crate tempdir;
+extern crate tempfile;
 
 mod common;
+
+use std::env;
 
 use dotenv::*;
 
@@ -13,5 +15,6 @@ fn test_var() {
 
     assert_eq!(var("TESTKEY").unwrap(), "test_val");
 
+    env::set_current_dir(dir.path().parent().unwrap()).unwrap();
     dir.close().unwrap();
 }

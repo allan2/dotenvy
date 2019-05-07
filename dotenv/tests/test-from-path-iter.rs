@@ -1,5 +1,5 @@
 extern crate dotenv;
-extern crate tempdir;
+extern crate tempfile;
 
 mod common;
 
@@ -23,5 +23,6 @@ fn test_from_path_iter() {
 
     assert_eq!(env::var("TESTKEY").unwrap(), "test_val");
 
+    env::set_current_dir(dir.path().parent().unwrap()).unwrap();
     dir.close().unwrap();
 }

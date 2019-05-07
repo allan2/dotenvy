@@ -1,5 +1,5 @@
 extern crate dotenv;
-extern crate tempdir;
+extern crate tempfile;
 
 mod common;
 
@@ -9,16 +9,13 @@ use dotenv::*;
 use common::*;
 
 #[test]
-fn test_from_filename_iter() {
+fn test_from_filename() {
     let dir = make_test_dotenv().unwrap();
 
-    let iter = from_filename_iter(".env").unwrap();
-
-    assert!(env::var("TESTKEY").is_err());
-
-    iter.load().ok();
+    from_filename(".env").ok();
 
     assert_eq!(env::var("TESTKEY").unwrap(), "test_val");
 
+    env::set_current_dir(dir.path().parent().unwrap()).unwrap();
     dir.close().unwrap();
 }

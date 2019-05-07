@@ -1,7 +1,0 @@
-language: rust
-sudo: false
-script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - (cd dotenv_codegen; cargo build --verbose)
-  - (cd dotenv_codegen; cargo test --verbose)

@@ -1,4 +1,4 @@
-rust-dotenv [![Build Status](https://travis-ci.org/purpliminal/rust-dotenv.svg?branch=master)](https://travis-ci.org/purpliminal/rust-dotenv)
+rust-dotenv [![Build Status](https://dev.azure.com/dotenv-rs/dotenv/_apis/build/status/dotenv-rs.dotenv?branchName=master)](https://dev.azure.com/dotenv-rs/dotenv/_build/latest?definitionId=2&branchName=master)
 ====
 
 **Achtung!** This is a v0.\* version! Expect bugs and issues all around.
