@@ -3,7 +3,7 @@ proc-macro = true
 
 [package]
 
-name = "dotenv_codegen_impl"
+name = "dotenv_codegen_implementation"
 version = "0.14.0"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
