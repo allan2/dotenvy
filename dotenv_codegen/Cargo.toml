@@ -17,5 +17,5 @@ repository = "https://github.com/dotenv-rs/dotenv"
 description = "A `dotenv` implementation for Rust"
 
 [dependencies]
-dotenv_codegen_impl = { version = "0.14", path = "../dotenv_codegen_impl" }
+dotenv_codegen_implementation = { version = "0.14", path = "../dotenv_codegen_implementation" }
 proc-macro-hack = "0.5"

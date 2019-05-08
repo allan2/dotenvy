@@ -3,5 +3,5 @@
 members = [
     "dotenv",
     "dotenv_codegen",
-    "dotenv_codegen_impl",
+    "dotenv_codegen_implementation",
 ]
