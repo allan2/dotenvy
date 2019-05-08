@@ -1,6 +1,3 @@
-extern crate dotenv;
-extern crate tempfile;
-
 mod common;
 
 use std::collections::HashMap;
@@ -8,7 +5,7 @@ use std::env;
 
 use dotenv::*;
 
-use common::*;
+use crate::common::*;
 
 #[test]
 fn test_vars() {

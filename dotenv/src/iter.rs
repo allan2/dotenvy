@@ -2,8 +2,8 @@ use std::io::prelude::*;
 use std::io::{BufReader, Lines};
 use std::env;
 
-use errors::*;
-use parse;
+use crate::errors::*;
+use crate::parse;
 
 pub struct Iter<R> {
     lines: Lines<BufReader<R>>,

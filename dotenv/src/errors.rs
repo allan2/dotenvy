@@ -1,4 +1,5 @@
 use std::io;
+use failure::Fail;
 
 #[derive(Debug, Fail)]
 pub enum Error {

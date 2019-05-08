@@ -15,6 +15,7 @@ license = "MIT"
 homepage = "https://github.com/dotenv-rs/dotenv"
 repository = "https://github.com/dotenv-rs/dotenv"
 description = "A `dotenv` implementation for Rust"
+edition = "2018"
 
 [dependencies]
 dotenv_codegen_implementation = { version = "0.14", path = "../dotenv_codegen_implementation" }
