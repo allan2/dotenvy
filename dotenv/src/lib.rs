@@ -5,12 +5,6 @@
 //! file, if available, and mashes those with the actual environment variables
 //! provided by the operating system.
 
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate lazy_static;
-extern crate regex;
-
 mod parse;
 mod errors;
 mod iter;
@@ -22,9 +16,9 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::{Once, ONCE_INIT};
 
-pub use errors::*;
-use iter::Iter;
-use find::Finder;
+pub use crate::errors::*;
+use crate::iter::Iter;
+use crate::find::Finder;
 
 static START: Once = ONCE_INIT;
 

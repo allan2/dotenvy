@@ -2,8 +2,8 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
-use errors::*;
-use iter::Iter;
+use crate::errors::*;
+use crate::iter::Iter;
 
 pub struct Finder<'a> {
   filename:  &'a Path,

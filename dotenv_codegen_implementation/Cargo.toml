@@ -18,7 +18,7 @@ license = "MIT"
 homepage = "https://github.com/dotenv-rs/dotenv"
 repository = "https://github.com/dotenv-rs/dotenv"
 description = "A `dotenv` implementation for Rust"
-
+edition = "2018"
 
 [dependencies]
 proc-macro2 = "0.4"

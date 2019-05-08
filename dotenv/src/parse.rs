@@ -1,5 +1,6 @@
 use regex::{Captures, Regex};
-use errors::*;
+use crate::errors::*;
+use lazy_static::lazy_static;
 
 // for readability's sake
 pub type ParsedLine = Result<Option<(String, String)>>;
@@ -31,7 +32,7 @@ pub fn parse_line(line: &str) -> ParsedLine {
 
             match (key, value) {
                 (Some(k), Some(v)) => {
-                    let parsed_value = try!(parse_value(&v));
+                    let parsed_value = parse_value(&v)?;
 
                     Ok(Some((k, parsed_value)))
                 }
@@ -48,7 +49,7 @@ pub fn parse_line(line: &str) -> ParsedLine {
         })
 }
 
-fn named_string(captures: &Captures, name: &str) -> Option<String> {
+fn named_string(captures: &Captures<'_>, name: &str) -> Option<String> {
     captures
         .name(name)
         .and_then(|v| Some(v.as_str().to_owned()))
@@ -140,7 +141,7 @@ fn parse_value(input: &str) -> Result<String> {
 mod test {
     use super::*;
 
-    use iter::Iter;
+    use crate::iter::Iter;
 
     #[test]
     fn test_parse_line_env() {

@@ -8,6 +8,7 @@ readme = "README.md"
 keywords = ["environment", "env", "dotenv", "settings", "config"]
 license = "MIT"
 repository = "https://github.com/dotenv-rs/dotenv"
+edition = "2018"
 
 [[bin]]
 name = "dotenv"

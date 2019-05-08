@@ -1,12 +1,9 @@
-extern crate dotenv;
-extern crate tempfile;
-
 mod common;
 
 use std::env;
 use dotenv::*;
 
-use common::*;
+use crate::common::*;
 
 #[test]
 fn test_from_filename_iter() {
