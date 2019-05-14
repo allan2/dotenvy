@@ -4,7 +4,7 @@ proc-macro = true
 [package]
 
 name = "dotenv_codegen_implementation"
-version = "0.14.0"
+version = "0.15.0"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
@@ -25,4 +25,4 @@ proc-macro2 = "0.4"
 quote = "0.6"
 syn = "0.15"
 proc-macro-hack = "0.5"
-dotenv = { version = "0.14", path = "../dotenv" }
+dotenv = { version = "0.15", path = "../dotenv" }

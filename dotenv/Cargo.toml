@@ -1,6 +1,6 @@
 [package]
 name = "dotenv"
-version = "0.14.0"
+version = "0.15.0"
 authors = ["Noemi Lapresta <noemi.lapresta@gmail.com>", "Craig Hills <chills@gmail.com>", "Mike Piccolo <mfpiccolo@gmail.com>", "Alice Maz <alice@alicemaz.com>", "Sean Griffin <sean@seantheprogrammer.com>", "Adam Sharp <adam@sharplet.me>"]
 description = "A `dotenv` implementation for Rust"
 homepage = "https://github.com/dotenv-rs/dotenv"
