@@ -1,5 +1,8 @@
-rust-dotenv [![Build Status](https://dev.azure.com/dotenv-rs/dotenv/_apis/build/status/dotenv-rs.dotenv?branchName=master)](https://dev.azure.com/dotenv-rs/dotenv/_build/latest?definitionId=2&branchName=master)
-====
+# rust-dotenv 
+
+[![Build Status](https://dev.azure.com/dotenv-rs/dotenv/_apis/build/status/dotenv-rs.dotenv?branchName=master)](https://dev.azure.com/dotenv-rs/dotenv/_build/latest?definitionId=2&branchName=master)
+[![codecov](https://codecov.io/gh/dotenv-rs/dotenv/branch/master/graph/badge.svg)](https://codecov.io/gh/dotenv-rs/dotenv)
+[![Crates.io](https://img.shields.io/crates/v/dotenv.svg)](https://crates.io/crates/dotenv)
 
 **Achtung!** This is a v0.\* version! Expect bugs and issues all around.
 Submitting pull requests and issues is highly encouraged!
