@@ -1,11 +1,14 @@
-use regex::{Captures, Regex};
-use crate::errors::*;
+use std::collections::HashMap;
+
 use lazy_static::lazy_static;
+use regex::{Captures, Regex};
+
+use crate::errors::*;
 
 // for readability's sake
 pub type ParsedLine = Result<Option<(String, String)>>;
 
-pub fn parse_line(line: &str) -> ParsedLine {
+pub fn parse_line(line: &str, mut substitution_data: &mut HashMap<String, Option<String>>) -> ParsedLine {
     lazy_static! {
       static ref LINE_REGEX: Regex = Regex::new(r#"(?x)
         ^(
@@ -26,17 +29,19 @@ pub fn parse_line(line: &str) -> ParsedLine {
 
     LINE_REGEX
         .captures(line)
-        .map_or(Err(Error::LineParse(line.into()).into()), |captures| {
+        .map_or(Err(Error::LineParse(line.into())), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
 
             match (key, value) {
                 (Some(k), Some(v)) => {
-                    let parsed_value = parse_value(&v)?;
+                    let parsed_value = parse_value(&v, &mut substitution_data)?;
+                    substitution_data.insert(k.to_owned(), Some(parsed_value.to_owned()));
 
                     Ok(Some((k, parsed_value)))
                 }
                 (Some(k), None) => {
+                    substitution_data.insert(k.to_owned(), None);
                     // Empty string for value.
                     Ok(Some((k, String::from(""))))
                 }
@@ -55,7 +60,14 @@ fn named_string(captures: &Captures<'_>, name: &str) -> Option<String> {
         .and_then(|v| Some(v.as_str().to_owned()))
 }
 
-fn parse_value(input: &str) -> Result<String> {
+#[derive(Eq, PartialEq)]
+enum SubstitutionMode {
+    None,
+    Block,
+    EscapedBlock,
+}
+
+fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<String>>) -> Result<String> {
     let mut strong_quote = false; // '
     let mut weak_quote = false; // "
     let mut escaped = false;
@@ -63,6 +75,9 @@ fn parse_value(input: &str) -> Result<String> {
 
     //FIXME can this be done without yet another allocation per line?
     let mut output = String::new();
+
+    let mut substitution_mode = SubstitutionMode::None;
+    let mut substitution_name = String::new();
 
     for c in input.chars() {
         //the regex _should_ already trim whitespace off the end
@@ -77,51 +92,78 @@ fn parse_value(input: &str) -> Result<String> {
             } else {
                 return Err(Error::LineParse(input.to_owned()));
             }
+        } else if escaped {
+            //TODO I tried handling literal \n \r but various issues
+            //imo not worth worrying about until there's a use case
+            //(actually handling backslash 0x10 would be a whole other matter)
+            //then there's \v \f bell hex... etc
+            match c {
+                '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
+                _ => {
+                    return Err(Error::LineParse(input.to_owned()));
+                }
+            }
+
+            escaped = false;
         } else if strong_quote {
             if c == '\'' {
                 strong_quote = false;
             } else {
                 output.push(c);
             }
-        } else if weak_quote {
-            if escaped {
-                //TODO variable expansion perhaps
-                //not in this update but in the future
-                //$ requires escape anyway for conformance
-                //and so as not to make that future change breaking
-                //TODO I tried handling literal \n \r but various issues
-                //imo not worth worrying about until there's a use case
-                //(actually handling backslash 0x10 would be a whole other matter)
-                //then there's \v \f bell hex... etc
-                match c {
-                    '\\' | '"' | '$' => output.push(c),
-                    _ => return Err(Error::LineParse(input.to_owned())),
+        } else if substitution_mode != SubstitutionMode::None {
+            if c.is_alphanumeric() {
+                substitution_name.push(c);
+            } else {
+                match substitution_mode {
+                    SubstitutionMode::None => unreachable!(),
+                    SubstitutionMode::Block => {
+                        if c == '{' && substitution_name.is_empty() {
+                            substitution_mode = SubstitutionMode::EscapedBlock;
+                        } else {
+                            apply_substitution(substitution_data, &substitution_name.drain(..).collect::<String>(), &mut output);
+                            if c == '$' {
+                                substitution_mode = if !strong_quote && !escaped {
+                                    SubstitutionMode::Block
+                                } else {
+                                    SubstitutionMode::None
+                                }
+                            } else {
+                                substitution_mode = SubstitutionMode::None;
+                                output.push(c);
+                            }
+                        }
+                    }
+                    SubstitutionMode::EscapedBlock => {
+                        if c == '}' {
+                            substitution_mode = SubstitutionMode::None;
+                            apply_substitution(substitution_data, &substitution_name.drain(..).collect::<String>(), &mut output);
+                        } else {
+                            substitution_name.push(c);
+                        }
+                    }
                 }
-
-                escaped = false;
-            } else if c == '"' {
+            }
+        } else if c == '$' {
+            substitution_mode = if !strong_quote && !escaped {
+                SubstitutionMode::Block
+            } else {
+                SubstitutionMode::None
+            }
+        } else if weak_quote {
+            if c == '"' {
                 weak_quote = false;
             } else if c == '\\' {
                 escaped = true;
             } else {
                 output.push(c);
             }
-        } else if escaped {
-            match c {
-                '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
-                _ => return Err(Error::LineParse(input.to_owned())),
-            }
-
-            escaped = false;
         } else if c == '\'' {
             strong_quote = true;
         } else if c == '"' {
             weak_quote = true;
         } else if c == '\\' {
             escaped = true;
-        } else if c == '$' {
-            //variable interpolation goes here later
-            return Err(Error::LineParse(input.to_owned()));
         } else if c == ' ' || c == '\t' {
             expecting_end = true;
         } else {
@@ -130,18 +172,28 @@ fn parse_value(input: &str) -> Result<String> {
     }
 
     //XXX also fail if escaped? or...
-    if strong_quote || weak_quote {
-        Err(Error::LineParse(input.to_owned()).into())
+    if substitution_mode == SubstitutionMode::EscapedBlock || strong_quote || weak_quote {
+        Err(Error::LineParse(input.to_owned()))
     } else {
+        apply_substitution(substitution_data, &substitution_name.drain(..).collect::<String>(), &mut output);
         Ok(output)
     }
 }
 
+fn apply_substitution(substitution_data: &mut HashMap<String, Option<String>>, substitution_name: &str, output: &mut String) {
+    if let Ok(environment_value) = std::env::var(substitution_name) {
+        output.push_str(&environment_value);
+    } else {
+        let stored_value = substitution_data.get(substitution_name).unwrap_or(&None).to_owned();
+        output.push_str(&stored_value.unwrap_or_else(String::new));
+    };
+}
+
 #[cfg(test)]
 mod test {
-    use super::*;
-
     use crate::iter::Iter;
+
+    use super::*;
 
     #[test]
     fn test_parse_line_env() {
@@ -238,14 +290,214 @@ KEY6="lol" #well you see when I say lol wh
     fn test_parse_value_escapes_invalid() {
         let actual_iter = Iter::new(r#"
 KEY=my uncool value
-KEY2=$notcool
-KEY3="why
-KEY4='please stop''
-KEY5=h\8u
+KEY2="why
+KEY3='please stop''
+KEY4=h\8u
 "#.as_bytes());
 
         for actual in actual_iter {
             assert!(actual.is_err());
+        }
+    }
+}
+
+#[cfg(test)]
+mod variable_substitution_tests {
+    use crate::errors::Error::LineParse;
+    use crate::iter::Iter;
+
+    fn assert_parsed_string(input_string: &str, expected_parse_result: Vec<(&str, &str)>) {
+        let actual_iter = Iter::new(input_string.as_bytes());
+        let expected_count = &expected_parse_result.len();
+
+        let expected_iter = expected_parse_result.into_iter()
+            .map(|(key, value)| (key.to_string(), value.to_string()));
+
+        let mut count = 0;
+        for (expected, actual) in expected_iter.zip(actual_iter) {
+            assert!(actual.is_ok());
+            assert_eq!(expected, actual.ok().unwrap());
+            count += 1;
+        }
+
+        assert_eq!(count, *expected_count);
+    }
+
+    #[test]
+    fn variable_in_parenthesis_surrounded_by_quotes() {
+        assert_parsed_string(
+            r#"
+            KEY=test
+            KEY1="${KEY}"
+            "#,
+            vec![
+                ("KEY", "test"),
+                ("KEY1", "test"),
+            ],
+        );
+    }
+
+    #[test]
+    fn substitute_undefined_variables_to_empty_string() {
+        assert_parsed_string(
+            r#"KEY=">$KEY1<>${KEY2}<""#,
+            vec![
+                ("KEY", "><><"),
+            ],
+        );
+    }
+
+    #[test]
+    fn do_not_substitute_variables_with_dollar_escaped() {
+        assert_parsed_string(
+            "KEY=>\\$KEY1<>\\${KEY2}<",
+            vec![
+                ("KEY", ">$KEY1<>${KEY2}<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn do_not_substitute_variables_in_weak_quotes_with_dollar_escaped() {
+        assert_parsed_string(
+            r#"KEY=">\$KEY1<>\${KEY2}<""#,
+            vec![
+                ("KEY", ">$KEY1<>${KEY2}<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn do_not_substitute_variables_in_strong_quotes() {
+        assert_parsed_string(
+            "KEY='>${KEY1}<>$KEY2<'",
+            vec![
+                ("KEY", ">${KEY1}<>$KEY2<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn same_variable_reused() {
+        assert_parsed_string(
+            r#"
+    KEY=VALUE
+    KEY1=$KEY$KEY
+    "#,
+            vec![
+                ("KEY", "VALUE"),
+                ("KEY1", "VALUEVALUE"),
+            ],
+        );
+    }
+
+    #[test]
+    fn recursive_substitution() {
+        assert_parsed_string(
+            r#"
+            KEY=${KEY1}+KEY_VALUE
+            KEY1=${KEY}+KEY1_VALUE
+            "#,
+            vec![
+                ("KEY", "+KEY_VALUE"),
+                ("KEY1", "+KEY_VALUE+KEY1_VALUE"),
+            ],
+        );
+    }
+
+    #[test]
+    fn variable_without_parenthesis_is_substituted_before_separators() {
+        assert_parsed_string(
+            r#"
+            KEY1=test_user
+            KEY1_1=test_user_with_separator
+            KEY=">$KEY1_1<>$KEY1}<>$KEY1{<"
+            "#,
+            vec![
+                ("KEY1", "test_user"),
+                ("KEY1_1", "test_user_with_separator"),
+                ("KEY", ">test_user_1<>test_user}<>test_user{<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn substitute_variable_from_env_variable() {
+        std::env::set_var("KEY11", "test_user_env");
+
+        assert_parsed_string(
+            r#"KEY=">${KEY11}<""#,
+            vec![
+                ("KEY", ">test_user_env<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn substitute_variable_env_variable_overrides_dotenv_in_substitution() {
+        std::env::set_var("KEY11", "test_user_env");
+
+        assert_parsed_string(
+            r#"
+    KEY11=test_user
+    KEY=">${KEY11}<"
+    "#,
+            vec![
+                ("KEY11", "test_user"),
+                ("KEY", ">test_user_env<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn consequent_substitutions() {
+        assert_parsed_string(
+            r#"
+    KEY1=test_user
+    KEY2=$KEY1_2
+    KEY=>${KEY1}<>${KEY2}<
+    "#,
+            vec![
+                ("KEY1", "test_user"),
+                ("KEY2", "test_user_2"),
+                ("KEY", ">test_user<>test_user_2<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn consequent_substitutions_with_one_missing() {
+        assert_parsed_string(
+            r#"
+    KEY2=$KEY1_2
+    KEY=>${KEY1}<>${KEY2}<
+    "#,
+            vec![
+                ("KEY2", "_2"),
+                ("KEY", "><>_2<"),
+            ],
+        );
+    }
+
+    #[test]
+    fn should_not_parse_unfinished_substitutions() {
+        let parsed_values: Vec<_> = Iter::new(r#"
+    KEY=VALUE
+    KEY1=>${KEY{<
+    "#.as_bytes()).collect();
+
+        assert_eq!(parsed_values.len(), 2);
+
+        if let Ok(first_line) = &parsed_values[0] {
+            assert_eq!(first_line, &(String::from("KEY"), String::from("VALUE")))
+        } else {
+            assert!(false, "Expected the first value to be parsed")
+        }
+
+        if let Err(LineParse(second_value)) = &parsed_values[1] {
+            assert_eq!(second_value, &String::from(">${KEY{<"))
+        } else {
+            assert!(false, "Expected the second value not to be parsed")
         }
     }
 }
