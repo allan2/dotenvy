@@ -79,7 +79,8 @@ pub fn vars() -> Vars {
 /// dotenv::from_path(my_path.as_path());
 /// ```
 pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
-    from_path_iter(path)?.load()
+    let iter = Iter::new(File::open(path).map_err(Error::Io)?);
+    iter.load()
 }
 
 /// Like `from_path`, but returns an iterator over variables instead of loading into environment.
@@ -99,6 +100,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 ///   println!("{}={}", key, val);
 /// }
 /// ```
+#[deprecated(since = "0.14.1", note = "please use `from_path` in conjunction with `var` instead")]
 pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
     Ok(Iter::new(File::open(path).map_err(Error::Io)?))
 }
@@ -144,6 +146,7 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 ///   println!("{}={}", key, val);
 /// }
 /// ```
+#[deprecated(since = "0.14.1", note = "please use `from_path` in conjunction with `var` instead")]
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
     Ok(iter)
@@ -174,6 +177,7 @@ pub fn dotenv() -> Result<PathBuf> {
 ///   println!("{}={}", key, val);
 /// }
 /// ```
+#[deprecated(since = "0.14.1", note = "please use `from_path` in conjunction with `var` instead")]
 pub fn dotenv_iter() -> Result<iter::Iter<File>> {
     let (_, iter) = Finder::new().find()?;
     Ok(iter)
