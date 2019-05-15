@@ -6,7 +6,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
-    LineParse(String),
+    LineParse(String, usize),
     Io(io::Error),
     EnvVar(std::env::VarError),
     #[doc(hidden)]
@@ -37,7 +37,7 @@ impl fmt::Display for Error {
         match self {
             Error::Io(err) => write!(fmt, "{}", err),
             Error::EnvVar(err) => write!(fmt, "{}", err),
-            Error::LineParse(line) => write!(fmt, "Error parsing line: '{}'", line),
+            Error::LineParse(line, error_index) => write!(fmt, "Error parsing line: '{}', error at line index: {}", line, error_index),
             _ => unreachable!(),
         }
     }
@@ -46,7 +46,7 @@ impl fmt::Display for Error {
 #[cfg(test)]
 mod test {
     use std::error::Error as StdError;
-    
+
     use super::*;
 
     #[test]
@@ -65,7 +65,7 @@ mod test {
 
     #[test]
     fn test_lineparse_error_source() {
-        let err = Error::LineParse("test line".to_string());
+        let err = Error::LineParse("test line".to_string(), 2);
         assert!(err.source().is_none());
     }
 
@@ -103,8 +103,8 @@ mod test {
 
     #[test]
     fn test_lineparse_error_display() {
-        let err = Error::LineParse("test line".to_string());
+        let err = Error::LineParse("test line".to_string(), 2);
         let err_desc = format!("{}", err);
-        assert_eq!("Error parsing line: 'test line'", err_desc);
+        assert_eq!("Error parsing line: 'test line', error at line index: 2", err_desc);
     }
 }

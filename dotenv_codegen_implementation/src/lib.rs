@@ -2,21 +2,17 @@ extern crate proc_macro;
 
 use std::env;
 
-use syn::punctuated::Punctuated;
-use syn::parse::Parser;
-use syn::Token;
 use proc_macro::TokenStream;
 use proc_macro_hack::proc_macro_hack;
 use quote::quote;
+use syn::parse::Parser;
+use syn::punctuated::Punctuated;
+use syn::Token;
 
 #[proc_macro_hack]
 pub fn dotenv(input: TokenStream) -> TokenStream {
     if let Err(err) = dotenv::dotenv() {
-        if let dotenv::Error::LineParse(ref line) = err {
-            panic!("Error parsing .env file: {}", line);
-        } else {
-            panic!("Error loading .env file: {}", err);
-        }
+        panic!("Error loading .env file: {}", err);
     }
 
     // Either everything was fine, or we didn't find an .env file (which we ignore)

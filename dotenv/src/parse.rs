@@ -29,7 +29,7 @@ pub fn parse_line(line: &str, mut substitution_data: &mut HashMap<String, Option
 
     LINE_REGEX
         .captures(line)
-        .map_or(Err(Error::LineParse(line.into())), |captures| {
+        .map_or(Err(Error::LineParse(line.into(), 0)), |captures| {
             let key = named_string(&captures, "key");
             let value = named_string(&captures, "value");
 
@@ -79,7 +79,7 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
     let mut substitution_mode = SubstitutionMode::None;
     let mut substitution_name = String::new();
 
-    for c in input.chars() {
+    for (index, c) in input.chars().enumerate() {
         //the regex _should_ already trim whitespace off the end
         //expecting_end is meant to permit: k=v #comment
         //without affecting: k=v#comment
@@ -90,7 +90,7 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
             } else if c == '#' {
                 break;
             } else {
-                return Err(Error::LineParse(input.to_owned()));
+                return Err(Error::LineParse(input.to_owned(), index));
             }
         } else if escaped {
             //TODO I tried handling literal \n \r but various issues
@@ -100,7 +100,7 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
             match c {
                 '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
                 _ => {
-                    return Err(Error::LineParse(input.to_owned()));
+                    return Err(Error::LineParse(input.to_owned(), index));
                 }
             }
 
@@ -173,7 +173,8 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
 
     //XXX also fail if escaped? or...
     if substitution_mode == SubstitutionMode::EscapedBlock || strong_quote || weak_quote {
-        Err(Error::LineParse(input.to_owned()))
+        let value_length = input.len();
+        Err(Error::LineParse(input.to_owned(), if value_length == 0 { 0 } else { value_length - 1 }))
     } else {
         apply_substitution(substitution_data, &substitution_name.drain(..).collect::<String>(), &mut output);
         Ok(output)
@@ -303,7 +304,6 @@ KEY4=h\8u
 
 #[cfg(test)]
 mod variable_substitution_tests {
-    use crate::errors::Error::LineParse;
     use crate::iter::Iter;
 
     fn assert_parsed_string(input_string: &str, expected_parse_result: Vec<(&str, &str)>) {
@@ -478,13 +478,21 @@ mod variable_substitution_tests {
             ],
         );
     }
+}
+
+#[cfg(test)]
+mod error_tests {
+    use crate::errors::Error::LineParse;
+    use crate::iter::Iter;
 
     #[test]
     fn should_not_parse_unfinished_substitutions() {
-        let parsed_values: Vec<_> = Iter::new(r#"
+        let wrong_value = ">${KEY{<";
+
+        let parsed_values: Vec<_> = Iter::new(format!(r#"
     KEY=VALUE
-    KEY1=>${KEY{<
-    "#.as_bytes()).collect();
+    KEY1={}
+    "#, wrong_value).as_bytes()).collect();
 
         assert_eq!(parsed_values.len(), 2);
 
@@ -494,8 +502,39 @@ mod variable_substitution_tests {
             assert!(false, "Expected the first value to be parsed")
         }
 
-        if let Err(LineParse(second_value)) = &parsed_values[1] {
-            assert_eq!(second_value, &String::from(">${KEY{<"))
+        if let Err(LineParse(second_value, index)) = &parsed_values[1] {
+            assert_eq!(second_value, wrong_value);
+            assert_eq!(*index, wrong_value.len() - 1)
+        } else {
+            assert!(false, "Expected the second value not to be parsed")
+        }
+    }
+
+    #[test]
+    fn should_not_parse_illegal_format() {
+        let wrong_format = r"<><><>";
+        let parsed_values: Vec<_> = Iter::new(wrong_format.as_bytes()).collect();
+
+        assert_eq!(parsed_values.len(), 1);
+
+        if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
+            assert_eq!(wrong_value, wrong_format);
+            assert_eq!(*index, 0)
+        } else {
+            assert!(false, "Expected the second value not to be parsed")
+        }
+    }
+
+    #[test]
+    fn should_not_parse_illegal_escape() {
+        let wrong_escape = r">\f<";
+        let parsed_values: Vec<_> = Iter::new(format!("VALUE={}", wrong_escape).as_bytes()).collect();
+
+        assert_eq!(parsed_values.len(), 1);
+
+        if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
+            assert_eq!(wrong_value, wrong_escape);
+            assert_eq!(*index, wrong_escape.find("\\").unwrap() + 1)
         } else {
             assert!(false, "Expected the second value not to be parsed")
         }
