@@ -99,6 +99,7 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
             //then there's \v \f bell hex... etc
             match c {
                 '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
+                'n' => output.push('\n'),  // handle \n case
                 _ => {
                     return Err(Error::LineParse(input.to_owned(), index));
                 }
