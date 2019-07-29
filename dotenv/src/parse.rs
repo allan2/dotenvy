@@ -93,7 +93,7 @@ fn parse_value(input: &str, substitution_data: &mut HashMap<String, Option<Strin
                 return Err(Error::LineParse(input.to_owned(), index));
             }
         } else if escaped {
-            //TODO I tried handling literal \n \r but various issues
+            //TODO I tried handling literal \r but various issues
             //imo not worth worrying about until there's a use case
             //(actually handling backslash 0x10 would be a whole other matter)
             //then there's \v \f bell hex... etc
@@ -199,6 +199,7 @@ mod test {
 
     #[test]
     fn test_parse_line_env() {
+        // Note 5 spaces after 'KEY8=' below
         let actual_iter = Iter::new(r#"
 KEY=1
 KEY2="2"
@@ -246,6 +247,7 @@ export   SHELL_LOVER=1
 
     #[test]
     fn test_parse_line_invalid() {
+        // Note 4 spaces after 'invalid' below
         let actual_iter = Iter::new(r#"
   invalid    
 KEY =val
@@ -270,6 +272,7 @@ KEY3="awesome stuff \"mang\""
 KEY4='sweet $\fgs'\''fds'
 KEY5="'\"yay\\"\ "stuff"
 KEY6="lol" #well you see when I say lol wh
+KEY7="line 1\nline 2"
 "#.as_bytes());
 
         let expected_iter = vec![
@@ -279,6 +282,7 @@ KEY6="lol" #well you see when I say lol wh
             ("KEY4", r#"sweet $\fgs'fds"#),
             ("KEY5", r#"'"yay\ stuff"#),
             ("KEY6", "lol"),
+            ("KEY7", "line 1\nline 2"),
         ].into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string()));
 
