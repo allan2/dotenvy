@@ -14,12 +14,12 @@ pub fn parse_line(line: &str, mut substitution_data: &mut HashMap<String, Option
         ^(
           \s*
           (
-            \#.*|                           # A comment, or...
-            \s*|                            # ...an empty string, or...
-            (export\s+)?                    # ...(optionally preceded by "export")...
-            (?P<key>[A-Za-z_][A-Za-z0-9_]*) # ...a key,...
-            =                               # ...then an equal sign,...
-            (?P<value>.+?)?                 # ...and then its corresponding value.
+            \#.*|                             # A comment, or...
+            \s*|                              # ...an empty string, or...
+            (export\s+)?                      # ...(optionally preceded by "export")...
+            (?P<key>[A-Za-z_][A-Za-z0-9_.]*)  # ...a key,...
+            =                                 # ...then an equal sign,...
+            (?P<value>.+?)?                   # ...and then its corresponding value.
           )\s*
         )
         [\r\n]*
@@ -397,6 +397,19 @@ mod variable_substitution_tests {
     }
 
     #[test]
+    fn with_dot() {
+        assert_parsed_string(
+            r#"
+    KEY.Value=VALUE
+    "#,
+            vec![
+                ("KEY.Value", "VALUE"),
+            ],
+        );
+    }
+
+
+    #[test]
     fn recursive_substitution() {
         assert_parsed_string(
             r#"
@@ -510,6 +523,22 @@ mod error_tests {
         if let Err(LineParse(second_value, index)) = &parsed_values[1] {
             assert_eq!(second_value, wrong_value);
             assert_eq!(*index, wrong_value.len() - 1)
+        } else {
+            assert!(false, "Expected the second value not to be parsed")
+        }
+    }
+
+    #[test]
+    fn should_not_allow_dot_as_first_character_of_key() {
+        let wrong_key_value = ".Key=VALUE";
+
+        let parsed_values: Vec<_> = Iter::new(wrong_key_value.as_bytes()).collect();
+
+        assert_eq!(parsed_values.len(), 1);
+
+        if let Err(LineParse(second_value, index)) = &parsed_values[0] {
+            assert_eq!(second_value, wrong_key_value);
+            assert_eq!(*index, 0)
         } else {
             assert!(false, "Expected the second value not to be parsed")
         }
