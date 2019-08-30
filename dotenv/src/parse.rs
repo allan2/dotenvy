@@ -1,63 +1,112 @@
 use std::collections::HashMap;
 
-use lazy_static::lazy_static;
-use regex::{Captures, Regex};
-
 use crate::errors::*;
 
 // for readability's sake
 pub type ParsedLine = Result<Option<(String, String)>>;
 
-pub fn parse_line(line: &str, mut substitution_data: &mut HashMap<String, Option<String>>) -> ParsedLine {
-    lazy_static! {
-      static ref LINE_REGEX: Regex = Regex::new(r#"(?x)
-        ^(
-          \s*
-          (
-            \#.*|                             # A comment, or...
-            \s*|                              # ...an empty string, or...
-            (export\s+)?                      # ...(optionally preceded by "export")...
-            (?P<key>[A-Za-z_][A-Za-z0-9_.]*)  # ...a key,...
-            =                                 # ...then an equal sign,...
-            (?P<value>.+?)?                   # ...and then its corresponding value.
-          )\s*
-        )
-        [\r\n]*
-        $
-      "#).unwrap();
-    }
-
-    LINE_REGEX
-        .captures(line)
-        .map_or(Err(Error::LineParse(line.into(), 0)), |captures| {
-            let key = named_string(&captures, "key");
-            let value = named_string(&captures, "value");
-
-            match (key, value) {
-                (Some(k), Some(v)) => {
-                    let parsed_value = parse_value(&v, &mut substitution_data)?;
-                    substitution_data.insert(k.to_owned(), Some(parsed_value.to_owned()));
-
-                    Ok(Some((k, parsed_value)))
-                }
-                (Some(k), None) => {
-                    substitution_data.insert(k.to_owned(), None);
-                    // Empty string for value.
-                    Ok(Some((k, String::from(""))))
-                }
-                _ => {
-                    // If there's no key, but capturing did not
-                    // fail, we're dealing with a comment
-                    Ok(None)
-                }
-            }
-        })
+pub fn parse_line(line: &str, substitution_data: &mut HashMap<String, Option<String>>) -> ParsedLine {
+    let mut parser = LineParser::new(line, substitution_data);
+    parser.parse_line()
 }
 
-fn named_string(captures: &Captures<'_>, name: &str) -> Option<String> {
-    captures
-        .name(name)
-        .and_then(|v| Some(v.as_str().to_owned()))
+struct LineParser<'a> {
+    original_line: &'a str,
+    substitution_data: &'a mut HashMap<String, Option<String>>,
+    line: &'a str,
+    pos: usize,
+}
+
+impl<'a> LineParser<'a> {
+    fn new(
+        line: &'a str,
+        substitution_data: &'a mut HashMap<String, Option<String>>,
+    ) -> LineParser<'a> {
+        LineParser {
+            original_line: line,
+            substitution_data,
+            line: line.trim_end(), // we don’t want trailing whitespace
+            pos: 0,
+        }
+    }
+
+    fn err(&self) -> Error {
+        return Error::LineParse(self.original_line.into(), self.pos);
+    }
+
+    fn parse_line(&mut self) -> ParsedLine {
+        self.skip_whitespace();
+        // if its an empty line or a comment, skip it
+        if self.line.is_empty() || self.line.starts_with('#') {
+            return Ok(None);
+        }
+
+        let mut key = self.parse_key()?;
+        self.skip_whitespace();
+
+        // export can be either an optional prefix or a key itself
+        if key == "export" {
+            // here we check for an optional `=`, below we throw directly when it’s not found.
+            if self.expect_equal().is_err() {
+                key = self.parse_key()?;
+                self.skip_whitespace();
+                self.expect_equal()?;
+            }
+        } else {
+            self.expect_equal()?;
+        }
+        self.skip_whitespace();
+
+        if self.line.is_empty() || self.line.starts_with('#') {
+            self.substitution_data.insert(key.clone(), None);
+            return Ok(Some((key, String::new())));
+        }
+
+        let parsed_value = parse_value(self.line, &mut self.substitution_data)?;
+        self.substitution_data
+            .insert(key.clone(), Some(parsed_value.clone()));
+
+        return Ok(Some((key, parsed_value)));
+    }
+
+    fn parse_key(&mut self) -> Result<String> {
+        if !self
+            .line
+            .starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
+        {
+            return Err(self.err());
+        }
+        let index = match self
+            .line
+            .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '.'))
+        {
+            Some(index) => index,
+            None => self.line.len(),
+        };
+        self.pos += index;
+        let key = String::from(&self.line[..index]);
+        self.line = &self.line[index..];
+        Ok(key)
+    }
+
+    fn expect_equal(&mut self) -> Result<()> {
+        if !self.line.starts_with("=") {
+            return Err(self.err());
+        }
+        self.line = &self.line[1..];
+        self.pos += 1;
+        Ok(())
+    }
+
+    fn skip_whitespace(&mut self) {
+        if let Some(index) = self.line.find(|c: char| !c.is_whitespace()) {
+            self.pos += index;
+            self.line = &self.line[index..];
+        } else {
+            self.pos += self.line.len();
+            self.line = "";
+        }
+    }
 }
 
 #[derive(Eq, PartialEq)]
@@ -210,6 +259,9 @@ KEY6=s\ ix
 KEY7=
 KEY8=     
 KEY9=   # foo
+KEY10  ="whitespace before ="
+KEY11=    "whitespace after ="
+export="export as key"
 export   SHELL_LOVER=1
 "#.as_bytes());
 
@@ -223,6 +275,9 @@ export   SHELL_LOVER=1
             ("KEY7", ""),
             ("KEY8", ""),
             ("KEY9", ""),
+            ("KEY10", "whitespace before ="),
+            ("KEY11", "whitespace after ="),
+            ("export", "export as key"),
             ("SHELL_LOVER", "1"),
         ].into_iter()
             .map(|(key, value)| (key.to_string(), value.to_string()));
@@ -234,7 +289,7 @@ export   SHELL_LOVER=1
             count += 1;
         }
 
-        assert_eq!(count, 10);
+        assert_eq!(count, 13);
     }
 
     #[test]
@@ -250,8 +305,6 @@ export   SHELL_LOVER=1
         // Note 4 spaces after 'invalid' below
         let actual_iter = Iter::new(r#"
   invalid    
-KEY =val
-KEY2= val
 very bacon = yes indeed
 =value"#.as_bytes());
 
@@ -260,7 +313,7 @@ very bacon = yes indeed
             assert!(actual.is_err());
             count += 1;
         }
-        assert_eq!(count, 5);
+        assert_eq!(count, 3);
     }
 
     #[test]
