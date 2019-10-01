@@ -21,8 +21,8 @@ description = "A `dotenv` implementation for Rust"
 edition = "2018"
 
 [dependencies]
-proc-macro2 = "0.4"
-quote = "0.6"
-syn = "0.15"
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
 proc-macro-hack = "0.5"
 dotenv = { version = "0.15", path = "../dotenv" }
