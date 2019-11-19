@@ -14,13 +14,13 @@ use std::env::{self, Vars};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::{Once, ONCE_INIT};
+use std::sync::{Once};
 
 pub use crate::errors::*;
 use crate::iter::Iter;
 use crate::find::Finder;
 
-static START: Once = ONCE_INIT;
+static START: Once = Once::new();
 
 /// After loading the dotenv file, fetches the environment variable key from the current process.
 ///
