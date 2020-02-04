@@ -38,11 +38,11 @@ jobs:
         cargo kcov --print-install-kcov-sh | sh
     displayName: Install kcov
     condition: and(eq(variables['Agent.OS'], 'Linux'), eq(variables['Agent.JobName'], 'Linux stable'))
-  - script: cargo install --git https://github.com/dgriffen/cargo-junit --branch temp-patch
+  - script: cargo install cargo2junit
     displayName: Install cargo junit formatter
   - script: cargo build
     displayName: Build
-  - script: cargo junit --name testResults.xml
+  - script: cargo test -- -Z unstable-options --format json | cargo2junit > testResults.xml
     displayName: Build and run tests
   - task: PublishTestResults@2
     inputs:
