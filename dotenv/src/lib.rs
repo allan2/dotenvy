@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Once};
 
 pub use crate::errors::*;
-use crate::iter::Iter;
+use crate::iter::{Iter, DistinctEnvIter};
 use crate::find::Finder;
 
 static START: Once = Once::new();
@@ -120,10 +120,15 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// use dotenv;
 /// dotenv::from_filename(".env").ok();
 /// ```
-pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
-    let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
-    iter.load()?;
-    Ok(path)
+pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<Vec<PathBuf>> {
+    let results = Finder::new().filename(filename.as_ref()).find()?;
+    results
+        .into_iter()
+        .map(|(path, iter)| -> Result<PathBuf> {
+            iter.load()?;
+            Ok(path)
+        })
+        .collect()
 }
 
 /// Like `from_filename`, but returns an iterator over variables instead of loading into environment.
@@ -147,9 +152,13 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// }
 /// ```
 #[deprecated(since = "0.14.1", note = "please use `from_path` in conjunction with `var` instead")]
-pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
-    let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
-    Ok(iter)
+pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<impl Iterator<Item = Result<(String, String)>>> {
+    let results = Finder::new().filename(filename.as_ref()).find()?;
+    Ok(DistinctEnvIter::new(results
+        .into_iter()
+        .flat_map(|(_, iter)| {
+            iter
+        })))
 }
 
 /// This is usually what you want.
@@ -161,9 +170,14 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// dotenv::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<PathBuf> {
-    let (path, iter) = Finder::new().find()?;
-    iter.load()?;
-    Ok(path)
+    let results = Finder::new().find()?;
+    results
+        .into_iter()
+        .map(|(path, iter)| -> Result<PathBuf> {
+            iter.load()?;
+            Ok(path)
+        })
+        .collect()
 }
 
 /// Like `dotenv`, but returns an iterator over variables instead of loading into environment.
@@ -178,7 +192,12 @@ pub fn dotenv() -> Result<PathBuf> {
 /// }
 /// ```
 #[deprecated(since = "0.14.1", note = "please use `from_path` in conjunction with `var` instead")]
-pub fn dotenv_iter() -> Result<iter::Iter<File>> {
-    let (_, iter) = Finder::new().find()?;
-    Ok(iter)
+pub fn dotenv_iter() -> Result<impl Iterator<Item = Result<(String, String)>>> {
+    let results = Finder::new().find()?;
+    
+    Ok(DistinctEnvIter::new(results
+        .into_iter()
+        .flat_map(|(_, iter)| {
+            iter
+        })))
 }

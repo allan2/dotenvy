@@ -21,32 +21,39 @@ impl<'a> Finder<'a> {
         self
     }
 
-    pub fn find(self) -> Result<(PathBuf, Iter<File>)> {
-        let path = find(&env::current_dir().map_err(Error::Io)?, self.filename)?;
-        let file = File::open(&path).map_err(Error::Io)?;
-        let iter = Iter::new(file);
-        Ok((path, iter))
+    pub fn find(self) -> Result<Vec<(PathBuf, Iter<File>)>> {
+        let paths = find(&env::current_dir().map_err(Error::Io)?, self.filename)?;
+
+        paths
+            .into_iter()
+            .map(|path| match File::open(&path) {
+                Ok(file) => Ok((path, Iter::new(file))),
+                Err(err) => Err(Error::Io(err))
+            })
+            .collect::<Result<Vec<_>>>()
     }
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
-pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
-    let candidate = directory.join(filename);
+pub fn find(directory: &Path, filename: &Path) -> Result<Vec<PathBuf>> {
 
-    match fs::metadata(&candidate) {
-        Ok(metadata) => if metadata.is_file() {
-            return Ok(candidate);
-        },
-        Err(error) => {
-            if error.kind() != io::ErrorKind::NotFound {
-                return Err(Error::Io(error));
-            }
-        }
+    let results = directory
+        .ancestors()
+        .map(|path| path.join(filename))
+        .filter_map(|candidate| match fs::metadata(&candidate) {
+            Ok(metadata) if metadata.is_file() => {
+                Some(Ok(candidate))
+            },
+            Err(error) if error.kind() != io::ErrorKind::NotFound => {
+                Some(Err(Error::Io(error)))
+            },
+            _ => None,
+        })
+        .collect::<Result<Vec<_>>>()?;
+    
+    if results.is_empty() {
+        return Err(Error::Io(io::Error::new(io::ErrorKind::NotFound, "path not found")));
     }
 
-    if let Some(parent) = directory.parent() {
-        find(parent, filename)
-    } else {
-        Err(Error::Io(io::Error::new(io::ErrorKind::NotFound, "path not found")))
-    }
+    Ok(results)
 }

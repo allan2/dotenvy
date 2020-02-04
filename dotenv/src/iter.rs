@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::collections::HashMap;
 use std::env;
 use std::io::{BufReader, Lines};
@@ -46,6 +47,37 @@ impl<R: Read> Iterator for Iter<R> {
                 Ok(Some(result)) => return Some(Ok(result)),
                 Ok(None) => {}
                 Err(err) => return Some(Err(err)),
+            }
+        }
+    }
+}
+
+pub struct DistinctEnvIter<T> {
+    seen_keys: HashSet<String>,
+    inner: T,
+}
+
+impl<T: Iterator<Item = Result<(String, String)>>> DistinctEnvIter<T> {
+    pub fn new(inner_iter: T) -> DistinctEnvIter<T> {
+        DistinctEnvIter {
+            seen_keys: HashSet::new(),
+            inner: inner_iter
+        }
+    }
+}
+
+impl<T: Iterator<Item = Result<(String, String)>>> Iterator for DistinctEnvIter<T> {
+    type Item = Result<(String, String)>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.inner.next() {
+                Some(Ok((key, value))) if !self.seen_keys.contains(&key) => {
+                    self.seen_keys.insert(key.clone());
+                    return Some(Ok((key, value)));
+                },
+                Some(Ok(_)) => continue,
+                otherwise => return otherwise,
             }
         }
     }
