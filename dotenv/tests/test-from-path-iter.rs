@@ -6,7 +6,6 @@ use dotenv::*;
 use crate::common::*;
 
 #[test]
-#[allow(deprecated)]
 fn test_from_path_iter() {
     let dir = make_test_dotenv().unwrap();
 
