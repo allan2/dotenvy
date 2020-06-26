@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::env;
-use std::io::{BufReader, Lines};
 use std::io::prelude::*;
+use std::io::{BufReader, Lines};
 
 use crate::errors::*;
 use crate::parse;

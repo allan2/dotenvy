@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use std::env;
+use std::env::{self, VarError};
 
 use proc_macro::TokenStream;
 use proc_macro_hack::proc_macro_hack;
@@ -20,8 +20,8 @@ pub fn dotenv(input: TokenStream) -> TokenStream {
 }
 
 fn expand_env(input_raw: TokenStream) -> TokenStream {
-
-    let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated.parse(input_raw)
+    let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated
+        .parse(input_raw)
         .expect("expected macro to be called with a comma-separated list of string literals");
 
     let mut iter = args.iter();
@@ -33,7 +33,7 @@ fn expand_env(input_raw: TokenStream) -> TokenStream {
 
     let err_msg = match iter.next() {
         Some(lit) => lit.value(),
-        None => format!("environment variable `{}` not defined", var_name).into(),
+        None => format!("environment variable `{}` not defined", var_name),
     };
 
     if iter.next().is_some() {
@@ -42,6 +42,6 @@ fn expand_env(input_raw: TokenStream) -> TokenStream {
 
     match env::var(var_name) {
         Ok(val) => quote!(#val).into(),
-        Err(_) => panic!("{}", err_msg),
+        Err(VarError::NotPresent) | Err(VarError::NotUnicode(_)) => panic!("{}", err_msg),
     }
 }
