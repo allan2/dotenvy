@@ -1,6 +1,6 @@
 # rust-dotenv 
 
-[![Build Status](https://dev.azure.com/dotenv-rs/dotenv/_apis/build/status/dotenv-rs.dotenv?branchName=master)](https://dev.azure.com/dotenv-rs/dotenv/_build/latest?definitionId=2&branchName=master)
+![CI](https://github.com/dotenv-rs/dotenv/workflows/CI/badge.svg)
 [![codecov](https://codecov.io/gh/dotenv-rs/dotenv/branch/master/graph/badge.svg)](https://codecov.io/gh/dotenv-rs/dotenv)
 [![Crates.io](https://img.shields.io/crates/v/dotenv.svg)](https://crates.io/crates/dotenv)
 
