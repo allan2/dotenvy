@@ -1,7 +1,7 @@
 mod common;
 
-use std::{env, fs};
 use dotenv::*;
+use std::{env, fs};
 
 use crate::common::*;
 

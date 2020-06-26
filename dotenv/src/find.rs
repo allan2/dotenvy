@@ -6,7 +6,7 @@ use crate::errors::*;
 use crate::iter::Iter;
 
 pub struct Finder<'a> {
-  filename:  &'a Path,
+    filename: &'a Path,
 }
 
 impl<'a> Finder<'a> {
@@ -34,9 +34,11 @@ pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
     let candidate = directory.join(filename);
 
     match fs::metadata(&candidate) {
-        Ok(metadata) => if metadata.is_file() {
-            return Ok(candidate);
-        },
+        Ok(metadata) => {
+            if metadata.is_file() {
+                return Ok(candidate);
+            }
+        }
         Err(error) => {
             if error.kind() != io::ErrorKind::NotFound {
                 return Err(Error::Io(error));
@@ -47,6 +49,9 @@ pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
     if let Some(parent) = directory.parent() {
         find(parent, filename)
     } else {
-        Err(Error::Io(io::Error::new(io::ErrorKind::NotFound, "path not found")))
+        Err(Error::Io(io::Error::new(
+            io::ErrorKind::NotFound,
+            "path not found",
+        )))
     }
 }

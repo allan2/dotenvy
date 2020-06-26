@@ -5,20 +5,20 @@
 //! file, if available, and mashes those with the actual environment variables
 //! provided by the operating system.
 
-mod parse;
 mod errors;
-mod iter;
 mod find;
+mod iter;
+mod parse;
 
 use std::env::{self, Vars};
 use std::ffi::OsStr;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::{Once};
+use std::sync::Once;
 
 pub use crate::errors::*;
-use crate::iter::Iter;
 use crate::find::Finder;
+use crate::iter::Iter;
 
 static START: Once = Once::new();
 
@@ -49,7 +49,7 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// The returned iterator contains a snapshot of the process's environment variables at the
 /// time of this invocation, modifications to environment variables afterwards will not be
 /// reflected in the returned iterator.
-/// 
+///
 /// Examples:
 ///
 /// ```no_run
