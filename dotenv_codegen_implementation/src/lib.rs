@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 extern crate proc_macro;
 
 use std::env::{self, VarError};

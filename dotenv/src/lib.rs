@@ -4,6 +4,7 @@
 //! variables is not practical. It loads environment variables from a .env
 //! file, if available, and mashes those with the actual environment variables
 //! provided by the operating system.
+#![forbid(unsafe_code)]
 
 mod errors;
 mod find;

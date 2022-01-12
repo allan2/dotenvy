@@ -16,17 +16,17 @@ readme = "../README.md"
 keywords = ["environment", "env", "dotenv", "settings", "config"]
 license = "MIT"
 repository = "https://github.com/dotenv-rs/dotenv"
-edition = "2018"
+edition = "2021"
 
 [[bin]]
 name = "dotenv"
 required-features = ["cli"]
 
 [dependencies]
-clap = { version = "2", optional = true }
+clap = { version = "3.1.6", optional = true }
 
 [dev-dependencies]
-tempfile = "3.0.0"
+tempfile = "3.3.0"
 
 [features]
 cli = ["clap"]

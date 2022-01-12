@@ -29,13 +29,12 @@ fn make_command(name: &str, args: Vec<&str>) -> Command {
 fn main() {
     let matches = App::new("dotenv")
         .about("Run a command using the environment in a .env file")
-        .usage("dotenv <COMMAND> [ARGS]...")
+        .override_usage("dotenv <COMMAND> [ARGS]...")
         .setting(AppSettings::AllowExternalSubcommands)
         .setting(AppSettings::ArgRequiredElseHelp)
-        .setting(AppSettings::UnifiedHelpMessage)
         .arg(
-            Arg::with_name("FILE")
-                .short("f")
+            Arg::new("FILE")
+                .short('f')
                 .long("file")
                 .takes_value(true)
                 .help("Use a specific .env file (defaults to .env)"),
@@ -49,7 +48,7 @@ fn main() {
     .unwrap_or_else(|e| die!("error: failed to load environment: {}", e));
 
     let mut command = match matches.subcommand() {
-        (name, Some(matches)) => {
+        Some((name, matches)) => {
             let args = matches
                 .values_of("")
                 .map(|v| v.collect())

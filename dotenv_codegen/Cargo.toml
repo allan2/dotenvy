@@ -15,8 +15,8 @@ license = "MIT"
 homepage = "https://github.com/dotenv-rs/dotenv"
 repository = "https://github.com/dotenv-rs/dotenv"
 description = "A `dotenv` implementation for Rust"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-dotenv_codegen_implementation = { version = "0.15", path = "../dotenv_codegen_implementation" }
-proc-macro-hack = "0.5"
+dotenvy_codegen_impl = { version = "0.15", path = "../dotenv_codegen_impl" }
+proc-macro-hack = "0.5.19"
