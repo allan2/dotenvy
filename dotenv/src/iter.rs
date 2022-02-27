@@ -37,31 +37,42 @@ struct QuotedLines<B> {
     buf: B,
 }
 
-fn is_complete(buf: &String) -> bool {
-    let mut escape = false;
-    let mut strong_quote = false;
-    let mut weak_quote = false;
-    let mut count = 0_u32;
+enum QuoteState {
+    Complete,
+    Escape,
+    StrongOpen,
+    StrongOpenEscape,
+    WeakOpen,
+    WeakOpenEscape,
+}
+
+fn eval_end_state(prev_state: QuoteState, buf: &str) -> QuoteState {
+    let mut cur_state = prev_state;
 
     for c in buf.chars() {
-        if escape {
-            escape = false
-        } else {
-            match c {
-                '\\' => escape = true,
-                '"' if !strong_quote => {
-                    count += 1;
-                    weak_quote = true
-                }
-                '\'' if !weak_quote => {
-                    count += 1;
-                    strong_quote = true
-                }
-                _ => (),
-            }
-        }
+        cur_state = match cur_state {
+            QuoteState::Escape => QuoteState::Complete,
+            QuoteState::Complete => match c {
+                '\\' => QuoteState::Escape,
+                '"' => QuoteState::WeakOpen,
+                '\'' => QuoteState::StrongOpen,
+                _ => QuoteState::Complete,
+            },
+            QuoteState::WeakOpen => match c {
+                '\\' => QuoteState::WeakOpenEscape,
+                '"' => QuoteState::Complete,
+                _ => QuoteState::WeakOpen,
+            },
+            QuoteState::WeakOpenEscape => QuoteState::WeakOpen,
+            QuoteState::StrongOpen => match c {
+                '\\' => QuoteState::StrongOpenEscape,
+                '\'' => QuoteState::Complete,
+                _ => QuoteState::StrongOpen,
+            },
+            QuoteState::StrongOpenEscape => QuoteState::StrongOpen,
+        };
     }
-    count % 2 == 0
+    cur_state
 }
 
 impl<B: BufRead> Iterator for QuotedLines<B> {
@@ -69,11 +80,21 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
 
     fn next(&mut self) -> Option<Result<String>> {
         let mut buf = String::new();
+        let mut cur_state = QuoteState::Complete;
+        let mut buf_pos;
         loop {
+            buf_pos = buf.len();
             match self.buf.read_line(&mut buf) {
-                Ok(0) => return None,
+                Ok(0) => match cur_state {
+                    QuoteState::Complete => return None,
+                    _ => {
+                        let len = buf.len();
+                        return Some(Err(Error::LineParse(buf, len)));
+                    }
+                },
                 Ok(_n) => {
-                    if is_complete(&buf) {
+                    cur_state = eval_end_state(cur_state, &buf[buf_pos..]);
+                    if let QuoteState::Complete = cur_state {
                         if buf.ends_with('\n') {
                             buf.pop();
                             if buf.ends_with('\r') {
