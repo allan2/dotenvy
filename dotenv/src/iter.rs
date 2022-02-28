@@ -21,6 +21,7 @@ impl<R: Read> Iter<R> {
         }
     }
 
+    /// Loads all variables found in the `reader` into the environment.
     pub fn load(self) -> Result<()> {
         for item in self {
             let (key, value) = item?;
