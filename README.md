@@ -1,129 +1,61 @@
-# rust-dotenv 
+# dotenvy
 
-![CI](https://github.com/dotenv-rs/dotenv/workflows/CI/badge.svg)
-[![codecov](https://codecov.io/gh/dotenv-rs/dotenv/branch/master/graph/badge.svg)](https://codecov.io/gh/dotenv-rs/dotenv)
-[![Crates.io](https://img.shields.io/crates/v/dotenv.svg)](https://crates.io/crates/dotenv)
+[![crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenv)
+![CI](https://github.com/allan2/dotenvy/workflows/CI/badge.svg)
+[![Released API docs](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy)
+[![codecov](https://codecov.io/gh/allan2/dotenvy/branch/master/graph/badge.svg)](https://codecov.io/gh/allan2/dotenvy)
 
-**Achtung!** This is a v0.\* version! Expect bugs and issues all around.
-Submitting pull requests and issues is highly encouraged!
+A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
 
-Quoting [bkeepers/dotenv][dotenv]:
+This library loads environment variables from a _.env_ file. This is convenient for dev environments.
 
-> Storing [configuration in the environment](http://www.12factor.net/config)
-> is one of the tenets of a [twelve-factor app](http://www.12factor.net/).
-> Anything that is likely to change between deployment environments–such as
-> resource handles for databases or credentials for external services–should
-> be extracted from the code into environment variables.
+## Components
 
-This library is meant to be used on development or testing environments in
-which setting environment variables is not practical. It loads environment
-variables from a `.env` file, if available, and mashes those with the actual
-environment variables provided by the operative system.
+1. `dotenvy` crate - A well-maintained fork of the `dotenv` crate.
+2. `dotenvy_codegen` crate - A macro for compile time dotenv inspection.
+3. `dotenvy_codgen_impl` crate - Internal implementation for dotenvy_codegen.
+4. `dotenvy` CLI tool for running a command using the environment from a _.env_ file (currently Unix only)
 
-Usage
-----
+## Usage
 
-The easiest and most common usage consists on calling `dotenv::dotenv` when the
-application starts, which will load environment variables from a file named
-`.env` in the current directory or any of its parents; after that, you can just call
-the environment-related method you need as provided by `std::os`.
+### Loading at runtime
 
-If you need finer control about the name of the file or its location, you can
-use the `from_filename` and `from_path` methods provided by the crate.
-
-`dotenv_codegen` provides the `dotenv!` macro, which
-behaves identically to `env!`, but first tries to load a `.env` file at compile
-time.
-
-Examples
-----
-
-A `.env` file looks like this:
-
-```sh
-# a comment, will be ignored
-REDIS_ADDRESS=localhost:6379
-MEANING_OF_LIFE=42
-```
-
-You can optionally prefix each line with the word `export`, which will
-conveniently allow you to source the whole file on your shell.
-
-A sample project using Dotenv would look like this:
-
-```rust
-extern crate dotenv;
-
-use dotenv::dotenv;
+```rs
+use dotenvy::dotenv;
 use std::env;
 
 fn main() {
     dotenv().ok();
 
     for (key, value) in env::vars() {
-        println!("{}: {}", key, value);
+        println!("{key}: {value}");
     }
 }
 ```
 
-Variable substitution
-----
+### Loading at compile time
 
-It's possible to reuse variables in the `.env` file using `$VARIABLE` syntax.
-The syntax and rules are similar to bash ones, here's the example:
+The `dotenv!` macro provided by `dotenvy_codegen` crate can be used.
 
+Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
 
-```sh
+## Why does this fork exist?
 
-VAR=one
-VAR_2=two
+The original dotenv crate has not been updated since June 26, 2020. Attempts to reach the authors and present maintainer were not successful ([dotenv-rs/dotenv #74](https://github.com/dotenv-rs/dotenv/issues/74)).
 
-# Non-existing values are replaced with an empty string
-RESULT=$NOPE #value: '' (empty string)
+This fork is intended to serve as the development home for the dotenv implementation in Rust.
 
-# All the letters after $ symbol are treated as the variable name to replace
-RESULT=$VAR #value: 'one'
+## What are the differences from the original?
 
-# Double quotes do not affect the substitution
-RESULT="$VAR" #value: 'one'
+This repo fixes:
 
-# Different syntax, same result 
-RESULT=${VAR} #value: 'one'
+- home directory works correctly (no longer using the deprecated `std::env::home_dir`)
+- more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57/files#))
 
-# Curly braces are useful in cases when we need to use a variable with non-alphanumeric name
-RESULT=$VAR_2 #value: 'one_2' since $ with no curly braces stops after first non-alphanumeric symbol 
-RESULT=${VAR_2} #value: 'two'
+For a full list of changes, read the [changelog](./CHANGELOG.md).
 
-# The replacement can be escaped with either single quotes or a backslash:
-RESULT='$VAR' #value: '$VAR'
-RESULT=\$VAR #value: '$VAR'
+## Are you a usurper of the dotenv legacy?
 
-# Environment variables are used in the substutution and always override the local variables
-RESULT=$PATH #value: the contents of the $PATH environment variable
-PATH="My local variable value"
-RESULT=$PATH #value: the contents of the $PATH environment variable, even though the local variable is defined
-```
+Legend has it that the Lost Maintainer will return, merging changes from `dotenvy` into `dotenv` with such thrust that all `Cargo.toml`s will lose one keystroke. Only then shall the Rust dotenv crateverse be united in true harmony.
 
-Dotenv will parse the file, substituting the variables the way it's described in the comments.
-
-
-Using the `dotenv!` macro
-------------------------------------
-
-Add `dotenv_codegen` to your dependencies, and add the following to the top of
-your crate:
-
-```rust
-#[macro_use]
-extern crate dotenv_codegen;
-```
-
-Then, in your crate:
-
-```rust
-fn main() {
-  println!("{}", dotenv!("MEANING_OF_LIFE"));
-}
-```
-
-[dotenv]: https://github.com/bkeepers/dotenv
+Until then, this repo dutifully carries on the dotenv torch. It is actively maintained. Contributions and PRs are very welcome!

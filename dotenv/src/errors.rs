@@ -1,3 +1,4 @@
+use std::env;
 use std::error;
 use std::fmt;
 use std::io;
@@ -8,7 +9,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     LineParse(String, usize),
     Io(io::Error),
-    EnvVar(std::env::VarError),
+    EnvVar(env::VarError),
     #[doc(hidden)]
     __Nonexhaustive,
 }
@@ -49,30 +50,28 @@ impl fmt::Display for Error {
 
 #[cfg(test)]
 mod test {
+    use std::env;
     use std::error::Error as StdError;
+    use std::io;
 
     use super::*;
 
     #[test]
     fn test_io_error_source() {
-        let err = Error::Io(std::io::ErrorKind::PermissionDenied.into());
-        let io_err = err
-            .source()
-            .unwrap()
-            .downcast_ref::<std::io::Error>()
-            .unwrap();
-        assert_eq!(std::io::ErrorKind::PermissionDenied, io_err.kind());
+        let err = Error::Io(io::ErrorKind::PermissionDenied.into());
+        let io_err = err.source().unwrap().downcast_ref::<io::Error>().unwrap();
+        assert_eq!(io::ErrorKind::PermissionDenied, io_err.kind());
     }
 
     #[test]
     fn test_envvar_error_source() {
-        let err = Error::EnvVar(std::env::VarError::NotPresent);
+        let err = Error::EnvVar(env::VarError::NotPresent);
         let var_err = err
             .source()
             .unwrap()
-            .downcast_ref::<std::env::VarError>()
+            .downcast_ref::<env::VarError>()
             .unwrap();
-        assert_eq!(&std::env::VarError::NotPresent, var_err);
+        assert_eq!(&env::VarError::NotPresent, var_err);
     }
 
     #[test]
@@ -83,20 +82,20 @@ mod test {
 
     #[test]
     fn test_error_not_found_true() {
-        let err = Error::Io(std::io::ErrorKind::NotFound.into());
+        let err = Error::Io(io::ErrorKind::NotFound.into());
         assert!(err.not_found());
     }
 
     #[test]
     fn test_error_not_found_false() {
-        let err = Error::Io(std::io::ErrorKind::PermissionDenied.into());
+        let err = Error::Io(io::ErrorKind::PermissionDenied.into());
         assert!(!err.not_found());
     }
 
     #[test]
     fn test_io_error_display() {
-        let err = Error::Io(std::io::ErrorKind::PermissionDenied.into());
-        let io_err: std::io::Error = std::io::ErrorKind::PermissionDenied.into();
+        let err = Error::Io(io::ErrorKind::PermissionDenied.into());
+        let io_err: io::Error = io::ErrorKind::PermissionDenied.into();
 
         let err_desc = format!("{}", err);
         let io_err_desc = format!("{}", io_err);
@@ -105,8 +104,8 @@ mod test {
 
     #[test]
     fn test_envvar_error_display() {
-        let err = Error::EnvVar(std::env::VarError::NotPresent);
-        let var_err = std::env::VarError::NotPresent;
+        let err = Error::EnvVar(env::VarError::NotPresent);
+        let var_err = env::VarError::NotPresent;
 
         let err_desc = format!("{}", err);
         let var_err_desc = format!("{}", var_err);

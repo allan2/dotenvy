@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 
 use crate::errors::*;
 
@@ -261,7 +262,7 @@ fn apply_substitution(
     substitution_name: &str,
     output: &mut String,
 ) {
-    if let Ok(environment_value) = std::env::var(substitution_name) {
+    if let Ok(environment_value) = env::var(substitution_name) {
         output.push_str(&environment_value);
     } else {
         let stored_value = substitution_data
@@ -321,7 +322,7 @@ export   SHELL_LOVER=1
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
             assert!(actual.is_ok());
-            assert_eq!(expected, actual.ok().unwrap());
+            assert_eq!(expected, actual.unwrap());
             count += 1;
         }
 
@@ -413,6 +414,7 @@ KEY4=h\8u
 #[cfg(test)]
 mod variable_substitution_tests {
     use crate::iter::Iter;
+    use std::env;
 
     fn assert_parsed_string(input_string: &str, expected_parse_result: Vec<(&str, &str)>) {
         let actual_iter = Iter::new(input_string.as_bytes());
@@ -425,7 +427,7 @@ mod variable_substitution_tests {
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
             assert!(actual.is_ok());
-            assert_eq!(expected, actual.ok().unwrap());
+            assert_eq!(expected, actual.unwrap());
             count += 1;
         }
 
@@ -519,14 +521,14 @@ mod variable_substitution_tests {
 
     #[test]
     fn substitute_variable_from_env_variable() {
-        std::env::set_var("KEY11", "test_user_env");
+        env::set_var("KEY11", "test_user_env");
 
         assert_parsed_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")]);
     }
 
     #[test]
     fn substitute_variable_env_variable_overrides_dotenv_in_substitution() {
-        std::env::set_var("KEY11", "test_user_env");
+        env::set_var("KEY11", "test_user_env");
 
         assert_parsed_string(
             r#"
@@ -591,14 +593,14 @@ mod error_tests {
         if let Ok(first_line) = &parsed_values[0] {
             assert_eq!(first_line, &(String::from("KEY"), String::from("VALUE")))
         } else {
-            assert!(false, "Expected the first value to be parsed")
+            panic!("Expected the first value to be parsed")
         }
 
         if let Err(LineParse(second_value, index)) = &parsed_values[1] {
             assert_eq!(second_value, wrong_value);
             assert_eq!(*index, wrong_value.len() - 1)
         } else {
-            assert!(false, "Expected the second value not to be parsed")
+            panic!("Expected the second value not to be parsed")
         }
     }
 
@@ -614,7 +616,7 @@ mod error_tests {
             assert_eq!(second_value, wrong_key_value);
             assert_eq!(*index, 0)
         } else {
-            assert!(false, "Expected the second value not to be parsed")
+            panic!("Expected the second value not to be parsed")
         }
     }
 
@@ -629,7 +631,7 @@ mod error_tests {
             assert_eq!(wrong_value, wrong_format);
             assert_eq!(*index, 0)
         } else {
-            assert!(false, "Expected the second value not to be parsed")
+            panic!("Expected the second value not to be parsed")
         }
     }
 
@@ -645,7 +647,7 @@ mod error_tests {
             assert_eq!(wrong_value, wrong_escape);
             assert_eq!(*index, wrong_escape.find("\\").unwrap() + 1)
         } else {
-            assert!(false, "Expected the second value not to be parsed")
+            panic!("Expected the second value not to be parsed")
         }
     }
 }

@@ -4,6 +4,7 @@
 //! variables is not practical. It loads environment variables from a .env
 //! file, if available, and mashes those with the actual environment variables
 //! provided by the operating system.
+#![forbid(unsafe_code)]
 
 mod errors;
 mod find;
@@ -30,11 +31,8 @@ static START: Once = Once::new();
 /// Examples:
 ///
 /// ```no_run
-///
-/// use dotenv;
-///
 /// let key = "FOO";
-/// let value= dotenv::var(key).unwrap();
+/// let value= dotenvy::var(key).unwrap();
 /// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
@@ -53,11 +51,9 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// Examples:
 ///
 /// ```no_run
-///
-/// use dotenv;
 /// use std::io;
 ///
-/// let result: Vec<(String, String)> = dotenv::vars().collect();
+/// let result: Vec<(String, String)> = dotenvy::vars().collect();
 /// ```
 pub fn vars() -> Vars {
     START.call_once(|| {
@@ -71,12 +67,11 @@ pub fn vars() -> Vars {
 /// Examples
 ///
 /// ```
-/// use dotenv;
 /// use std::env;
 /// use std::path::{Path};
 ///
-/// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
-/// dotenv::from_path(my_path.as_path());
+/// let my_path = dirs::home_dir().map(|a| a.join("/.env")).unwrap();
+/// dotenvy::from_path(my_path.as_path());
 /// ```
 pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
@@ -88,12 +83,11 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// Examples
 ///
 /// ```no_run
-/// use dotenv;
 /// use std::env;
 /// use std::path::{Path};
 ///
-/// let my_path = env::home_dir().and_then(|a| Some(a.join("/.env"))).unwrap();
-/// let iter = dotenv::from_path_iter(my_path.as_path()).unwrap();
+/// let my_path = dirs::home_dir().map(|a| a.join("/.env")).unwrap();
+/// let iter = dotenvy::from_path_iter(my_path.as_path()).unwrap();
 ///
 /// for item in iter {
 ///   let (key, val) = item.unwrap();
@@ -108,16 +102,14 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 ///
 /// # Examples
 /// ```
-/// use dotenv;
-/// dotenv::from_filename("custom.env").ok();
+/// dotenvy::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using `dotenv::dotenv()`,
+/// It is also possible to do the following, but it is equivalent to using `dotenvy::dotenv()`,
 /// which is preferred.
 ///
 /// ```
-/// use dotenv;
-/// dotenv::from_filename(".env").ok();
+/// dotenvy::from_filename(".env").ok();
 /// ```
 pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
@@ -129,16 +121,14 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 ///
 /// # Examples
 /// ```
-/// use dotenv;
-/// dotenv::from_filename("custom.env").ok();
+/// dotenvy::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using `dotenv::dotenv()`,
+/// It is also possible to do the following, but it is equivalent to using `dotenvy::dotenv()`,
 /// which is preferred.
 ///
 /// ```no_run
-/// use dotenv;
-/// let iter = dotenv::from_filename_iter(".env").unwrap();
+/// let iter = dotenvy::from_filename_iter(".env").unwrap();
 ///
 /// for item in iter {
 ///   let (key, val) = item.unwrap();
@@ -155,8 +145,7 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 ///
 /// # Examples
 /// ```
-/// use dotenv;
-/// dotenv::dotenv().ok();
+/// dotenvy::dotenv().ok();
 /// ```
 pub fn dotenv() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
@@ -168,9 +157,7 @@ pub fn dotenv() -> Result<PathBuf> {
 ///
 /// # Examples
 /// ```no_run
-/// use dotenv;
-///
-/// for item in dotenv::dotenv_iter().unwrap() {
+/// for item in dotenvy::dotenv_iter().unwrap() {
 ///   let (key, val) = item.unwrap();
 ///   println!("{}={}", key, val);
 /// }

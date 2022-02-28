@@ -1,23 +1,20 @@
-extern crate clap;
-extern crate dotenv;
-
-use clap::{App, AppSettings, Arg};
+use clap::Arg;
 use std::os::unix::process::CommandExt;
-use std::process::{exit, Command};
+use std::process;
 
 macro_rules! die {
     ($fmt:expr) => ({
         eprintln!($fmt);
-        exit(1);
+        process::exit(1);
     });
     ($fmt:expr, $($arg:tt)*) => ({
         eprintln!($fmt, $($arg)*);
-        exit(1);
+        process::exit(1);
     });
 }
 
-fn make_command(name: &str, args: Vec<&str>) -> Command {
-    let mut command = Command::new(name);
+fn make_command(name: &str, args: Vec<&str>) -> process::Command {
+    let mut command = process::Command::new(name);
 
     for arg in args {
         command.arg(arg);
@@ -27,15 +24,14 @@ fn make_command(name: &str, args: Vec<&str>) -> Command {
 }
 
 fn main() {
-    let matches = App::new("dotenv")
+    let matches = clap::Command::new("dotenvy")
         .about("Run a command using the environment in a .env file")
-        .usage("dotenv <COMMAND> [ARGS]...")
-        .setting(AppSettings::AllowExternalSubcommands)
-        .setting(AppSettings::ArgRequiredElseHelp)
-        .setting(AppSettings::UnifiedHelpMessage)
+        .override_usage("dotenvy <COMMAND> [ARGS]...")
+        .allow_external_subcommands(true)
+        .arg_required_else_help(true)
         .arg(
-            Arg::with_name("FILE")
-                .short("f")
+            Arg::new("FILE")
+                .short('f')
                 .long("file")
                 .takes_value(true)
                 .help("Use a specific .env file (defaults to .env)"),
@@ -43,13 +39,13 @@ fn main() {
         .get_matches();
 
     match matches.value_of("FILE") {
-        None => dotenv::dotenv(),
-        Some(file) => dotenv::from_filename(file),
+        None => dotenvy::dotenv(),
+        Some(file) => dotenvy::from_filename(file),
     }
     .unwrap_or_else(|e| die!("error: failed to load environment: {}", e));
 
     let mut command = match matches.subcommand() {
-        (name, Some(matches)) => {
+        Some((name, matches)) => {
             let args = matches
                 .values_of("")
                 .map(|v| v.collect())
@@ -57,12 +53,12 @@ fn main() {
 
             make_command(name, args)
         }
-        _ => die!("error: missing required argument <COMMAND>"),
+        None => die!("error: missing required argument <COMMAND>"),
     };
 
     if cfg!(target_os = "windows") {
         match command.spawn().and_then(|mut child| child.wait()) {
-            Ok(status) => exit(status.code().unwrap_or(1)),
+            Ok(status) => process::exit(status.code().unwrap_or(1)),
             Err(error) => die!("fatal: {}", error),
         };
     } else {

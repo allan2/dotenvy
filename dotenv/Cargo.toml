@@ -1,6 +1,6 @@
 [package]
-name = "dotenv"
-version = "0.15.0"
+name = "dotenvy"
+version = "0.15.1"
 authors = [
   "Noemi Lapresta <noemi.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
@@ -9,24 +9,26 @@ authors = [
   "Sean Griffin <sean@seantheprogrammer.com>",
   "Adam Sharp <adam@sharplet.me>",
   "Arpad Borsos <arpad.borsos@googlemail.com>",
+  "Allan Zhang <al@ayz.ai>",
 ]
-description = "A `dotenv` implementation for Rust"
-homepage = "https://github.com/dotenv-rs/dotenv"
+description = "A well-maintained fork of the `dotenv` crate"
+homepage = "https://github.com/allan2/dotenvy"
 readme = "../README.md"
-keywords = ["environment", "env", "dotenv", "settings", "config"]
+keywords = ["dotenv", "env", "environment", "settings", "config"]
 license = "MIT"
-repository = "https://github.com/dotenv-rs/dotenv"
+repository = "https://github.com/allan2/dotenvy"
 edition = "2018"
 
 [[bin]]
-name = "dotenv"
+name = "dotenvy"
 required-features = ["cli"]
 
 [dependencies]
-clap = { version = "2", optional = true }
+clap = { version = "3.1", optional = true }
+dirs = "4.0"
 
 [dev-dependencies]
-tempfile = "3.0.0"
+tempfile = "3.3.0"
 
 [features]
 cli = ["clap"]
