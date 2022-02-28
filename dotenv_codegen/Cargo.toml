@@ -1,6 +1,6 @@
 [package]
 
-name = "dotenvy-codegen"
+name = "dotenvy_codegen"
 version = "0.15.1"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
@@ -10,7 +10,7 @@ authors = [
   "Sean Griffin <sean@seantheprogrammer.com>",
   "Allan Zhang <al@ayz.ai>",
 ]
-readme = "../README.md"
+readme = "README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
 license = "MIT"
 homepage = "https://github.com/allan2/dotenvy"
