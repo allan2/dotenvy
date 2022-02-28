@@ -50,7 +50,7 @@ This fork is intended to serve as the development home for the dotenv implementa
 This repo fixes:
 
 - home directory works correctly (no longer using the deprecated `std::env::home_dir`)
-- more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57/files#))
+- more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
 
 For a full list of changes, read the [changelog](./CHANGELOG.md).
 

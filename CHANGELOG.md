@@ -16,14 +16,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Crate description for dotenvy_codgen_impl
 - New language in README
 - MIT license badge in README
-- Generate helpful errors from dotenv! macro (full merge of [dotenv-rs/dotenv #58](https://github.com/dotenv-rs/dotenv/pull/57/files#))
+- Generate helpful errors from dotenv! macro (full merge of [dotenv-rs/dotenv #58](https://github.com/dotenv-rs/dotenv/pull/57))
 
 ### Changed
 
 - replaced deprecated `std::env_home:dir()` with `dirs:home_dir`
-- Better handling of `home_dir` (merge of [dotenv-rs/dotenv #62](https://github.com/dotenv-rs/dotenv/pull/62/files#))
-- assertions dealing with `Result` (based on [dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57/files#))
-- upgraded clap in `dotenvy` bin from v2 to v3.1 (covers [dotenv-rs/dotenv #76](https://github.com/dotenv-rs/dotenv/pull/76/files))
+- Better handling of `home_dir` (merge of [dotenv-rs/dotenv #62](https://github.com/dotenv-rs/dotenv/pull/62))
+- assertions dealing with `Result` (based on [dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
+- upgraded clap in `dotenvy` bin from v2 to v3.1 (covers [dotenv-rs/dotenv #76](https://github.com/dotenv-rs/dotenv/pull/76))
 
 ### Removed
 
