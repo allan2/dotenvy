@@ -1,6 +1,6 @@
 [package]
 
-name = "dotenvy_codegen"
+name = "dotenvy_macro"
 version = "0.15.1"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
