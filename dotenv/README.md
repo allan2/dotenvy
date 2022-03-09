@@ -1,9 +1,7 @@
 # dotenvy
 
 [![crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
-![CI](https://github.com/allan2/dotenvy/workflows/CI/badge.svg)
 [![Released API docs](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy)
-[![codecov](https://codecov.io/gh/allan2/dotenvy/branch/master/graph/badge.svg)](https://codecov.io/gh/allan2/dotenvy)
 
 A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
 
@@ -12,7 +10,7 @@ This library loads environment variables from a _.env_ file. This is convenient 
 ## Components
 
 1. [`dotenvy`](https://crates.io/crates/dotenvy) crate - A well-maintained fork of the `dotenv` crate.
-2. [`dotenvy_macro`](https://crates.io/crates/dotenvy_codegen) crate - A macro for compile time dotenv inspection. This is a fork of `dotenv_codegen`.
+2. [`dotenvy_codegen`](https://crates.io/crates/dotenvy_codegen) crate - A macro for compile time dotenv inspection.
 3. [`dotenvy_codgen_impl`](https://crates.io/crates/dotenvy_codegen_impl) crate - Internal implementation for dotenvy_codegen.
 4. `dotenvy` CLI tool for running a command using the environment from a _.env_ file (currently Unix only)
 
@@ -35,9 +33,7 @@ fn main() {
 
 ### Loading at compile time
 
-The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
-
-Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
+The `dotenv!` macro provided by [`dotenvy_codegen`](https://crates.io/crates/dotenvy_codegen) can be used.
 
 ## Why does this fork exist?
 

@@ -3,7 +3,7 @@ mod common;
 use std::collections::HashMap;
 use std::env;
 
-use dotenv::*;
+use dotenvy::*;
 
 use crate::common::*;
 

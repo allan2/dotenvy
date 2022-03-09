@@ -3,21 +3,22 @@ proc-macro = true
 
 [package]
 
-name = "dotenv_codegen_implementation"
-version = "0.15.0"
+name = "dotenvy_codegen_impl"
+version = "0.15.1"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
   "Mike Piccolo <mfpiccolo@gmail.com>",
   "Alice Maz <alice@alicemaz.com>",
   "Sean Griffin <sean@seantheprogrammer.com>",
+  "Allan Zhang <al@ayz.ai>",
 ]
 readme = "../README.md"
-keywords = ["environment", "env", "dotenv", "settings", "config"]
+keywords = ["dotenv", "env", "environment", "settings", "config"]
 license = "MIT"
-homepage = "https://github.com/dotenv-rs/dotenv"
-repository = "https://github.com/dotenv-rs/dotenv"
-description = "A `dotenv` implementation for Rust"
+homepage = "https://github.com/allan2/dotenvy"
+repository = "https://github.com/allan2/dotenvy"
+description = "Internal implementation for dotenvy_codegen"
 edition = "2021"
 
 [dependencies]
