@@ -14,6 +14,7 @@ mod parse;
 use std::env::{self, Vars};
 use std::ffi::OsStr;
 use std::fs::File;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Once;
 
@@ -138,6 +139,48 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
     Ok(iter)
+}
+
+/// Loads from any arbitrary [io::Read](std::io::Read).
+///
+/// Useful when you're reading dotenv info from something like IPC or the network.
+///
+/// If you're just opening a regular file, use [from_path] or [from_filename].
+///
+/// # Examples
+/// ```no_run
+/// # #![cfg(unix)]
+/// use std::io::Read;
+/// use std::os::unix::net::UnixStream;
+///
+/// let mut stream = UnixStream::connect("/some/socket").unwrap();
+/// dotenvy::from_read(stream).unwrap();
+/// ```
+pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
+    let iter = Iter::new(reader);
+    iter.load()?;
+    Ok(())
+}
+
+/// Like [from_read], but returns an iterator over variables instead of loading into environment.
+///
+/// # Examples
+///
+/// ```no_run
+/// # #![cfg(unix)]
+/// use std::io::Read;
+/// use std::os::unix::net::UnixStream;
+///
+/// let mut stream = UnixStream::connect("/some/socket").unwrap();
+/// let iter = dotenvy::from_read_iter(stream);
+///
+/// for item in iter {
+///   let (key, val) = item.unwrap();
+///   println!("{}={}", key, val);
+/// }
+/// ```
+pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
+    Iter::new(reader)
 }
 
 /// This is usually what you want.
