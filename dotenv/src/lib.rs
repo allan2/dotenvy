@@ -78,7 +78,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     iter.load()
 }
 
-/// Like `from_path`, but returns an iterator over variables instead of loading into environment.
+/// Like [from_path], but returns an iterator over variables instead of loading into environment.
 ///
 /// Examples
 ///
@@ -105,7 +105,7 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// dotenvy::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using `dotenvy::dotenv()`,
+/// It is also possible to do the following, but it is equivalent to using [dotenv],
 /// which is preferred.
 ///
 /// ```
@@ -117,14 +117,14 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Like `from_filename`, but returns an iterator over variables instead of loading into environment.
+/// Like [from_filename], but returns an iterator over variables instead of loading into environment.
 ///
 /// # Examples
 /// ```
 /// dotenvy::from_filename("custom.env").ok();
 /// ```
 ///
-/// It is also possible to do the following, but it is equivalent to using `dotenvy::dotenv()`,
+/// It is also possible to do the following, but it is equivalent to using [dotenv_iter],
 /// which is preferred.
 ///
 /// ```no_run
@@ -153,7 +153,7 @@ pub fn dotenv() -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Like `dotenv`, but returns an iterator over variables instead of loading into environment.
+/// Like [dotenv], but returns an iterator over variables instead of loading into environment.
 ///
 /// # Examples
 /// ```no_run
