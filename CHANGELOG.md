@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.2] - 2022.08-22
+
+### Added
+
+- Multiline support [(PR #3)](https://github.com/allan2/dotenvy/pull/3) by [hoijui](https://github.com/hoijui)
+- `from_read` and `from_read_iter` [(PR #5)](https://github.com/allan2/dotenvy/pull/5) by [Kevin M Granger](https://github.com/KevinMGranger)
+
+### Changed
+
+- doc rewrite [(commit 1a45555)](https://github.com/allan2/dotenvy/commit/1a455554f5e4b4211be5490309d580d18a4cdf56) by [allan2](https://github.com/hoijui)
+- doc link improvement formatting [(PR #6)](https://github.com/allan2/dotenvy/pull/6) by [Kevin M Granger](https://github.com/KevinMGranger)
+- dependency bump (clap 3.1 to 3.2)
+
 ## [0.15.1] - 2022-02-28
 
 ### Added
