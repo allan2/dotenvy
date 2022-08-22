@@ -52,7 +52,12 @@ This repo fixes:
 - home directory works correctly (no longer using the deprecated `std::env::home_dir`)
 - more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
 
-For a full list of changes, read the [changelog](./CHANGELOG.md).
+It also adds:
+- multiline support for environment variable values
+- `io::Read` support via [`from_read`](https://docs.rs/dotenvy/latest/dotenvy/fn.from_read.html) and [`from_read_iter`](https://docs.rs/dotenvy/latest/dotenvy/fn.from_read_iter.html)
+- improved docs
+
+For a full list of changes, refer to the [changelog](./CHANGELOG.md).
 
 ## The legend
 
