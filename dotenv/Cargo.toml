@@ -11,7 +11,7 @@ authors = [
   "Arpad Borsos <arpad.borsos@googlemail.com>",
   "Allan Zhang <al@ayz.ai>",
 ]
-description = "A well-maintained fork of the `dotenv` crate"
+description = "A well-maintained fork of the dotenv crate"
 homepage = "https://github.com/allan2/dotenvy"
 readme = "README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
