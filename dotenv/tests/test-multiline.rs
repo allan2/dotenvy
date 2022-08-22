@@ -1,9 +1,8 @@
 mod common;
 
-use dotenv::*;
-use std::env;
-
 use crate::common::*;
+use dotenvy::*;
+use std::env;
 
 #[test]
 fn test_multiline() {
@@ -12,11 +11,11 @@ fn test_multiline() {
     let dir = tempdir_with_dotenv(&format!(
         r#"
 KEY=my\ cool\ value
-KEY3="awesome stuff \"mang\"
+KEY3="awesome \"stuff\"
 more
 on other
 lines"
-KEY4='hello '\''fds'"
+KEY4='hello '\''world'"
 good ' \'morning"
 WEAK="{}"
 STRONG='{}'
@@ -29,14 +28,14 @@ STRONG='{}'
     assert_eq!(var("KEY").unwrap(), r#"my cool value"#);
     assert_eq!(
         var("KEY3").unwrap(),
-        r#"awesome stuff "mang"
+        r#"awesome "stuff"
 more
 on other
 lines"#
     );
     assert_eq!(
         var("KEY4").unwrap(),
-        r#"hello 'fds
+        r#"hello 'world
 good ' 'morning"#
     );
     assert_eq!(var("WEAK").unwrap(), weak);
