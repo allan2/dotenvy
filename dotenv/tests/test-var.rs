@@ -1,17 +1,17 @@
 mod common;
 
-use std::env;
-
 use dotenvy::*;
+use std::{env, error::Error, result::Result};
 
 use crate::common::*;
 
 #[test]
-fn test_var() {
-    let dir = make_test_dotenv().unwrap();
+fn test_var() -> Result<(), Box<dyn Error>> {
+    let dir = make_test_dotenv()?;
 
-    assert_eq!(var("TESTKEY").unwrap(), "test_val");
+    assert_eq!(var("TESTKEY")?, "test_val");
 
-    env::set_current_dir(dir.path().parent().unwrap()).unwrap();
-    dir.close().unwrap();
+    env::set_current_dir(dir.path().parent().unwrap())?;
+    dir.close()?;
+    Ok(())
 }

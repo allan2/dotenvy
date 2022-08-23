@@ -2,10 +2,10 @@ mod common;
 
 use crate::common::*;
 use dotenvy::*;
-use std::env;
+use std::{env, error::Error, result::Result};
 
 #[test]
-fn test_multiline() {
+fn test_multiline() -> Result<(), Box<dyn Error>> {
     let value = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\\n\\\"QUOTED\\\"";
     let weak = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n\"QUOTED\"";
     let dir = tempdir_with_dotenv(&format!(
@@ -21,26 +21,26 @@ WEAK="{}"
 STRONG='{}'
 "#,
         value, value
-    ))
-    .unwrap();
+    ))?;
 
-    dotenv().ok();
-    assert_eq!(var("KEY").unwrap(), r#"my cool value"#);
+    dotenv()?;
+    assert_eq!(var("KEY")?, r#"my cool value"#);
     assert_eq!(
-        var("KEY3").unwrap(),
+        var("KEY3")?,
         r#"awesome "stuff"
 more
 on other
 lines"#
     );
     assert_eq!(
-        var("KEY4").unwrap(),
+        var("KEY4")?,
         r#"hello 'world
 good ' 'morning"#
     );
-    assert_eq!(var("WEAK").unwrap(), weak);
-    assert_eq!(var("STRONG").unwrap(), value);
+    assert_eq!(var("WEAK")?, weak);
+    assert_eq!(var("STRONG")?, value);
 
-    env::set_current_dir(dir.path().parent().unwrap()).unwrap();
-    dir.close().unwrap();
+    env::set_current_dir(dir.path().parent().unwrap())?;
+    dir.close()?;
+    Ok(())
 }
