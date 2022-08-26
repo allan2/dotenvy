@@ -38,7 +38,7 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
         dotenv().ok();
     });
-    env::var(key).map_err(Error::EnvVar)
+    env::var(&key).map_err(|err| Error::EnvVar((err, key.as_ref().to_str().unwrap().into())))
 }
 
 /// Returns an iterator of `(key, value)` pairs for all environment variables of the current process.

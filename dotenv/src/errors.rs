@@ -1,3 +1,4 @@
+#![allow(clippy::manual_non_exhaustive)]
 use std::env;
 use std::error;
 use std::fmt;
@@ -9,7 +10,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     LineParse(String, usize),
     Io(io::Error),
-    EnvVar(env::VarError),
+    EnvVar((env::VarError, String)),
     #[doc(hidden)]
     __Nonexhaustive,
 }
@@ -27,7 +28,7 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Error::Io(err) => Some(err),
-            Error::EnvVar(err) => Some(err),
+            Error::EnvVar((err, _)) => Some(err),
             _ => None,
         }
     }
@@ -37,7 +38,7 @@ impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Io(err) => write!(fmt, "{}", err),
-            Error::EnvVar(err) => write!(fmt, "{}", err),
+            Error::EnvVar((err, msg)) => write!(fmt, "{}: {}", err, msg),
             Error::LineParse(line, error_index) => write!(
                 fmt,
                 "Error parsing line: '{}', error at line index: {}",
@@ -65,7 +66,7 @@ mod test {
 
     #[test]
     fn test_envvar_error_source() {
-        let err = Error::EnvVar(env::VarError::NotPresent);
+        let err = Error::EnvVar((env::VarError::NotPresent, "TEST_VAR".to_string()));
         let var_err = err
             .source()
             .unwrap()
@@ -104,11 +105,12 @@ mod test {
 
     #[test]
     fn test_envvar_error_display() {
-        let err = Error::EnvVar(env::VarError::NotPresent);
+        let var_name = "TEST_VAR".to_string();
+        let err = Error::EnvVar((env::VarError::NotPresent, var_name.clone()));
         let var_err = env::VarError::NotPresent;
 
         let err_desc = format!("{}", err);
-        let var_err_desc = format!("{}", var_err);
+        let var_err_desc = format!("{}: {}", var_err, var_name);
         assert_eq!(var_err_desc, err_desc);
     }
 
