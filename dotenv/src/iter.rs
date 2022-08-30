@@ -38,39 +38,45 @@ struct QuotedLines<B> {
     buf: B,
 }
 
-enum QuoteState {
+enum ParseState {
     Complete,
     Escape,
     StrongOpen,
     StrongOpenEscape,
     WeakOpen,
     WeakOpenEscape,
+    Comment,
 }
 
-fn eval_end_state(prev_state: QuoteState, buf: &str) -> QuoteState {
+fn eval_end_state(prev_state: ParseState, buf: &str) -> ParseState {
     let mut cur_state = prev_state;
 
     for c in buf.chars() {
         cur_state = match cur_state {
-            QuoteState::Escape => QuoteState::Complete,
-            QuoteState::Complete => match c {
-                '\\' => QuoteState::Escape,
-                '"' => QuoteState::WeakOpen,
-                '\'' => QuoteState::StrongOpen,
-                _ => QuoteState::Complete,
+            ParseState::Escape => ParseState::Complete,
+            ParseState::Complete => match c {
+                '#' => return ParseState::Comment,
+                '\\' => ParseState::Escape,
+                '"' => ParseState::WeakOpen,
+                '\'' => ParseState::StrongOpen,
+                _ => ParseState::Complete,
             },
-            QuoteState::WeakOpen => match c {
-                '\\' => QuoteState::WeakOpenEscape,
-                '"' => QuoteState::Complete,
-                _ => QuoteState::WeakOpen,
+            ParseState::WeakOpen => match c {
+                '#' => return ParseState::Comment,
+                '\\' => ParseState::WeakOpenEscape,
+                '"' => ParseState::Complete,
+                _ => ParseState::WeakOpen,
             },
-            QuoteState::WeakOpenEscape => QuoteState::WeakOpen,
-            QuoteState::StrongOpen => match c {
-                '\\' => QuoteState::StrongOpenEscape,
-                '\'' => QuoteState::Complete,
-                _ => QuoteState::StrongOpen,
+            ParseState::WeakOpenEscape => ParseState::WeakOpen,
+            ParseState::StrongOpen => match c {
+                '#' => return ParseState::Comment,
+                '\\' => ParseState::StrongOpenEscape,
+                '\'' => ParseState::Complete,
+                _ => ParseState::StrongOpen,
             },
-            QuoteState::StrongOpenEscape => QuoteState::StrongOpen,
+            ParseState::StrongOpenEscape => ParseState::StrongOpen,
+            // Comments last the entire line.
+            ParseState::Comment => panic!("should have returned early"),
         };
     }
     cur_state
@@ -81,13 +87,13 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
 
     fn next(&mut self) -> Option<Result<String>> {
         let mut buf = String::new();
-        let mut cur_state = QuoteState::Complete;
+        let mut cur_state = ParseState::Complete;
         let mut buf_pos;
         loop {
             buf_pos = buf.len();
             match self.buf.read_line(&mut buf) {
                 Ok(0) => match cur_state {
-                    QuoteState::Complete => return None,
+                    ParseState::Complete => return None,
                     _ => {
                         let len = buf.len();
                         return Some(Err(Error::LineParse(buf, len)));
@@ -95,14 +101,29 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
                 },
                 Ok(_n) => {
                     cur_state = eval_end_state(cur_state, &buf[buf_pos..]);
-                    if let QuoteState::Complete = cur_state {
-                        if buf.ends_with('\n') {
-                            buf.pop();
-                            if buf.ends_with('\r') {
+
+                    match cur_state {
+                        ParseState::Complete => {
+                            if buf.ends_with('\n') {
                                 buf.pop();
+                                if buf.ends_with('\r') {
+                                    buf.pop();
+                                }
                             }
+                            return Some(Ok(buf));
                         }
-                        return Some(Ok(buf));
+                        ParseState::Escape => {}
+                        ParseState::StrongOpen => {}
+                        ParseState::StrongOpenEscape => {}
+                        ParseState::WeakOpen => {}
+                        ParseState::WeakOpenEscape => {}
+                        ParseState::Comment => {
+                            // Find the start of the comment
+                            let idx = buf.find(|c| c == '#').unwrap();
+                            // Drop the trailing comment text
+                            buf.truncate(idx);
+                            return Some(Ok(buf));
+                        }
                     }
                 }
                 Err(e) => return Some(Err(Error::Io(e))),
