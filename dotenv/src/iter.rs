@@ -46,30 +46,38 @@ enum ParseState {
     WeakOpen,
     WeakOpenEscape,
     Comment,
+    WhiteSpace,
 }
 
-fn eval_end_state(prev_state: ParseState, buf: &str) -> ParseState {
+fn eval_end_state(prev_state: ParseState, buf: &str) -> (usize, ParseState) {
     let mut cur_state = prev_state;
+    let mut cur_pos: usize = 0;
 
-    for c in buf.chars() {
+    for (pos, c) in buf.char_indices() {
+        cur_pos = pos;
         cur_state = match cur_state {
+            ParseState::WhiteSpace => match c {
+                '#' => return (cur_pos, ParseState::Comment),
+                '\\' => ParseState::Escape,
+                '"' => ParseState::WeakOpen,
+                '\'' => ParseState::StrongOpen,
+                _ => ParseState::Complete,
+            },
             ParseState::Escape => ParseState::Complete,
             ParseState::Complete => match c {
-                '#' => return ParseState::Comment,
+                c if c.is_whitespace() && c != '\n' && c != '\r' => ParseState::WhiteSpace,
                 '\\' => ParseState::Escape,
                 '"' => ParseState::WeakOpen,
                 '\'' => ParseState::StrongOpen,
                 _ => ParseState::Complete,
             },
             ParseState::WeakOpen => match c {
-                '#' => return ParseState::Comment,
                 '\\' => ParseState::WeakOpenEscape,
                 '"' => ParseState::Complete,
                 _ => ParseState::WeakOpen,
             },
             ParseState::WeakOpenEscape => ParseState::WeakOpen,
             ParseState::StrongOpen => match c {
-                '#' => return ParseState::Comment,
                 '\\' => ParseState::StrongOpenEscape,
                 '\'' => ParseState::Complete,
                 _ => ParseState::StrongOpen,
@@ -79,7 +87,7 @@ fn eval_end_state(prev_state: ParseState, buf: &str) -> ParseState {
             ParseState::Comment => panic!("should have returned early"),
         };
     }
-    cur_state
+    (cur_pos, cur_state)
 }
 
 impl<B: BufRead> Iterator for QuotedLines<B> {
@@ -89,6 +97,7 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
         let mut buf = String::new();
         let mut cur_state = ParseState::Complete;
         let mut buf_pos;
+        let mut cur_pos;
         loop {
             buf_pos = buf.len();
             match self.buf.read_line(&mut buf) {
@@ -100,7 +109,12 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
                     }
                 },
                 Ok(_n) => {
-                    cur_state = eval_end_state(cur_state, &buf[buf_pos..]);
+                    // Skip lines which start with a # before iteration
+                    // This optimizes parsing a bit.
+                    if buf.trim_start().starts_with('#') {
+                        return Some(Ok(String::with_capacity(0)));
+                    }
+                    (cur_pos, cur_state) = eval_end_state(cur_state, &buf[buf_pos..]);
 
                     match cur_state {
                         ParseState::Complete => {
@@ -112,16 +126,14 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
                             }
                             return Some(Ok(buf));
                         }
-                        ParseState::Escape => {}
-                        ParseState::StrongOpen => {}
-                        ParseState::StrongOpenEscape => {}
-                        ParseState::WeakOpen => {}
-                        ParseState::WeakOpenEscape => {}
+                        ParseState::Escape
+                        | ParseState::StrongOpen
+                        | ParseState::StrongOpenEscape
+                        | ParseState::WeakOpen
+                        | ParseState::WeakOpenEscape
+                        | ParseState::WhiteSpace => {}
                         ParseState::Comment => {
-                            // Find the start of the comment
-                            let idx = buf.find(|c| c == '#').unwrap();
-                            // Drop the trailing comment text
-                            buf.truncate(idx);
+                            buf.truncate(buf_pos + cur_pos);
                             return Some(Ok(buf));
                         }
                     }
