@@ -114,7 +114,9 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
                     if buf.trim_start().starts_with('#') {
                         return Some(Ok(String::with_capacity(0)));
                     }
-                    (cur_pos, cur_state) = eval_end_state(cur_state, &buf[buf_pos..]);
+                    let result = eval_end_state(cur_state, &buf[buf_pos..]);
+                    cur_pos = result.0;
+                    cur_state = result.1;
 
                     match cur_state {
                         ParseState::Complete => {
