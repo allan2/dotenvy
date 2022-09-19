@@ -1,6 +1,6 @@
 [package]
 name = "dotenvy"
-version = "0.15.3"
+version = "0.15.4"
 authors = [
   "Noemi Lapresta <noemi.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
