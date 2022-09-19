@@ -17,6 +17,7 @@ homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"
 description = "A macro for compile time dotenv inspection"
 edition = "2018"
+rust = "1.58.1"
 
 [dependencies]
 dotenvy_codegen_impl = { version = "0.15", path = "../dotenv_codegen_impl" }
