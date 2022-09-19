@@ -1,9 +1,7 @@
 # dotenvy
 
 [![crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
-![CI](https://github.com/allan2/dotenvy/workflows/CI/badge.svg)
 [![Released API docs](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy)
-[![codecov](https://codecov.io/gh/allan2/dotenvy/branch/master/graph/badge.svg)](https://codecov.io/gh/allan2/dotenvy)
 
 A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
 
