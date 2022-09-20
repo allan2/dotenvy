@@ -66,7 +66,7 @@ impl<'a> LineParser<'a> {
             return Ok(Some((key, String::new())));
         }
 
-        let parsed_value = parse_value(self.line, &mut self.substitution_data)?;
+        let parsed_value = parse_value(self.line, self.substitution_data)?;
         self.substitution_data
             .insert(key.clone(), Some(parsed_value.clone()));
 
