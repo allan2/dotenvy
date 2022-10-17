@@ -22,7 +22,9 @@ impl<R: Read> Iter<R> {
     }
 
     /// Loads all variables found in the `reader` into the environment.
-    pub fn load(self) -> Result<()> {
+    pub fn load(mut self) -> Result<()> {
+        self.remove_bom()?;
+
         for item in self {
             let (key, value) = item?;
             if env::var(&key).is_err() {
@@ -30,6 +32,16 @@ impl<R: Read> Iter<R> {
             }
         }
 
+        Ok(())
+    }
+
+    fn remove_bom(&mut self) -> Result<()> {
+        let buffer = self.lines.buf.fill_buf().map_err(Error::Io)?;
+        // https://www.compart.com/en/unicode/U+FEFF
+        if buffer.starts_with(&[0xEF, 0xBB, 0xBF]) {
+            // remove the BOM from the bufreader
+            self.lines.buf.consume(3);
+        }
         Ok(())
     }
 }
