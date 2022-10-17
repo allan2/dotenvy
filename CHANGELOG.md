@@ -5,11 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.6] - 2022-10-17
+
+### Added
+
+- Support for UTF-8 BOM [(PR #28)](https://github.com/allan2/dotenvy/pull/28) by [sonro](https://github.com/sonro). Thanks [webbertakken](https://github.com/webbertakken)
+
+
+### Changed
+- `dirs` moved to dev dependency [(PR #24)](https://github.com/allan2/dotenvy/pull/24) by [goto-bus-stop](https://github.com/goto-bus-stop)
+
+### Fixed
+- formatting and linting ([PR #22](https://github.com/allan2/dotenvy/pull/22) and [#23](https://github.com/allan2/dotenvy/pull/23)) by [rillian](https://github.com/rillian)
+
+
 ## [0.15.5] - 2022-09-19
 
 ### Added
 
-- Minimum Supported Rust Version is now 1.58.1. [(PR #18)](https://github.com/allan2/dotenvy/pull/21) by [rillian](https://github.com/rillian)
+- Minimum Supported Rust Version is now 1.58.1 [(PR #18)](https://github.com/allan2/dotenvy/pull/21) by [rillian](https://github.com/rillian)
 
 ## [0.15.4] - 2022-09-19
 
