@@ -269,7 +269,7 @@ fn apply_substitution(
             .get(substitution_name)
             .unwrap_or(&None)
             .to_owned();
-        output.push_str(&stored_value.unwrap_or_else(String::new));
+        output.push_str(&stored_value.unwrap_or_default());
     };
 }
 
@@ -645,7 +645,7 @@ mod error_tests {
 
         if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
             assert_eq!(wrong_value, wrong_escape);
-            assert_eq!(*index, wrong_escape.find("\\").unwrap() + 1)
+            assert_eq!(*index, wrong_escape.find('\\').unwrap() + 1)
         } else {
             panic!("Expected the second value not to be parsed")
         }
