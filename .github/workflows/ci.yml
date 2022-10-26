@@ -89,6 +89,12 @@ jobs:
         with:
           version: 0.22.0
           args: --ignore-tests --workspace -- --test-threads 1
+          
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: code_coverage_result
+          path: cobertura.xml
 
       # push steps
       - name: Upload to codecov.io
@@ -97,9 +103,18 @@ jobs:
         with:
           files: cobertura.xml
 
-      - name: Archive code coverage results
+      # pull request steps
+      - name: Note PR number
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./pr
+          printf $PR_NUMBER > ./pr/pr_number
+
+      - name: Save PR number
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v3
-        if: github.event_name == 'push'
         with:
-          name: code-coverage-report
-          path: cobertura.xml
+          name: pr_number
+          path: pr/
