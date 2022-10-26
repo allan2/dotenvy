@@ -1,0 +1,61 @@
+name: codecov-comment
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    # Only run if workflow was successfully run on a pull_request event
+    if: ${{ (github.event.workflow_run.conclusion == 'success') && (github.event.workflow_run.event == 'pull_request') }}
+    env:
+      # ID of the pull_request's workflow run
+      PR_RUN_ID: ${{ github.event.workflow_run.id }}
+
+    steps:
+      - name: Get results
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci
+          run_id: ${{ env.PR_RUN_ID }}
+          name: code_coverage_result
+
+      - name: Create report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: cobertura.xml
+          badge: true
+          format: markdown
+          hide_branch_rate: true
+          hide_complexity: true
+          indicators: false
+          output: both
+          thresholds: "50 75"
+
+      - name: Trim report
+        # get rid of unnecessary codcov info
+        # remove any line not containing a link or a comment
+        run: |
+          sed -i '/!\[\|<!--/!d' code-coverage-results.md
+
+      - name: Get PR number
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci
+          run_id: ${{ env.PR_RUN_ID }}
+          name: pr_number
+
+      - name: Read PR number
+        id: read_pr
+        uses: andstor/file-reader-action@v1
+        with:
+          path: pr_number
+
+      - name: Add coverage PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.read_pr.outputs.contents }}
+          recreate: true
+          path: code-coverage-results.md
