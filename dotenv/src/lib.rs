@@ -44,9 +44,9 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// Returns an iterator of `(key, value)` pairs for all environment variables of the current process.
 /// The returned iterator contains a snapshot of the process's environment variables at the time of invocation. Modifications to environment variables afterwards will not be reflected.
 ///
-///
 /// # Examples:
 ///
+/// ```no_run
 /// use std::io;
 ///
 /// let result: Vec<(String, String)> = dotenvy::vars().collect();
