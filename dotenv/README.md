@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
 [![msrv
-1.58.1](https://img.shields.io/badge/msrv-1.58.1-dea584.svg?logo=rust)](https://github.com/rust-lang/rust/releases/tag/1.58.1)
+1.56.1](https://img.shields.io/badge/msrv-1.56.1-dea584.svg?logo=rust)](https://github.com/rust-lang/rust/releases/tag/1.56.1)
 [![ci](https://github.com/allan2/dotenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/allan2/dotenvy/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/docsrs/dotenvy?logo=docs.rs)](https://docs.rs/dotenvy/)
 

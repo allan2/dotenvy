@@ -32,7 +32,7 @@ static START: Once = Once::new();
 ///
 /// ```no_run
 /// let value = dotenvy::var("HOME").unwrap();
-/// println!("{value}");  // prints `/home/foo`
+/// println!("{}", value);  // prints `/home/foo`
 /// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
@@ -84,7 +84,7 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 ///
 /// for item in dotenvy::from_path_iter(my_path.as_path()).unwrap() {
 ///   let (key, val) = item.unwrap();
-///   println!("{key}={val}");
+///   println!("{}={}", key, val);
 /// }
 /// ```
 pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
@@ -115,7 +115,7 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// ```no_run
 /// for item in dotenvy::from_filename_iter("custom.env").unwrap() {
 ///     let (key, val) = item.unwrap();
-///     println!("{key}={val}");
+///     println!("{}={}", key, val);
 ///   }
 /// ```
 
@@ -158,7 +158,7 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 ///
 /// for item in dotenvy::from_read_iter(stream) {
 ///   let (key, val) = item.unwrap();
-///   println!("{key}={val}");
+///   println!("{}={}", key, val);
 /// }
 /// ```
 pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
@@ -183,7 +183,7 @@ pub fn dotenv() -> Result<PathBuf> {
 /// ```
 /// for item in dotenvy::dotenv_iter().unwrap() {
 ///   let (key, val) = item.unwrap();
-///   println!("{key}={val}");
+///   println!("{}={}", key, val);
 /// }
 /// ```
 pub fn dotenv_iter() -> Result<iter::Iter<File>> {

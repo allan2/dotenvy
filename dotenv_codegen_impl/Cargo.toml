@@ -20,7 +20,7 @@ homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"
 description = "Internal implementation for dotenvy_codegen"
 edition = "2018"
-rust-version = "1.58.1"
+rust-version = "1.56.1"
 
 [dependencies]
 proc-macro2 = "1"
