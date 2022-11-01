@@ -42,6 +42,13 @@ The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
 Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
 
+## Minimum supported Rust version
+
+Currently: **1.56.1**
+
+We aim to support the latest 8 rustc versions - approximately 1 year. Increasing
+MSRV is _not_ considered a semver-breaking change.
+
 ## Why does this fork exist?
 
 The original dotenv crate has not been updated since June 26, 2020. Attempts to reach the authors and present maintainer were not successful ([dotenv-rs/dotenv #74](https://github.com/dotenv-rs/dotenv/issues/74)).
