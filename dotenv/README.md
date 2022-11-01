@@ -1,7 +1,9 @@
 # dotenvy
 
-[![crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
-[![Released API docs](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy)
+[![Crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
+[![ci](https://github.com/allan2/dotenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/allan2/dotenvy/actions/workflows/ci.yml)
+[![docs](https://img.shields.io/docsrs/dotenvy?logo=docs.rs)](https://docs.rs/dotenvy/)
+[![license](https://img.shields.io/crates/l/dotenvy)](LICENSE)
 
 A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
 
