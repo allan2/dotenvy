@@ -1,15 +1,16 @@
 # dotenvy
 
-[![crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
-[![Released API docs](https://docs.rs/dotenvy/badge.svg)](https://docs.rs/dotenvy)
+[![Crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
+[![msrv
+1.58.1](https://img.shields.io/badge/msrv-1.58.1-dea584.svg?logo=rust)](https://github.com/rust-lang/rust/releases/tag/1.58.1)
+[![ci](https://github.com/allan2/dotenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/allan2/dotenvy/actions/workflows/ci.yml)
+[![docs](https://img.shields.io/docsrs/dotenvy?logo=docs.rs)](https://docs.rs/dotenvy/)
 
 A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crate.
 
 This crate is the suggested alternative for `dotenv` in security advisory [RUSTSEC-2021-0141](https://rustsec.org/advisories/RUSTSEC-2021-0141.html).
 
 This library loads environment variables from a _.env_ file. This is convenient for dev environments.
-
-The Minimum Supported Rust Version (MSRV) is 1.58.1.
 
 ## Components
 
