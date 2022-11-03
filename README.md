@@ -2,7 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/dotenvy.svg)](https://crates.io/crates/dotenvy)
 [![msrv
-1.58.1](https://img.shields.io/badge/msrv-1.58.1-dea584.svg?logo=rust)](https://github.com/rust-lang/rust/releases/tag/1.58.1)
+1.56.1](https://img.shields.io/badge/msrv-1.56.1-dea584.svg?logo=rust)](https://github.com/rust-lang/rust/releases/tag/1.56.1)
 [![ci](https://github.com/allan2/dotenvy/actions/workflows/ci.yml/badge.svg)](https://github.com/allan2/dotenvy/actions/workflows/ci.yml)
 [![docs](https://img.shields.io/docsrs/dotenvy?logo=docs.rs)](https://docs.rs/dotenvy/)
 
@@ -41,6 +41,13 @@ fn main() {
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
 Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
+
+## Minimum supported Rust version
+
+Currently: **1.56.1**
+
+We aim to support the latest 8 rustc versions - approximately 1 year. Increasing
+MSRV is _not_ considered a semver-breaking change.
 
 ## Why does this fork exist?
 
