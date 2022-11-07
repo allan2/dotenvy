@@ -36,7 +36,7 @@ static START: Once = Once::new();
 /// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
-        dotenv().ok();
+        dotenv();
     });
     env::var(key).map_err(Error::EnvVar)
 }
@@ -53,7 +53,7 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// ```
 pub fn vars() -> Vars {
     START.call_once(|| {
-        dotenv().ok();
+        dotenv();
     });
     env::vars()
 }

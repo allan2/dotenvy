@@ -28,7 +28,7 @@ use dotenvy::dotenv;
 use std::env;
 
 fn main() {
-    dotenv().ok();
+    dotenv().unwrap();
 
     for (key, value) in env::vars() {
         println!("{key}: {value}");
