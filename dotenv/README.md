@@ -28,7 +28,8 @@ use dotenvy::dotenv;
 use std::env;
 
 fn main() {
-    dotenv().unwrap();
+    // load environment variables from .env file
+    dotenv().expect(".env file not found");
 
     for (key, value) in env::vars() {
         println!("{key}: {value}");
