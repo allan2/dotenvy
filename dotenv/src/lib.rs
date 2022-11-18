@@ -112,11 +112,12 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 ///  Returns an iterator over environment variables from the specified file.
 ///
 /// # Examples
+///
 /// ```no_run
 /// for item in dotenvy::from_filename_iter("custom.env").unwrap() {
 ///     let (key, val) = item.unwrap();
 ///     println!("{}={}", key, val);
-///   }
+/// }
 /// ```
 
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
@@ -131,6 +132,7 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// For regular files, use [from_path] or [from_filename].
 ///
 /// # Examples
+///
 /// ```no_run
 /// # #![cfg(unix)]
 /// use std::io::Read;
@@ -157,8 +159,8 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// let mut stream = UnixStream::connect("/some/socket").unwrap();
 ///
 /// for item in dotenvy::from_read_iter(stream) {
-///   let (key, val) = item.unwrap();
-///   println!("{}={}", key, val);
+///     let (key, val) = item.unwrap();
+///     println!("{}={}", key, val);
 /// }
 /// ```
 pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
@@ -167,7 +169,9 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 /// Loads the *.env* file from the current directory or parents. This is typically what you want.
 ///
 /// An error will be returned if the file is not found.
+///
 /// # Examples
+///
 /// ```
 /// dotenvy::dotenv().unwrap();
 /// ```
@@ -180,10 +184,11 @@ pub fn dotenv() -> Result<PathBuf> {
 /// Returns an iterator over environment variables.
 ///
 /// # Examples
+///
 /// ```
 /// for item in dotenvy::dotenv_iter().unwrap() {
-///   let (key, val) = item.unwrap();
-///   println!("{}={}", key, val);
+///     let (key, val) = item.unwrap();
+///     println!("{}={}", key, val);
 /// }
 /// ```
 pub fn dotenv_iter() -> Result<iter::Iter<File>> {
