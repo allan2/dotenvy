@@ -35,6 +35,18 @@ impl<R: Read> Iter<R> {
         Ok(())
     }
 
+    /// A version of [load] that overrides older variables in case of duplicates.
+    pub fn overload(mut self) -> Result<()> {
+        self.remove_bom()?;
+
+        for item in self {
+            let (key, value) = item?;
+            env::set_var(key, value);
+        }
+
+        Ok(())
+    }
+
     fn remove_bom(&mut self) -> Result<()> {
         let buffer = self.lines.buf.fill_buf().map_err(Error::Io)?;
         // https://www.compart.com/en/unicode/U+FEFF

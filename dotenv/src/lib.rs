@@ -181,6 +181,19 @@ pub fn dotenv() -> Result<PathBuf> {
     Ok(path)
 }
 
+/// A version of [dotenv] that overrides existing env vars
+///
+/// # Examples
+/// ```
+/// use dotenvy::overload;
+/// overload().ok();
+/// ```
+pub fn overload() -> Result<PathBuf> {
+    let (path, iter) = Finder::new().find()?;
+    iter.overload()?;
+    Ok(path)
+}
+
 /// Returns an iterator over environment variables.
 ///
 /// # Examples
