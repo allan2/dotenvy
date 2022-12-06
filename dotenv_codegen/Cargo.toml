@@ -1,5 +1,7 @@
-[package]
+[lib]
+proc-macro = true
 
+[package]
 name = "dotenvy_macro"
 version = "0.15.1"
 authors = [
@@ -20,5 +22,7 @@ edition = "2018"
 rust-version = "1.56.1"
 
 [dependencies]
-dotenvy_codegen_impl = { version = "0.15", path = "../dotenv_codegen_impl" }
-proc-macro-hack = "0.5"
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
+dotenvy = { version = "0.15", path = "../dotenv" }

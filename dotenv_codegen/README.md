@@ -6,5 +6,3 @@
 A macro for compile time dotenv inspection.
 
 This is a well-maintained fork of `dotenv_codegen`.
-
-Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
