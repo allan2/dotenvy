@@ -67,7 +67,7 @@ pub fn vars() -> Vars {
 /// file, the *first one* is applied.
 ///
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
-/// already existing in the environment, then use [`from_path_overload()`] instead.
+/// already existing in the environment, then use [`from_path_override`] instead.
 ///
 /// # Examples
 ///
@@ -88,9 +88,9 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
 ///
-/// If you want the existing environment to take precendence,
+/// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
-/// then use [`from_path()`] instead.
+/// then use [`from_path`] instead.
 ///
 /// # Examples
 ///
@@ -98,14 +98,14 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// use dirs::home_dir;
 ///
 /// let my_path = home_dir().map(|a| a.join("/absolute/path/.env")).unwrap();
-/// dotenvy::from_path_overload(my_path.as_path());
+/// dotenvy::from_path_override(my_path.as_path());
 /// ```
-pub fn from_path_overload<P: AsRef<Path>>(path: P) -> Result<()> {
+pub fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
-    iter.overload()
+    iter.load_override()
 }
 
-///  Returns an iterator over environment variables from the specified path.
+/// Returns an iterator over environment variables from the specified path.
 ///
 /// # Examples
 ///
@@ -132,14 +132,14 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// file, the *first one* is applied.
 ///
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
-/// already existing in the environment, then use [`from_filename_overload()`] instead.
+/// already existing in the environment, then use [`from_filename_override`] instead.
 ///
 /// # Examples
 /// ```no_run
 /// dotenvy::from_filename("custom.env").unwrap();
 /// ```
 ///
-/// It is also possible to load from a typical *.env* file like so. However, using [`dotenv()`] is preferred.
+/// It is also possible to load from a typical *.env* file like so. However, using [`dotenv`] is preferred.
 ///
 /// ```
 /// dotenvy::from_filename(".env").unwrap();
@@ -156,23 +156,23 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
 ///
-/// If you want the existing environment to take precendence,
+/// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
-/// then use [`from_filename()`] instead.
+/// then use [`from_filename`] instead.
 ///
 /// # Examples
 /// ```no_run
-/// dotenvy::from_filename_overload("custom.env").unwrap();
+/// dotenvy::from_filename_override("custom.env").unwrap();
 /// ```
 ///
-/// It is also possible to load from a typical *.env* file like so. However, using [`overload()`] is preferred.
+/// It is also possible to load from a typical *.env* file like so. However, using [`dotenv_override`] is preferred.
 ///
 /// ```
-/// dotenvy::from_filename_overload(".env").unwrap();
+/// dotenvy::from_filename_override(".env").unwrap();
 /// ```
-pub fn from_filename_overload<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
+pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
-    iter.overload()?;
+    iter.load_override()?;
     Ok(path)
 }
 
@@ -203,9 +203,9 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// the *first one* is applied.
 ///
 /// If you wish to ensure all variables are loaded from your `reader`, ignoring variables
-/// already existing in the environment, then use [`from_read_overload()`] instead.
+/// already existing in the environment, then use [`from_read_override`] instead.
 ///
-/// For regular files, use [`from_path()`] or [`from_filename()`].
+/// For regular files, use [`from_path`] or [`from_filename`].
 ///
 /// # Examples
 ///
@@ -231,11 +231,11 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// Where multiple declarations for the same environment variable exist in your `reader`, the
 /// *last one* is applied.
 ///
-/// If you want the existing environment to take precendence,
+/// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
-/// then use [`from_read()`] instead.
+/// then use [`from_read`] instead.
 ///
-/// For regular files, use [`from_path_overload()`] or [`from_filename_overload()`].
+/// For regular files, use [`from_path_override`] or [`from_filename_override`].
 ///
 /// # Examples
 /// ```no_run
@@ -244,11 +244,11 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// use std::os::unix::net::UnixStream;
 ///
 /// let mut stream = UnixStream::connect("/some/socket").unwrap();
-/// dotenvy::from_read_overload(stream).unwrap();
+/// dotenvy::from_read_override(stream).unwrap();
 /// ```
-pub fn from_read_overload<R: io::Read>(reader: R) -> Result<()> {
+pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
     let iter = Iter::new(reader);
-    iter.overload()?;
+    iter.load_override()?;
     Ok(())
 }
 
@@ -281,7 +281,7 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 /// file, the *first one* is applied.
 ///
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
-/// already existing in the environment, then use [`overload()`] instead.
+/// already existing in the environment, then use [`dotenv_override`] instead.
 ///
 /// An error will be returned if the file is not found.
 ///
@@ -302,18 +302,18 @@ pub fn dotenv() -> Result<PathBuf> {
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
 ///
-/// If you want the existing environment to take precendence,
+/// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
-/// then use [`dotenv()`] instead.
+/// then use [`dotenv`] instead.
 ///
 /// # Examples
 /// ```
-/// use dotenvy::overload;
-/// overload().ok();
+/// use dotenvy::dotenv_override;
+/// dotenv_override().ok();
 /// ```
-pub fn overload() -> Result<PathBuf> {
+pub fn dotenv_override() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
-    iter.overload()?;
+    iter.load_override()?;
     Ok(path)
 }
 
