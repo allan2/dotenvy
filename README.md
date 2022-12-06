@@ -16,8 +16,7 @@ This library loads environment variables from a _.env_ file. This is convenient 
 
 1. [`dotenvy`](https://crates.io/crates/dotenvy) crate - A well-maintained fork of the `dotenv` crate.
 2. [`dotenvy_macro`](https://crates.io/crates/dotenvy_codegen) crate - A macro for compile time dotenv inspection. This is a fork of `dotenv_codegen`.
-3. [`dotenvy_codgen_impl`](https://crates.io/crates/dotenvy_codegen_impl) crate - Internal implementation for dotenvy_codegen.
-4. `dotenvy` CLI tool for running a command using the environment from a _.env_ file (currently Unix only)
+3. `dotenvy` CLI tool for running a command using the environment from a _.env_ file (currently Unix only)
 
 ## Usage
 
