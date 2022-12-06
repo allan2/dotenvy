@@ -60,6 +60,15 @@ pub fn vars() -> Vars {
 
 /// Loads environment variables from the specified path.
 ///
+/// If variables with the same names already exist in the environment, then their values will be
+/// preserved.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env*
+/// file, the *first one* is applied.
+///
+/// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
+/// already existing in the environment, then use [`from_path_overload()`] instead.
+///
 /// # Examples
 ///
 /// ```no_run
@@ -71,6 +80,29 @@ pub fn vars() -> Vars {
 pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
     iter.load()
+}
+
+/// Loads environment variables from the specified path,
+/// overriding existing environment variables.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env* file, the
+/// *last one* is applied.
+///
+/// If you want the existing environment to take precendence,
+/// or if you want to be able to override environment variables on the command line,
+/// then use [`from_path()`] instead.
+///
+/// # Examples
+///
+/// ```no_run
+/// use dirs::home_dir;
+///
+/// let my_path = home_dir().map(|a| a.join("/absolute/path/.env")).unwrap();
+/// dotenvy::from_path_overload(my_path.as_path());
+/// ```
+pub fn from_path_overload<P: AsRef<Path>>(path: P) -> Result<()> {
+    let iter = Iter::new(File::open(path).map_err(Error::Io)?);
+    iter.overload()
 }
 
 ///  Returns an iterator over environment variables from the specified path.
@@ -93,12 +125,21 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 
 /// Loads environment variables from the specified file.
 ///
+/// If variables with the same names already exist in the environment, then their values will be
+/// preserved.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env*
+/// file, the *first one* is applied.
+///
+/// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
+/// already existing in the environment, then use [`from_filename_overload()`] instead.
+///
 /// # Examples
 /// ```no_run
 /// dotenvy::from_filename("custom.env").unwrap();
 /// ```
 ///
-/// It is also possible to load from a typical *.env* file like so. However, using [dotenv] is preferred.
+/// It is also possible to load from a typical *.env* file like so. However, using [`dotenv()`] is preferred.
 ///
 /// ```
 /// dotenvy::from_filename(".env").unwrap();
@@ -106,6 +147,32 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
     iter.load()?;
+    Ok(path)
+}
+
+/// Loads environment variables from the specified file,
+/// overriding existing environment variables.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env* file, the
+/// *last one* is applied.
+///
+/// If you want the existing environment to take precendence,
+/// or if you want to be able to override environment variables on the command line,
+/// then use [`from_filename()`] instead.
+///
+/// # Examples
+/// ```no_run
+/// dotenvy::from_filename_overload("custom.env").unwrap();
+/// ```
+///
+/// It is also possible to load from a typical *.env* file like so. However, using [`overload()`] is preferred.
+///
+/// ```
+/// dotenvy::from_filename_overload(".env").unwrap();
+/// ```
+pub fn from_filename_overload<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
+    let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
+    iter.overload()?;
     Ok(path)
 }
 
@@ -125,11 +192,20 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     Ok(iter)
 }
 
-/// Loads environment variables from [io::Read](std::io::Read).
+/// Loads environment variables from [`io::Read`](std::io::Read).
 ///
 /// This is useful for loading environment variables from from IPC or the network.
 ///
-/// For regular files, use [from_path] or [from_filename].
+/// If variables with the same names already exist in the environment, then their values will be
+/// preserved.
+///
+/// Where multiple declarations for the same environment variable exist in your `reader`,
+/// the *first one* is applied.
+///
+/// If you wish to ensure all variables are loaded from your `reader`, ignoring variables
+/// already existing in the environment, then use [`from_read_overload()`] instead.
+///
+/// For regular files, use [`from_path()`] or [`from_filename()`].
 ///
 /// # Examples
 ///
@@ -147,7 +223,36 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
     Ok(())
 }
 
-/// Returns an iterator over environment variables from [io::Read](std::io::Read).
+/// Loads environment variables from [`io::Read`](std::io::Read),
+/// overriding existing environment variables.
+///
+/// This is useful for loading environment variables from from IPC or the network.
+///
+/// Where multiple declarations for the same environment variable exist in your `reader`, the
+/// *last one* is applied.
+///
+/// If you want the existing environment to take precendence,
+/// or if you want to be able to override environment variables on the command line,
+/// then use [`from_read()`] instead.
+///
+/// For regular files, use [`from_path_overload()`] or [`from_filename_overload()`].
+///
+/// # Examples
+/// ```no_run
+/// # #![cfg(unix)]
+/// use std::io::Read;
+/// use std::os::unix::net::UnixStream;
+///
+/// let mut stream = UnixStream::connect("/some/socket").unwrap();
+/// dotenvy::from_read_overload(stream).unwrap();
+/// ```
+pub fn from_read_overload<R: io::Read>(reader: R) -> Result<()> {
+    let iter = Iter::new(reader);
+    iter.overload()?;
+    Ok(())
+}
+
+/// Returns an iterator over environment variables from [`io::Read`](std::io::Read).
 ///
 /// # Examples
 ///
@@ -166,7 +271,17 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
     Iter::new(reader)
 }
+
 /// Loads the *.env* file from the current directory or parents. This is typically what you want.
+///
+/// If variables with the same names already exist in the environment, then their values will be
+/// preserved.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env*
+/// file, the *first one* is applied.
+///
+/// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
+/// already existing in the environment, then use [`overload()`] instead.
 ///
 /// An error will be returned if the file is not found.
 ///
@@ -181,7 +296,15 @@ pub fn dotenv() -> Result<PathBuf> {
     Ok(path)
 }
 
-/// A version of [dotenv] that overrides existing env vars
+/// Loads all variables found in the `reader` into the environment,
+/// overriding any existing environment variables of the same name.
+///
+/// Where multiple declarations for the same environment variable exist in your *.env* file, the
+/// *last one* is applied.
+///
+/// If you want the existing environment to take precendence,
+/// or if you want to be able to override environment variables on the command line,
+/// then use [`dotenv()`] instead.
 ///
 /// # Examples
 /// ```
