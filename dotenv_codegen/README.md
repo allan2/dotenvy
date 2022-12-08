@@ -1,4 +1,4 @@
-# dotenvy_codgen
+# dotenvy_macro
 
 [![crates.io](https://img.shields.io/crates/v/dotenvy_macro.svg)](https://crates.io/crates/dotenvy_macro)
 [![Released API docs](https://docs.rs/dotenvy_macro/badge.svg)](https://docs.rs/dotenvy_macro)
