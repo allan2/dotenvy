@@ -21,7 +21,11 @@ impl<R: Read> Iter<R> {
         }
     }
 
-    /// Loads all variables found in the `reader` into the environment.
+    /// Loads all variables found in the `reader` into the environment,
+    /// preserving any existing environment variables of the same name.
+    ///
+    /// If a variable is specified multiple times within the reader's data,
+    /// then the first occurrence is applied.
     pub fn load(mut self) -> Result<()> {
         self.remove_bom()?;
 
@@ -35,8 +39,12 @@ impl<R: Read> Iter<R> {
         Ok(())
     }
 
-    /// A version of [load] that overrides older variables in case of duplicates.
-    pub fn overload(mut self) -> Result<()> {
+    /// Loads all variables found in the `reader` into the environment,
+    /// overriding any existing environment variables of the same name.
+    ///
+    /// If a variable is specified multiple times within the reader's data,
+    /// then the last occurrence is applied.
+    pub fn load_override(mut self) -> Result<()> {
         self.remove_bom()?;
 
         for item in self {

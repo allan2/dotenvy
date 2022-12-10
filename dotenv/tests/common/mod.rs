@@ -4,6 +4,7 @@ use std::{env, io};
 use tempfile::{tempdir, TempDir};
 
 pub fn tempdir_with_dotenv(dotenv_text: &str) -> io::Result<TempDir> {
+    env::set_var("EXISTING", "from_env");
     let dir = tempdir()?;
     env::set_current_dir(dir.path())?;
     let dotenv_path = dir.path().join(".env");
@@ -15,5 +16,5 @@ pub fn tempdir_with_dotenv(dotenv_text: &str) -> io::Result<TempDir> {
 
 #[allow(dead_code)]
 pub fn make_test_dotenv() -> io::Result<TempDir> {
-    tempdir_with_dotenv("TESTKEY=test_val")
+    tempdir_with_dotenv("TESTKEY=test_val\nTESTKEY=test_val_overridden\nEXISTING=from_file")
 }
