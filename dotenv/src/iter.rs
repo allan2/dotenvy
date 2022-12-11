@@ -26,6 +26,12 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the first occurrence is applied.
+    ///
+    /// # Errors
+    ///
+    /// An [`Error::Io`] is returned if the provided `reader` is not readable.
+    ///
+    /// An [`Error::LineParse`] is returned if the provided `reader` produces invalid declarations.
     pub fn load(mut self) -> Result<()> {
         self.remove_bom()?;
 
@@ -44,6 +50,12 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the last occurrence is applied.
+    ///
+    /// # Errors
+    ///
+    /// An [`Error::Io`] is returned if the provided `reader` is not readable.
+    ///
+    /// An [`Error::LineParse`] is returned if the provided `reader` produces invalid declarations.
     pub fn load_override(mut self) -> Result<()> {
         self.remove_bom()?;
 

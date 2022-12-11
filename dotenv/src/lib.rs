@@ -23,10 +23,33 @@ static START: Once = Once::new();
 
 /// Gets the value for an environment variable.
 ///
-/// The value is `Ok(s)` if the environment variable is present and valid unicode.
+/// # Discovery
 ///
-/// Note: this function gets values from any visible environment variable key,
-/// regardless of whether a *.env* file was loaded.
+/// Environment variables are loaded from the *first .env file*
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then load environment variables with [`from_path`] instead, then invoke [`env::var`] manually.
+///
+/// # Sources
+///
+/// This function returns values from any environment variable key present in the process,
+/// even if no *.env* file is discovered, the discovered *.env* file is not readable, or it contains invalid declarations.
+///
+/// # Repeated calls
+///
+/// *.env* auto-discovery and loading into the process environment is performed at the first call to [`var`] or [`vars`].
+///
+/// Any repeated calls skip auto-discovery and return variables as found in the environment.
+///
+/// # Errors
+///
+/// An [`Error::EnvVar`] is returned if the environment variable is missing or not valid unicode.
+///
+/// Errors while attempting to auto-discover and load an *.env* file are silenced.
+///
+/// If you need explicit error handling, then consider first loading enironment variables
+/// with [`from_filename`] or [`from_path`], then manually invoking [`env::var`] instead.
 ///
 /// # Examples:
 ///
@@ -42,7 +65,34 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 }
 
 /// Returns an iterator of `(key, value)` pairs for all environment variables of the current process.
-/// The returned iterator contains a snapshot of the process's environment variables at the time of invocation. Modifications to environment variables afterwards will not be reflected.
+/// The returned iterator contains a snapshot of the process's environment variables at the time of invocation.
+/// Modifications to environment variables afterwards are not reflected.
+///
+/// # Discovery
+///
+/// Environment variables are loaded from the *first .env file*
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then load environment variables with [`from_path`] instead, then invoke [`env::vars`] manually.
+///
+/// # Sources
+///
+/// This function returns values from any environment variable key present in the process,
+/// even if no *.env* file is discovered, the discovered *.env* file is not readable, or it contains invalid declarations.
+///
+/// # Repeated calls
+///
+/// *.env* auto-discovery and loading into the process environment is performed at the first call to [`var`] or [`vars`].
+///
+/// Any repeated calls skip auto-discovery and return variables as found in the environment.
+///
+/// # Errors
+///
+/// Errors while attempting to auto-discover and load an *.env* file are silenced.
+///
+/// If you need explicit error handling, then consider first loading enironment variables
+/// with [`from_filename`] or [`from_path`], then manually invoking [`env::vars`] instead.
 ///
 /// # Examples:
 ///
@@ -58,9 +108,18 @@ pub fn vars() -> Vars {
     env::vars()
 }
 
-/// Loads environment variables from the specified path.
+/// Loads environment variables from the specified file.
 ///
-/// If variables with the same names already exist in the environment, then their values will be
+/// # Discovery
+///
+/// Environment variables are loaded *exclusively* from the file specified as `path`.
+///
+/// If you prefer `dotenvy` to auto-discover your *.env* file in parent directories,
+/// then use [`from_filename`] instead.
+///
+/// # Overriding behavior
+///
+/// If variables with the same names already exist in the environment, then their values are
 /// preserved.
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env*
@@ -68,6 +127,12 @@ pub fn vars() -> Vars {
 ///
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
 /// already existing in the environment, then use [`from_path_override`] instead.
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if the specified file is not found or not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered environment file contains invalid declarations.
 ///
 /// # Examples
 ///
@@ -79,11 +144,21 @@ pub fn vars() -> Vars {
 /// ```
 pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
-    iter.load()
+    iter.load()?;
+    Ok(())
 }
 
-/// Loads environment variables from the specified path,
+/// Loads environment variables from the specified file,
 /// overriding existing environment variables.
+///
+/// # Discovery
+///
+/// Environment variables are loaded *exclusively* from the file specified as `path`.
+///
+/// If you prefer `dotenvy` to auto-discover your *.env* file in parent directories,
+/// then use [`from_filename_override`] instead.
+///
+/// # Overriding behavior
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
@@ -91,6 +166,12 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
 /// then use [`from_path`] instead.
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if the specified file is not found or not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered environment file contains invalid declarations.
 ///
 /// # Examples
 ///
@@ -102,10 +183,22 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// ```
 pub fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
-    iter.load_override()
+    iter.load_override()?;
+    Ok(())
 }
 
-/// Returns an iterator over environment variables from the specified path.
+/// Returns an iterator over environment variables from the specified file.
+///
+/// # Discovery
+///
+/// Environment variables are loaded *exclusively* from the file specified as `path`.
+///
+/// If you prefer `dotenvy` to auto-discover your *.env* file in parent directories,
+/// then use [`from_filename_iter`] instead.
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if the specified file is not found or not readable.
 ///
 /// # Examples
 ///
@@ -123,9 +216,19 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
     Ok(Iter::new(File::open(path).map_err(Error::Io)?))
 }
 
-/// Loads environment variables from the specified file.
+/// Loads environment variables from the first discovered file matching the specified name.
 ///
-/// If variables with the same names already exist in the environment, then their values will be
+/// # Discovery
+///
+/// Environment variables are loaded from the *first file* matching `filename`
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then use [`from_path`] instead.
+///
+/// # Overriding behavior
+///
+/// If variables with the same names already exist in the environment, then their values are
 /// preserved.
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env*
@@ -134,7 +237,14 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
 /// already existing in the environment, then use [`from_filename_override`] instead.
 ///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if auto-discovery fails, or the discovered file is not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered environment file contains invalid declarations.
+///
 /// # Examples
+///
 /// ```no_run
 /// dotenvy::from_filename("custom.env").unwrap();
 /// ```
@@ -150,8 +260,18 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Loads environment variables from the specified file,
+/// Loads environment variables from the first discovered file matching the specified name,
 /// overriding existing environment variables.
+///
+/// # Discovery
+///
+/// Environment variables are loaded from the *first file* matching `filename`
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then use [`from_path_override`] instead.
+///
+/// # Overriding behavior
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
@@ -160,7 +280,14 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// or if you want to be able to override environment variables on the command line,
 /// then use [`from_filename`] instead.
 ///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if auto-discovery fails, or the discovered file is not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered environment file contains invalid declarations.
+///
 /// # Examples
+///
 /// ```no_run
 /// dotenvy::from_filename_override("custom.env").unwrap();
 /// ```
@@ -176,7 +303,20 @@ pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     Ok(path)
 }
 
-///  Returns an iterator over environment variables from the specified file.
+/// Returns an iterator over environment variables from the first discovered file
+/// matching the specified name.
+///
+/// # Discovery
+///
+/// Environment variables are loaded from the *first file* matching `filename`
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then use [`from_path_iter`] instead.
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if auto-discovery fails, or the discovered file is not readable.
 ///
 /// # Examples
 ///
@@ -196,7 +336,9 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 ///
 /// This is useful for loading environment variables from from IPC or the network.
 ///
-/// If variables with the same names already exist in the environment, then their values will be
+/// # Overriding behavior
+///
+/// If variables with the same names already exist in the environment, then their values are
 /// preserved.
 ///
 /// Where multiple declarations for the same environment variable exist in your `reader`,
@@ -205,7 +347,15 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// If you wish to ensure all variables are loaded from your `reader`, ignoring variables
 /// already existing in the environment, then use [`from_read_override`] instead.
 ///
+/// # Regular *.env* files
+///
 /// For regular files, use [`from_path`] or [`from_filename`].
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if the provided `reader` is not readable.
+///
+/// An [`Error::LineParse`] is returned if the provided `reader` produces invalid declarations.
 ///
 /// # Examples
 ///
@@ -228,6 +378,8 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 ///
 /// This is useful for loading environment variables from from IPC or the network.
 ///
+/// # Overriding behavior
+///
 /// Where multiple declarations for the same environment variable exist in your `reader`, the
 /// *last one* is applied.
 ///
@@ -235,9 +387,18 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// or if you want to be able to override environment variables on the command line,
 /// then use [`from_read`] instead.
 ///
+/// # Regular *.env* files
+///
 /// For regular files, use [`from_path_override`] or [`from_filename_override`].
 ///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if the provided `reader` is not readable.
+///
+/// An [`Error::LineParse`] is returned if the provided `reader` produces invalid declarations.
+///
 /// # Examples
+///
 /// ```no_run
 /// # #![cfg(unix)]
 /// use std::io::Read;
@@ -253,6 +414,10 @@ pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
 }
 
 /// Returns an iterator over environment variables from [`io::Read`](std::io::Read).
+///
+/// # Regular *.env* files
+///
+/// For regular files, use [`from_path_iter`] or [`from_filename_iter`].
 ///
 /// # Examples
 ///
@@ -272,9 +437,19 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
     Iter::new(reader)
 }
 
-/// Loads the *.env* file from the current directory or parents. This is typically what you want.
+/// Loads the *.env* file from the current or any parent directory. This is typically what you want.
 ///
-/// If variables with the same names already exist in the environment, then their values will be
+/// # Discovery
+///
+/// Environment variables are loaded from the *first .env file*
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then use [`from_path`] instead.
+///
+/// # Overriding behavior
+///
+/// If variables with the same names already exist in the environment, then their values are
 /// preserved.
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env*
@@ -283,7 +458,11 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 /// If you wish to ensure all variables are loaded from your *.env* file, ignoring variables
 /// already existing in the environment, then use [`dotenv_override`] instead.
 ///
-/// An error will be returned if the file is not found.
+/// # Errors
+///
+/// An [`Error::Io`] is returned if *.env* auto-discovery fails, or the discovered *.env* file is not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered *.env* file contains invalid declarations.
 ///
 /// # Examples
 ///
@@ -296,8 +475,18 @@ pub fn dotenv() -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Loads all variables found in the `reader` into the environment,
+/// Loads the *.env* file from the current or any parent directory,
 /// overriding any existing environment variables of the same name.
+///
+/// # Discovery
+///
+/// Environment variables are loaded from the *first .env file*
+/// found in the *current directory* or any *parent directories*.
+///
+/// If you prefer `dotenvy` to load environment variables exclusively from a specific file,
+/// then use [`from_path_override`] instead.
+///
+/// # Overriding behavior
 ///
 /// Where multiple declarations for the same environment variable exist in your *.env* file, the
 /// *last one* is applied.
@@ -306,7 +495,14 @@ pub fn dotenv() -> Result<PathBuf> {
 /// or if you want to be able to override environment variables on the command line,
 /// then use [`dotenv`] instead.
 ///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if *.env* auto-discovery fails, or the discovered *.env* file is not readable.
+///
+/// An [`Error::LineParse`] is returned if the discovered *.env* file contains invalid declarations.
+///
 /// # Examples
+///
 /// ```
 /// use dotenvy::dotenv_override;
 /// dotenv_override().ok();
@@ -318,6 +514,10 @@ pub fn dotenv_override() -> Result<PathBuf> {
 }
 
 /// Returns an iterator over environment variables.
+///
+/// # Errors
+///
+/// An [`Error::Io`] is returned if *.env* auto-discovery fails, or the discovered *.env* file is not readable.
 ///
 /// # Examples
 ///
