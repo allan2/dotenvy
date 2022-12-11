@@ -31,8 +31,11 @@ static START: Once = Once::new();
 /// # Examples:
 ///
 /// ```no_run
-/// let value = dotenvy::var("HOME").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let value = dotenvy::var("HOME")?;
 /// println!("{}", value);  // prints `/home/foo`
+/// #     Ok(())
+/// # }
 /// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
@@ -72,10 +75,12 @@ pub fn vars() -> Vars {
 /// # Examples
 ///
 /// ```no_run
-/// use dirs::home_dir;
+/// use std::path::Path;
 ///
-/// let my_path = home_dir().map(|a| a.join("/absolute/path/.env")).unwrap();
-/// dotenvy::from_path(my_path.as_path());
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_path(Path::new("path/to/.env"))?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
@@ -95,10 +100,12 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// # Examples
 ///
 /// ```no_run
-/// use dirs::home_dir;
+/// use std::path::Path;
 ///
-/// let my_path = home_dir().map(|a| a.join("/absolute/path/.env")).unwrap();
-/// dotenvy::from_path_override(my_path.as_path());
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_path_override(Path::new("path/to/.env"))?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
@@ -110,14 +117,15 @@ pub fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
 /// # Examples
 ///
 /// ```no_run
-/// use dirs::home_dir;
+/// use std::path::Path;
 ///
-/// let my_path = home_dir().map(|a| a.join("/absolute/path/.env")).unwrap();
-///
-/// for item in dotenvy::from_path_iter(my_path.as_path()).unwrap() {
-///   let (key, val) = item.unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// for item in dotenvy::from_path_iter(Path::new("path/to/.env"))? {
+///   let (key, val) = item?;
 ///   println!("{}={}", key, val);
 /// }
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
     Ok(Iter::new(File::open(path).map_err(Error::Io)?))
@@ -136,13 +144,19 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 ///
 /// # Examples
 /// ```no_run
-/// dotenvy::from_filename("custom.env").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_filename("custom.env")?;
+/// #     Ok(())
+/// # }
 /// ```
 ///
 /// It is also possible to load from a typical *.env* file like so. However, using [`dotenv`] is preferred.
 ///
 /// ```
-/// dotenvy::from_filename(".env").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_filename(".env")?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
@@ -162,13 +176,19 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 ///
 /// # Examples
 /// ```no_run
-/// dotenvy::from_filename_override("custom.env").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_filename_override("custom.env")?;
+/// #     Ok(())
+/// # }
 /// ```
 ///
 /// It is also possible to load from a typical *.env* file like so. However, using [`dotenv_override`] is preferred.
 ///
 /// ```
-/// dotenvy::from_filename_override(".env").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::from_filename_override(".env")?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
@@ -181,10 +201,13 @@ pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// # Examples
 ///
 /// ```no_run
-/// for item in dotenvy::from_filename_iter("custom.env").unwrap() {
-///     let (key, val) = item.unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// for item in dotenvy::from_filename_iter("custom.env")? {
+///     let (key, val) = item?;
 ///     println!("{}={}", key, val);
 /// }
+/// #     Ok(())
+/// # }
 /// ```
 
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
@@ -214,8 +237,11 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// use std::io::Read;
 /// use std::os::unix::net::UnixStream;
 ///
-/// let mut stream = UnixStream::connect("/some/socket").unwrap();
-/// dotenvy::from_read(stream).unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let mut stream = UnixStream::connect("/some/socket")?;
+/// dotenvy::from_read(stream)?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
     let iter = Iter::new(reader);
@@ -243,8 +269,11 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// use std::io::Read;
 /// use std::os::unix::net::UnixStream;
 ///
-/// let mut stream = UnixStream::connect("/some/socket").unwrap();
-/// dotenvy::from_read_override(stream).unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let mut stream = UnixStream::connect("/some/socket")?;
+/// dotenvy::from_read_override(stream)?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
     let iter = Iter::new(reader);
@@ -261,12 +290,15 @@ pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
 /// use std::io::Read;
 /// use std::os::unix::net::UnixStream;
 ///
-/// let mut stream = UnixStream::connect("/some/socket").unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let mut stream = UnixStream::connect("/some/socket")?;
 ///
 /// for item in dotenvy::from_read_iter(stream) {
-///     let (key, val) = item.unwrap();
+///     let (key, val) = item?;
 ///     println!("{}={}", key, val);
 /// }
+/// #     Ok(())
+/// # }
 /// ```
 pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
     Iter::new(reader)
@@ -288,7 +320,10 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 /// # Examples
 ///
 /// ```
-/// dotenvy::dotenv().unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::dotenv()?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn dotenv() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
@@ -308,8 +343,10 @@ pub fn dotenv() -> Result<PathBuf> {
 ///
 /// # Examples
 /// ```
-/// use dotenvy::dotenv_override;
-/// dotenv_override().ok();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// dotenvy::dotenv_override()?;
+/// #     Ok(())
+/// # }
 /// ```
 pub fn dotenv_override() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
@@ -322,10 +359,13 @@ pub fn dotenv_override() -> Result<PathBuf> {
 /// # Examples
 ///
 /// ```
-/// for item in dotenvy::dotenv_iter().unwrap() {
-///     let (key, val) = item.unwrap();
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// for item in dotenvy::dotenv_iter()? {
+///     let (key, val) = item?;
 ///     println!("{}={}", key, val);
 /// }
+/// #     Ok(())
+/// # }
 /// ```
 pub fn dotenv_iter() -> Result<iter::Iter<File>> {
     let (_, iter) = Finder::new().find()?;

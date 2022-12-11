@@ -29,7 +29,6 @@ clap = { version = "3.2", optional = true }
 
 [dev-dependencies]
 tempfile = "3.3.0"
-dirs = "4.0"
 
 [features]
 cli = ["clap"]
