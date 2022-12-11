@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - Minimum Supported Rust Version is now 1.56.1
 - Removed internal `dotenv_codegen_impl` crate and `proc_macro_hack` dependency
+- Rewrote most documentation ([PR #54](https://github.com/allan2/dotenvy/pull/54) by [LeoniePhiline](https://github.com/LeoniePhiline)
 
 ## [0.15.6] - 2022-10-17
 
