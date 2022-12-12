@@ -52,7 +52,7 @@ impl FromStr for AppEnv {
 }
 
 impl fmt::Display for AppEnv {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AppEnv::Dev => write!(f, "dev"),
             AppEnv::Prod => write!(f, "prod"),
