@@ -194,7 +194,7 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 
 /// Loads environment variables from [`io::Read`](std::io::Read).
 ///
-/// This is useful for loading environment variables from from IPC or the network.
+/// This is useful for loading environment variables from IPC or the network.
 ///
 /// If variables with the same names already exist in the environment, then their values will be
 /// preserved.
@@ -226,7 +226,7 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// Loads environment variables from [`io::Read`](std::io::Read),
 /// overriding existing environment variables.
 ///
-/// This is useful for loading environment variables from from IPC or the network.
+/// This is useful for loading environment variables from IPC or the network.
 ///
 /// Where multiple declarations for the same environment variable exist in your `reader`, the
 /// *last one* is applied.
