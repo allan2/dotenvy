@@ -22,17 +22,20 @@ This library loads environment variables from a _.env_ file. This is convenient 
 
 ### Loading at runtime
 
-```rs
-use dotenvy::dotenv;
+```rust
 use std::env;
+use std::error::Error;
 
-fn main() {
-    // load environment variables from .env file
-    dotenv().expect(".env file not found");
+fn main() -> Result<(), Box<dyn Error>> {
+    // Load environment variables from .env file.
+    // Fails if .env file not found, not readable or invalid.
+    dotenvy::dotenv()?;
 
     for (key, value) in env::vars() {
         println!("{key}: {value}");
     }
+
+    Ok(())
 }
 ```
 
@@ -59,13 +62,13 @@ This fork intends to serve as the development home for the dotenv implementation
 
 This repo fixes:
 
-- home directory works correctly (no longer using the deprecated `std::env::home_dir`)
 - more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
 
 It also adds:
 
 - multiline support for environment variable values
 - `io::Read` support via [`from_read`](https://docs.rs/dotenvy/latest/dotenvy/fn.from_read.html) and [`from_read_iter`](https://docs.rs/dotenvy/latest/dotenvy/fn.from_read_iter.html)
+- override support via [`dotenv_override`], [`from_filename_override`], [`from_path_override`] and [`from_read_override`]
 - improved docs
 
 For a full list of changes, refer to the [changelog](./CHANGELOG.md).
