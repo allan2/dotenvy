@@ -40,8 +40,6 @@ fn main() {
 
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
-Warning: there is an outstanding issue with rust-analyzer ([rust-analyzer #9606](https://github.com/rust-analyzer/rust-analyzer/issues/9606)) related to the `dotenv!` macro
-
 ## Minimum supported Rust version
 
 Currently: **1.56.1**
