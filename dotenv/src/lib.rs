@@ -17,7 +17,7 @@ use std::sync::Once;
 
 pub use crate::errors::*;
 use crate::find::Finder;
-use crate::iter::Iter;
+pub use crate::iter::Iter;
 
 static START: Once = Once::new();
 
