@@ -16,9 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Minimum Supported Rust Version is now 1.56.1
 - Removed internal `dotenv_codegen_impl` crate and `proc_macro_hack` dependency
 - Improved examples by handling errors, rather than using `unwrap`. ([PR #52](https://github.com/allan2/dotenvy/pull/52) by [LeoniePhiline](https://github.com/LeoniePhiline))
-
-### Fixed
-- Set `dotenvy::Iter` to public, as it is returned from public functions `dotenv_iter`, `from_filename_iter`, `from_path_iter` and `from_read_iter`. ([PR #51](https://github.com/allan2/dotenvy/pull/51) by [LeoniePhiline](https://github.com/LeoniePhiline))
+- Fix `Iter` being leaked in public API. It is now public in the crate root. ([PR #51](https://github.com/allan2/dotenvy/pull/51) by [LeoniePhiline](https://github.com/LeoniePhiline))
 
 ## [0.15.6] - 2022-10-17
 
