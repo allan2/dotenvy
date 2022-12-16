@@ -35,7 +35,7 @@ fn main() {
         };
     }
 
-    let host = dotenvy::var("HOST").expect("HOST not set");
+    let host = env::var("HOST").expect("HOST not set");
     println!("Host: {host}");
 }
 
