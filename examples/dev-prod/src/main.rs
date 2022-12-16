@@ -18,7 +18,7 @@ enum AppEnv {
 /// 2) `APP_ENV=dev HOST=prod.com cargo run`
 /// 3) `APP_ENV=prod cargo run`
 ///
-/// To have the .env file take priority, use `dotenv_orderride()`.
+/// To have the .env file take priority, use `dotenv_override()`.
 /// Try replacing `dotenv()` with `dotenv_override()` on line 2 and re-running command 2.
 fn main() {
     let app_env = std::env::var("APP_ENV")
