@@ -1,6 +1,6 @@
 use std::{
+    env,
     fmt::{self},
-    str::FromStr,
 };
 
 #[derive(PartialEq)]
@@ -14,17 +14,14 @@ enum AppEnv {
 ///  - loads from the envrironment in prod mode
 ///
 /// A few commands to try:
-/// 1) `APP_ENV=prod HOST=prod.com cargo run`
-/// 2) `APP_ENV=dev HOST=prod.com cargo run`
-/// 3) `APP_ENV=prod cargo run`
-///
-/// To have the .env file take priority, use `dotenv_override()`.
-/// Try replacing `dotenv()` with `dotenv_override()` on line 2 and re-running command 2.
+/// 1) `cargo run`
+/// 2) `APP_ENV=prod cargo run`
+/// 3) `APP_ENV=prod HOST=prod.com cargo run`
 fn main() {
-    let app_env = std::env::var("APP_ENV")
-        .unwrap_or("dev".to_owned())
-        .parse::<AppEnv>()
-        .unwrap();
+    let app_env = match env::var("APP_ENV") {
+        Ok(v) if v == "prod" => AppEnv::Prod,
+        _ => AppEnv::Dev,
+    };
 
     println!("Running in {app_env} mode");
 
@@ -37,18 +34,6 @@ fn main() {
 
     let host = env::var("HOST").expect("HOST not set");
     println!("Host: {host}");
-}
-
-impl FromStr for AppEnv {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "dev" => Ok(AppEnv::Dev),
-            "prod" => Ok(AppEnv::Prod),
-            _ => Err(format!("Unknown app env: {s}")),
-        }
-    }
 }
 
 impl fmt::Display for AppEnv {
