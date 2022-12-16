@@ -70,11 +70,6 @@ Please ensure that your PR passes the CI checks:
 - [Rustdoc](https://doc.rust-lang.org/rustdoc/write-documentation/linking-to-items-by-name.html)
   links work
 
-#### MSRV
-
-Check the [readme][MSRV] for the current
-minimum supported rust version. We are open to updating it.
-
 #### Add an entry to the changelog
 
 If your contribution changes the behavior of dotenvy, please update the
