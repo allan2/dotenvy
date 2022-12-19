@@ -44,7 +44,11 @@ pub fn assert_env_var(key: &str, expected: &str) {
             key, expected, actual
         ),
         Err(VarError::NotPresent) => panic!("env var `{}` not found", key),
-        Err(VarError::NotUnicode(_)) => unreachable!("str should always be valid unicode"),
+        Err(VarError::NotUnicode(val)) => panic!(
+            "env var `{}` currently has invalid unicode: `{}`",
+            key,
+            val.to_string_lossy()
+        ),
     }
 }
 
@@ -55,7 +59,11 @@ pub fn assert_env_var_unset(key: &str) {
             "env var `{}` should not be set, currently it is: `{}`",
             key, actual
         ),
-        Err(VarError::NotUnicode(_)) => unreachable!("str should always be valid unicode"),
+        Err(VarError::NotUnicode(val)) => panic!(
+            "env var `{}` should not be set, currently has invalid unicode: `{}`",
+            key,
+            val.to_string_lossy()
+        ),
         _ => (),
     }
 }
