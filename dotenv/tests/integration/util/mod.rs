@@ -20,13 +20,19 @@ pub const TEST_OVERRIDING_VALUE: &str = "from_file";
 
 #[inline(always)]
 pub fn create_default_envfile() -> String {
-    format!("{TEST_KEY}={TEST_VALUE}\n{TEST_EXISTING_KEY}={TEST_OVERRIDING_VALUE}")
+    format!(
+        "{}={}\\n{}={}",
+        TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
+    )
 }
 
 /// missing equals
 #[inline(always)]
 pub fn create_invalid_envfile() -> String {
-    format!("{TEST_KEY}{TEST_VALUE}\n{TEST_EXISTING_KEY}{TEST_OVERRIDING_VALUE}")
+    format!(
+        "{}{}\\n{}{}",
+        TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
+    )
 }
 
 /// Assert that an environment variable is set and has the expected value.
