@@ -246,8 +246,8 @@ impl TestEnv {
 
 impl Default for TestEnv {
     fn default() -> Self {
-        let tempdir = tempdir().expect("create tempdir");
-        let work_dir = tempdir.path().to_owned();
+        let temp_dir = tempdir().expect("create tempdir");
+        let work_dir = temp_dir.path().to_owned();
         let env_vars = vec![KeyVal {
             key: TEST_EXISTING_KEY.into(),
             value: TEST_EXISTING_VALUE.into(),
@@ -255,7 +255,7 @@ impl Default for TestEnv {
         let envfile_contents = Some(create_default_envfile());
         let envfile_path = work_dir.join(".env");
         Self {
-            temp_dir: tempdir,
+            temp_dir,
             work_dir,
             env_vars,
             envfile_contents,
@@ -291,9 +291,11 @@ fn get_env_locker() -> Arc<Mutex<EnvMap>> {
 
 /// Reset the process' env vars back to what was in `original_env`.
 fn reset_env(original_env: &EnvMap) {
+    // remove keys if they weren't in the original environment
     env::vars()
         .filter(|(key, _)| !original_env.contains_key(key))
         .for_each(|(key, _)| env::remove_var(key));
+    // ensure original keys have their original values
     original_env
         .iter()
         .for_each(|(key, value)| env::set_var(key, value));
@@ -320,12 +322,15 @@ fn create_envfile(path: &Path, contents: &str) {
     if path.exists() {
         panic!("envfile `{}` already exists", path.display())
     }
+    // inner function to group together io::Results
     fn create_env_file_inner(path: &Path, contents: &str) -> io::Result<()> {
         let mut file = fs::File::create(path)?;
         file.write_all(contents.as_bytes())?;
         file.sync_all()
     }
+    // call inner function
     if let Err(err) = create_env_file_inner(path, contents) {
+        // handle any io::Result::Err
         panic!("error creating envfile `{}`: {}", path.display(), err);
     }
 }
