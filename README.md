@@ -68,8 +68,15 @@ It also adds:
 
 For a full list of changes, refer to the [changelog](./CHANGELOG.md).
 
+## Contributing
+
+Thank you very much for considering to contribute to this project! See
+[CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+
+**Note**: Before you take the time to open a pull request, please open an issue first.
+
 ## The legend
 
 Legend has it that the Lost Maintainer will return, merging changes from `dotenvy` into `dotenv` with such thrust that all `Cargo.toml`s will lose one keystroke. Only then shall the Rust dotenv crateverse be united in true harmony.
 
-Until then, this repo dutifully carries on the dotenv torch. It is actively maintained. Contributions and PRs are very welcome!
+Until then, this repo dutifully carries on the dotenv torch. It is actively maintained.
