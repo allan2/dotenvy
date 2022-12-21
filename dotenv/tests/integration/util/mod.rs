@@ -21,7 +21,7 @@ pub const TEST_OVERRIDING_VALUE: &str = "from_file";
 #[inline(always)]
 pub fn create_default_envfile() -> String {
     format!(
-        "{}={}\\n{}={}",
+        "{}={}\n{}={}",
         TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
     )
 }
@@ -30,7 +30,7 @@ pub fn create_default_envfile() -> String {
 #[inline(always)]
 pub fn create_invalid_envfile() -> String {
     format!(
-        "{}{}\\n{}{}",
+        "{}{}\n{}{}",
         TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
     )
 }
