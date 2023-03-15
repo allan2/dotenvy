@@ -14,3 +14,11 @@ fn two_argument_form_works() {
         "'quotes within quotes'"
     );
 }
+
+#[test]
+fn optional_dotenv() {
+    assert_eq!(
+        dotenvy_macro::try_dotenv!("non existing env", "unexpected sentence"),
+        "unexpected sentence"
+    );
+}

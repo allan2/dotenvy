@@ -2,7 +2,7 @@
 
 use std::env::{self, VarError};
 
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::parse::Parser;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
@@ -10,21 +10,34 @@ use syn::Token;
 
 #[proc_macro]
 pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    dotenv_inner(input.into()).into()
-}
-
-fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    if let Err(err) = dotenvy::dotenv() {
-        let msg = format!("Error loading .env file: {}", err);
+    if let Err(error) = dotenvy::dotenv() {
+        let msg = format!("Error loading .env file: {}", error);
         return quote! {
             compile_error!(#msg);
-        };
+        }
+        .into();
+    };
+    match expand_env(input.into()) {
+        Ok(result) => result,
+        Err(error) => error.to_compile_error(),
     }
+    .into()
+}
 
-    match expand_env(input) {
-        Ok(stream) => stream,
-        Err(e) => e.to_compile_error(),
-    }
+#[proc_macro]
+pub fn try_dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    drop(dotenvy::dotenv());
+    let tokens: proc_macro2::TokenStream = input.into();
+    let mut iter = tokens.into_iter();
+    let env_key = iter.next().unwrap();
+    // comma
+    iter.next().unwrap();
+    expand_env(env_key.to_token_stream())
+        .unwrap_or_else(|_| {
+            let env_default = iter.next().unwrap();
+            env_default.to_token_stream()
+        })
+        .into()
 }
 
 fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::TokenStream> {
