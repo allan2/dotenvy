@@ -60,7 +60,7 @@ fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::T
         ));
     }
 
-    match env::var(&var_name) {
+    match ::std::env::var(&var_name) {
         Ok(val) => Ok(quote!(#val)),
         Err(e) => Err(syn::Error::new(
             var_name.span(),
