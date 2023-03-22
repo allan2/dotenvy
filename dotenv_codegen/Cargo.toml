@@ -3,7 +3,7 @@ proc-macro = true
 
 [package]
 name = "dotenvy_macro"
-version = "0.15.1"
+version = "0.15.7"
 authors = [
   "Santiago Lapresta <santiago.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
