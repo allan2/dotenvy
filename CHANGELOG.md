@@ -5,18 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.15.7] - 2023-03-22
 
 ### Added
 
-- `override` versions of public functions ([PR #47](https://github.com/allan2/dotenvy/pull/47) by [LeoniePhiline](https://github.com/LeoniePhiline) and [PR #41](https://github.com/alla2/dotenvy/pull/41) by [tshepang](https://github.com/tshepang))
+- override existing envv vars ([PR #41](https://github.com/allan2/dotenvy/pull/28) by [tshepang](https://github.com/tshepang) and [PR #47](https://github.com/allan2/dotenvy/pull/47) by [LeoniePhiline](https://github.com/LeoniePhiline))
+- contribution guide ([PR #28](https://github.com/allan2/dotenvy/pull/28) by [sonro](https://github.com/sonro))
 
 ### Changed
 
-- Minimum Supported Rust Version is now 1.56.1
-- Removed internal `dotenv_codegen_impl` crate and `proc_macro_hack` dependency
-- Improved examples by handling errors, rather than using `unwrap`. ([PR #52](https://github.com/allan2/dotenvy/pull/52) by [LeoniePhiline](https://github.com/LeoniePhiline))
-- Fix `Iter` being leaked in public API. It is now public in the crate root. ([PR #51](https://github.com/allan2/dotenvy/pull/51) by [LeoniePhiline](https://github.com/LeoniePhiline))
+- MSRV updated to 1.56.1
+- removed `dotenv_codegen_impl` and `proc_macro_hack` dependencies ([PR #45](https://github.com/allan2/dotenvy/pull/45) by [sonro](https://github.com/sonro))
+- improved examples by handling errors, rather than using `unwrap` ([PR #52](https://github.com/allan2/dotenvy/pull/52) by [LeoniePhiline](https://github.com/LeoniePhiline))
+- `Iter` now public in the crate root ([PR #51](https://github.com/allan2/dotenvy/pull/51) by [LeoniePhiline](https://github.com/LeoniePhiline))
 
 ## [0.15.6] - 2022-10-17
 
