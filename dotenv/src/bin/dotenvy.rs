@@ -33,12 +33,11 @@ fn main() {
             Arg::new("FILE")
                 .short('f')
                 .long("file")
-                .takes_value(true)
                 .help("Use a specific .env file (defaults to .env)"),
         )
         .get_matches();
 
-    match matches.value_of("FILE") {
+    match matches.get_one::<String>("FILE") {
         None => dotenvy::dotenv(),
         Some(file) => dotenvy::from_filename(file),
     }
@@ -47,8 +46,8 @@ fn main() {
     let mut command = match matches.subcommand() {
         Some((name, matches)) => {
             let args = matches
-                .values_of("")
-                .map(|v| v.collect())
+                .get_many("")
+                .map(|v| v.copied().collect())
                 .unwrap_or(Vec::new());
 
             make_command(name, args)
