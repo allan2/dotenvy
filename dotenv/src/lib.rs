@@ -20,6 +20,16 @@ use crate::find::Finder;
 pub use crate::iter::Iter;
 
 static START: Once = Once::new();
+static FILES: &[&'static str] = &[
+    ".env",
+    ".env.production",
+    ".env.test",
+    ".env.development",
+    ".env.local",
+    ".env.production.local",
+    ".env.test.local",
+    ".env.development.local",
+];
 
 /// Gets the value for an environment variable.
 ///
@@ -304,7 +314,7 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
     Iter::new(reader)
 }
 
-/// Loads the *.env* file from the current directory or parents. This is typically what you want.
+/// Loads the *.env* files from the current directory or parents. This is typically what you want.
 ///
 /// If variables with the same names already exist in the environment, then their values will be
 /// preserved.
@@ -325,10 +335,17 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 /// #     Ok(())
 /// # }
 /// ```
-pub fn dotenv() -> Result<PathBuf> {
-    let (path, iter) = Finder::new().find()?;
-    iter.load()?;
-    Ok(path)
+pub fn dotenv() -> Result<()> {
+    for file in FILES {
+        let finder = Finder::new().filename(&Path::new(file));
+
+        match finder.find() {
+            Ok((_path, iter)) => iter.load()?,
+            Err(_) => continue,
+        };
+    }
+
+    Ok(())
 }
 
 /// Loads all variables found in the `reader` into the environment,
@@ -348,10 +365,17 @@ pub fn dotenv() -> Result<PathBuf> {
 /// #     Ok(())
 /// # }
 /// ```
-pub fn dotenv_override() -> Result<PathBuf> {
-    let (path, iter) = Finder::new().find()?;
-    iter.load_override()?;
-    Ok(path)
+pub fn dotenv_override() -> Result<()> {
+    for file in FILES {
+        let finder = Finder::new().filename(&Path::new(file));
+
+        match finder.find() {
+            Ok((_path, iter)) => iter.load_override()?,
+            Err(_) => continue,
+        };
+    }
+
+    Ok(())
 }
 
 /// Returns an iterator over environment variables.
