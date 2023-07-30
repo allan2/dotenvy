@@ -233,12 +233,14 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// # Examples
 ///
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
+/// # #[cfg(unix)]
 /// dotenvy::from_read(stream)?;
 /// #     Ok(())
 /// # }
@@ -265,12 +267,14 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 ///
 /// # Examples
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
+/// # #[cfg(unix)]
 /// dotenvy::from_read_override(stream)?;
 /// #     Ok(())
 /// # }
@@ -286,13 +290,15 @@ pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
 /// # Examples
 ///
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
 ///
+/// # #[cfg(unix)]
 /// for item in dotenvy::from_read_iter(stream) {
 ///     let (key, val) = item?;
 ///     println!("{}={}", key, val);
