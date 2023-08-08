@@ -18,7 +18,7 @@ keywords = ["dotenv", "env", "environment", "settings", "config"]
 license = "MIT"
 repository = "https://github.com/allan2/dotenvy"
 edition = "2018"
-rust-version = "1.56.1"
+rust-version = "1.64.0"
 
 [[bin]]
 name = "dotenvy"
