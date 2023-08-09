@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- MSRV updated to 1.64.0
+
 ## [0.15.7] - 2023-03-22
 
 ### Added
@@ -114,7 +120,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Renamed dotenv_codegen_impl to dotenv_codegen_implementation since we no longer own the original crate.
 - Update code to 2018 edition
 
-[Unreleased]: https://github.com/allan2/dotenvy/compare/v0.15.6...HEAD
+[Unreleased]: https://github.com/allan2/dotenvy/compare/v0.15.7...HEAD
+[0.15.7]: https://github.com/allan2/dotenvy/releases/tag/v0.15.7
 [0.15.6]: https://github.com/allan2/dotenvy/releases/tag/v0.15.6
 [0.15.5]: https://github.com/allan2/dotenvy/releases/tag/v0.15.5
 [0.15.4]: https://github.com/allan2/dotenvy/releases/tag/v0.15.4
