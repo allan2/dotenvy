@@ -25,7 +25,7 @@ name = "dotenvy"
 required-features = ["cli"]
 
 [dependencies]
-clap = { version = "3.2", optional = true }
+clap = { version = "4.3.11", optional = true }
 
 [dev-dependencies]
 tempfile = "3.3.0"
