@@ -180,7 +180,7 @@ fn parse_value(
                         } else {
                             apply_substitution(
                                 substitution_data,
-                                &substitution_name.drain(..).collect::<String>(),
+                                &std::mem::take(&mut substitution_name),
                                 &mut output,
                             );
                             if c == '$' {
@@ -200,7 +200,7 @@ fn parse_value(
                             substitution_mode = SubstitutionMode::None;
                             apply_substitution(
                                 substitution_data,
-                                &substitution_name.drain(..).collect::<String>(),
+                                &std::mem::take(&mut substitution_name),
                                 &mut output,
                             );
                         } else {
@@ -250,7 +250,7 @@ fn parse_value(
     } else {
         apply_substitution(
             substitution_data,
-            &substitution_name.drain(..).collect::<String>(),
+            &std::mem::take(&mut substitution_name),
             &mut output,
         );
         Ok(output)
