@@ -89,7 +89,7 @@ impl TestEnv {
     /// Blank testing environment in a new temporary directory.
     ///
     /// No envfile_contents or pre-existing variables to set. The envfile_name
-    /// is set to `.env` but wont be written until its contents is set. The
+    /// is set to `.env` but won't be written until its content is set. The
     /// working directory is the created temporary directory.
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
@@ -225,7 +225,7 @@ impl TestEnv {
         &self.work_dir
     }
 
-    /// Get a reference to environnement variables that will be set **before**
+    /// Get a reference to environment variables that will be set **before**
     /// the test.
     pub fn env_vars(&self) -> &[KeyVal] {
         &self.env_vars

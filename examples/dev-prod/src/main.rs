@@ -11,7 +11,7 @@ enum AppEnv {
 
 /// A common setup that:
 ///  - loads from a .env file in dev mode
-///  - loads from the envrironment in prod mode
+///  - loads from the environment in prod mode
 ///
 /// A few commands to try:
 /// 1) `cargo run`
