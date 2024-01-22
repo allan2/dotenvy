@@ -215,7 +215,7 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     Ok(iter)
 }
 
-/// Loads environment variables from [`io::Read`](std::io::Read).
+/// Loads environment variables from [`io::Read`].
 ///
 /// This is useful for loading environment variables from IPC or the network.
 ///
@@ -249,7 +249,7 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
     Ok(())
 }
 
-/// Loads environment variables from [`io::Read`](std::io::Read),
+/// Loads environment variables from [`io::Read`],
 /// overriding existing environment variables.
 ///
 /// This is useful for loading environment variables from IPC or the network.
@@ -281,7 +281,7 @@ pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
     Ok(())
 }
 
-/// Returns an iterator over environment variables from [`io::Read`](std::io::Read).
+/// Returns an iterator over environment variables from [`io::Read`].
 ///
 /// # Examples
 ///
