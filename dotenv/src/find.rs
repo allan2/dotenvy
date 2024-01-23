@@ -51,7 +51,7 @@ pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
     } else {
         Err(Error::Io(io::Error::new(
             io::ErrorKind::NotFound,
-            ".env file not found inside parent",
+            "dotenv file not found in parent directory",
         )))
     }
 }
