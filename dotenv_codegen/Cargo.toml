@@ -10,10 +10,11 @@ authors = [
   "Mike Piccolo <mfpiccolo@gmail.com>",
   "Alice Maz <alice@alicemaz.com>",
   "Sean Griffin <sean@seantheprogrammer.com>",
-  "Allan Zhang <al@ayz.ai>",
+  "Allan Zhang <allanzhang7@gmail.com>",
 ]
 readme = "README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
+categories = ["configuration"]
 license = "MIT"
 homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"

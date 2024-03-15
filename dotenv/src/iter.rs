@@ -1,10 +1,12 @@
-use std::collections::HashMap;
-use std::env;
-use std::io::prelude::*;
-use std::io::BufReader;
-
-use crate::errors::*;
-use crate::parse;
+use crate::{
+    errors::{Error, Result},
+    parse,
+};
+use std::{
+    collections::HashMap,
+    env,
+    io::{BufRead, BufReader, Read},
+};
 
 pub struct Iter<R> {
     lines: QuotedLines<BufReader<R>>,
@@ -12,8 +14,8 @@ pub struct Iter<R> {
 }
 
 impl<R: Read> Iter<R> {
-    pub fn new(reader: R) -> Iter<R> {
-        Iter {
+    pub fn new(reader: R) -> Self {
+        Self {
             lines: QuotedLines {
                 buf: BufReader::new(reader),
             },
@@ -133,13 +135,13 @@ impl<B: BufRead> Iterator for QuotedLines<B> {
         loop {
             buf_pos = buf.len();
             match self.buf.read_line(&mut buf) {
-                Ok(0) => match cur_state {
-                    ParseState::Complete => return None,
-                    _ => {
-                        let len = buf.len();
-                        return Some(Err(Error::LineParse(buf, len)));
+                Ok(0) => {
+                    if matches!(cur_state, ParseState::Complete) {
+                        return None;
                     }
-                },
+                    let len = buf.len();
+                    return Some(Err(Error::LineParse(buf, len)));
+                }
                 Ok(_n) => {
                     // Skip lines which start with a # before iteration
                     // This optimizes parsing a bit.

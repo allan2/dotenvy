@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::env;
+#![allow(clippy::module_name_repetitions)]
 
-use crate::errors::*;
+use crate::errors::{Error, Result};
+use std::{collections::HashMap, env};
 
 // for readability's sake
 pub type ParsedLine = Result<Option<(String, String)>>;
@@ -120,10 +120,7 @@ enum SubstitutionMode {
     EscapedBlock,
 }
 
-fn parse_value(
-    input: &str,
-    substitution_data: &mut HashMap<String, Option<String>>,
-) -> Result<String> {
+fn parse_value(input: &str, substitution_data: &HashMap<String, Option<String>>) -> Result<String> {
     let mut strong_quote = false; // '
     let mut weak_quote = false; // "
     let mut escaped = false;
@@ -145,9 +142,8 @@ fn parse_value(
                 continue;
             } else if c == '#' {
                 break;
-            } else {
-                return Err(Error::LineParse(input.to_owned(), index));
             }
+            return Err(Error::LineParse(input.to_owned(), index));
         } else if escaped {
             //TODO I tried handling literal \r but various issues
             //imo not worth worrying about until there's a use case
@@ -258,7 +254,7 @@ fn parse_value(
 }
 
 fn apply_substitution(
-    substitution_data: &mut HashMap<String, Option<String>>,
+    substitution_data: &HashMap<String, Option<String>>,
     substitution_name: &str,
     output: &mut String,
 ) {

@@ -1,3 +1,6 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::missing_errors_doc)]
+
 //! [`dotenv`]: https://crates.io/crates/dotenv
 //! A well-maintained fork of the [`dotenv`] crate
 //!
@@ -209,7 +212,6 @@ pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// #     Ok(())
 /// # }
 /// ```
-
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
     Ok(iter)

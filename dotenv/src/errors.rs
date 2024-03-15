@@ -1,7 +1,4 @@
-use std::env;
-use std::error;
-use std::fmt;
-use std::io;
+use std::{env, error, fmt, io};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -14,8 +11,9 @@ pub enum Error {
 }
 
 impl Error {
+    #[must_use]
     pub fn not_found(&self) -> bool {
-        if let Error::Io(ref io_error) = *self {
+        if let Self::Io(ref io_error) = *self {
             return io_error.kind() == io::ErrorKind::NotFound;
         }
         false
@@ -25,8 +23,8 @@ impl Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Error::Io(err) => Some(err),
-            Error::EnvVar(err) => Some(err),
+            Self::Io(err) => Some(err),
+            Self::EnvVar(err) => Some(err),
             _ => None,
         }
     }
@@ -35,12 +33,11 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Io(err) => write!(fmt, "{}", err),
-            Error::EnvVar(err) => write!(fmt, "{}", err),
-            Error::LineParse(line, error_index) => write!(
+            Self::Io(e) => write!(fmt, "{e}"),
+            Self::EnvVar(e) => write!(fmt, "{e}"),
+            Self::LineParse(line, index) => write!(
                 fmt,
-                "Error parsing line: '{}', error at line index: {}",
-                line, error_index
+                "Error parsing line: '{line}', error at line index: {index}",
             ),
         }
     }
@@ -48,9 +45,7 @@ impl fmt::Display for Error {
 
 #[cfg(test)]
 mod test {
-    use std::env;
     use std::error::Error as StdError;
-    use std::io;
 
     use super::*;
 

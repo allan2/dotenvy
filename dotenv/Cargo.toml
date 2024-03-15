@@ -9,12 +9,13 @@ authors = [
   "Sean Griffin <sean@seantheprogrammer.com>",
   "Adam Sharp <adam@sharplet.me>",
   "Arpad Borsos <arpad.borsos@googlemail.com>",
-  "Allan Zhang <al@ayz.ai>",
+  "Allan Zhang <allanzhang7@gmail.com>",
 ]
 description = "A well-maintained fork of the dotenv crate"
 homepage = "https://github.com/allan2/dotenvy"
 readme = "README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
+categories = ["configuration"]
 license = "MIT"
 repository = "https://github.com/allan2/dotenvy"
 edition = "2018"
