@@ -7,7 +7,7 @@ use std::{env, error};
 fn test_var() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
-    assert_eq!(env::var("TESTKEY")?, "test_val");
+    assert_eq!(dotenvy::var("TESTKEY")?, "test_val");
 
     env::set_current_dir(dir.path().parent().unwrap())?;
     dir.close()?;
