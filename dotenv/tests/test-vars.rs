@@ -7,7 +7,7 @@ use std::{collections::HashMap, env, error};
 fn test_vars() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
-    let vars: HashMap<String, String> = env::vars().collect();
+    let vars: HashMap<String, String> = dotenvy::vars().collect();
 
     assert_eq!(vars["TESTKEY"], "test_val");
 
