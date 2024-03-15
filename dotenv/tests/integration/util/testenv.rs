@@ -1,12 +1,13 @@
+use super::{create_default_envfile, TEST_EXISTING_KEY, TEST_EXISTING_VALUE};
 use once_cell::sync::OnceCell;
-use std::collections::HashMap;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, PoisonError};
-use std::{env, fs, io};
+use std::{
+    collections::HashMap,
+    env, fs,
+    io::{self, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex, PoisonError},
+};
 use tempfile::{tempdir, TempDir};
-
-use super::*;
 
 /// Env var convenience type.
 type EnvMap = HashMap<String, String>;

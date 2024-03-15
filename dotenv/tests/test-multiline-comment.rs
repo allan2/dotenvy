@@ -2,7 +2,6 @@ mod common;
 use std::env;
 
 use common::tempdir_with_dotenv;
-use dotenvy::dotenv;
 
 #[test]
 fn test_issue_12() {
@@ -27,7 +26,7 @@ Line 6
     )
     .expect("should write test env");
 
-    dotenv().expect("should succeed");
+    dotenvy::dotenv().expect("should succeed");
     assert_eq!(
         env::var("TESTKEY1").expect("testkey1 env key not set"),
         "test_val"

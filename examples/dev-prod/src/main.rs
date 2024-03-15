@@ -1,7 +1,4 @@
-use std::{
-    env,
-    fmt::{self},
-};
+use std::{env, fmt};
 
 #[derive(PartialEq)]
 enum AppEnv {

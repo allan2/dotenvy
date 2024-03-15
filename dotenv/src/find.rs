@@ -1,12 +1,13 @@
+use crate::{
+    errors::{Error, Result},
+    iter::Iter,
+};
 use std::{
     env,
     fs::{self, File},
     io,
     path::{Path, PathBuf},
 };
-
-use crate::errors::{Error, Result};
-use crate::iter::Iter;
 
 pub struct Finder<'a> {
     filename: &'a Path,

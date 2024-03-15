@@ -4,8 +4,6 @@ mod testenv;
 
 use std::env::{self, VarError};
 
-pub use testenv::*;
-
 /// Default key used in envfile
 pub const TEST_KEY: &str = "TESTKEY";
 /// Default value used in envfile

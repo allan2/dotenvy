@@ -1,12 +1,11 @@
 mod common;
 
-use dotenvy::*;
-use std::{env, error::Error, result::Result};
-
-use crate::common::*;
+use crate::common::make_test_dotenv;
+use dotenvy::from_filename;
+use std::{env, error};
 
 #[test]
-fn test_from_filename() -> Result<(), Box<dyn Error>> {
+fn test_from_filename() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
     from_filename(".env")?;

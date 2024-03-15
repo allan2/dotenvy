@@ -1,12 +1,10 @@
 mod common;
 
-use dotenvy::*;
-use std::{env, error::Error, result::Result};
-
-use crate::common::*;
+use crate::common::tempdir_with_dotenv;
+use std::{env, error};
 
 #[test]
-fn test_variable_substitutions() -> Result<(), Box<dyn Error>> {
+fn test_variable_substitutions() -> Result<(), Box<dyn error::Error>> {
     std::env::set_var("KEY", "value");
     std::env::set_var("KEY1", "value1");
 
@@ -27,12 +25,12 @@ SUBSTITUTION_WITHOUT_QUOTES={}
         common_string, common_string, common_string
     ))?;
 
-    assert_eq!(var("KEY")?, "value");
-    assert_eq!(var("KEY1")?, "value1");
-    assert_eq!(var("KEY_U")?, "value+valueU");
-    assert_eq!(var("SUBSTITUTION_FOR_STRONG_QUOTES")?, common_string);
+    assert_eq!(env::var("KEY")?, "value");
+    assert_eq!(env::var("KEY1")?, "value1");
+    assert_eq!(env::var("KEY_U")?, "value+valueU");
+    assert_eq!(env::var("SUBSTITUTION_FOR_STRONG_QUOTES")?, common_string);
     assert_eq!(
-        var("SUBSTITUTION_FOR_WEAK_QUOTES")?,
+        env::var("SUBSTITUTION_FOR_WEAK_QUOTES")?,
         [
             "",
             "value",
@@ -45,7 +43,7 @@ SUBSTITUTION_WITHOUT_QUOTES={}
         .join(">>")
     );
     assert_eq!(
-        var("SUBSTITUTION_WITHOUT_QUOTES")?,
+        env::var("SUBSTITUTION_WITHOUT_QUOTES")?,
         [
             "",
             "value",

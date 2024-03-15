@@ -1,15 +1,13 @@
 mod common;
 
-use dotenvy::*;
-use std::{env, error::Error, result::Result};
-
-use crate::common::*;
+use crate::common::make_test_dotenv;
+use std::{env, error};
 
 #[test]
-fn test_dotenv_iter() -> Result<(), Box<dyn Error>> {
+fn test_dotenv_iter() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
-    let iter = dotenv_iter()?;
+    let iter = dotenvy::dotenv_iter()?;
     assert!(env::var("TESTKEY").is_err());
 
     iter.load()?;

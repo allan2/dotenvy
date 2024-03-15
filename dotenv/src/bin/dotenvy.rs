@@ -1,6 +1,5 @@
 use clap::Arg;
-use std::os::unix::process::CommandExt;
-use std::process;
+use std::{os::unix::process::CommandExt, process};
 
 macro_rules! die {
     ($fmt:expr) => ({
