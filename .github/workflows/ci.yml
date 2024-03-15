@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable, beta, nightly, 1.64.0]
+        rust: [stable, beta, nightly, 1.68.0]
     steps:
       - uses: actions/checkout@v3
 
@@ -109,7 +109,7 @@ jobs:
         with:
           version: 0.22.0
           args: --ignore-tests --workspace -- --test-threads 1
-          
+
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:
