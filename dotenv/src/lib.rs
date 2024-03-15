@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
-#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::missing_errors_doc, clippy::too_many_lines)]
 
 //! [`dotenv`]: https://crates.io/crates/dotenv
 //! A well-maintained fork of the [`dotenv`] crate

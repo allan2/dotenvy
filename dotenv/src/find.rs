@@ -34,6 +34,7 @@ impl<'a> Finder<'a> {
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
+#[allow(clippy::option_if_let_else)]
 pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
     let candidate = directory.join(filename);
 
