@@ -20,7 +20,7 @@ homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"
 description = "A macro for compile time dotenv inspection"
 edition = "2018"
-rust-version = "1.64.0"
+rust-version = "1.68.0"
 
 [dependencies]
 proc-macro2 = "1"
