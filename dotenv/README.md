@@ -23,12 +23,10 @@ This library loads environment variables from a _.env_ file. This is convenient 
 ### Loading at runtime
 
 ```rs
-use dotenvy::dotenv;
 use std::env;
 
 fn main() {
-    // load environment variables from .env file
-    load().expect(".env file not found");
+    dotenvy::load().expect(".env file not found");
 
     for (key, value) in env::vars() {
         println!("{key}: {value}");
