@@ -10,7 +10,7 @@ pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    if let Err(err) = dotenvy::dotenv() {
+    if let Err(err) = dotenvy::load() {
         let msg = format!("Error loading .env file: {}", err);
         return quote! {
             compile_error!(#msg);

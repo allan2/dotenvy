@@ -11,7 +11,7 @@ fn test_child_dir() -> Result<(), Box<dyn error::Error>> {
 
     env::set_current_dir("child")?;
 
-    dotenvy::dotenv()?;
+    dotenvy::load()?;
     assert_eq!(env::var("TESTKEY")?, "test_val");
 
     env::set_current_dir(dir.path().parent().unwrap())?;

@@ -42,7 +42,7 @@ static START: Once = Once::new();
 /// ```
 pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
-        dotenv().ok();
+        load().ok();
     });
     env::var(key).map_err(Error::EnvVar)
 }
@@ -59,7 +59,7 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// ```
 pub fn vars() -> Vars {
     START.call_once(|| {
-        dotenv().ok();
+        load().ok();
     });
     env::vars()
 }
@@ -323,10 +323,17 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::dotenv()?;
+/// dotenvy::load()?;
 /// #     Ok(())
 /// # }
 /// ```
+pub fn load() -> Result<PathBuf> {
+    let (path, iter) = Finder::new().find()?;
+    iter.load()?;
+    Ok(path)
+}
+
+#[deprecated(since = "0.16.0", note = "Use `load` instead")]
 pub fn dotenv() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
     iter.load()?;
@@ -341,7 +348,7 @@ pub fn dotenv() -> Result<PathBuf> {
 ///
 /// If you want the existing environment to take precedence,
 /// or if you want to be able to override environment variables on the command line,
-/// then use [`dotenv`] instead.
+/// then use [`load`] instead.
 ///
 /// # Examples
 /// ```

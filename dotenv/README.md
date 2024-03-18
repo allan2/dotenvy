@@ -28,7 +28,7 @@ use std::env;
 
 fn main() {
     // load environment variables from .env file
-    dotenv().expect(".env file not found");
+    load().expect(".env file not found");
 
     for (key, value) in env::vars() {
         println!("{key}: {value}");
@@ -56,7 +56,7 @@ This fork intends to serve as the development home for the dotenv implementation
 ## What are the differences from the original?
 
 This repo fixes:
-
+- the primary function is `dotenvy::load` rather than `dotenv::dotenv`
 - home directory works correctly (no longer using the deprecated `std::env::home_dir`)
 - more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
 
