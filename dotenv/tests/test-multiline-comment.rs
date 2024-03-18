@@ -26,7 +26,7 @@ Line 6
     )
     .expect("should write test env");
 
-    dotenvy::dotenv().expect("should succeed");
+    dotenvy::load().expect("should succeed");
     assert_eq!(
         env::var("TESTKEY1").expect("testkey1 env key not set"),
         "test_val"

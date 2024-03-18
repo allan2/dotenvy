@@ -37,7 +37,7 @@ fn main() {
         .get_matches();
 
     match matches.get_one::<String>("FILE") {
-        None => dotenvy::dotenv(),
+        None => dotenvy::load(),
         Some(file) => dotenvy::from_filename(file),
     }
     .unwrap_or_else(|e| die!("error: failed to load environment: {}", e));

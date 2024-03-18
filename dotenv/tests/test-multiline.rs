@@ -22,7 +22,7 @@ STRONG='{}'
         value, value
     ))?;
 
-    dotenvy::dotenv()?;
+    dotenvy::load()?;
     assert_eq!(env::var("KEY")?, r#"my cool value"#);
     assert_eq!(
         env::var("KEY3")?,

@@ -25,7 +25,7 @@ SUBSTITUTION_WITHOUT_QUOTES={}
         common_string, common_string, common_string
     ))?;
 
-    dotenvy::dotenv()?;
+    dotenvy::load()?;
 
     assert_eq!(env::var("KEY")?, "value");
     assert_eq!(env::var("KEY1")?, "value1");

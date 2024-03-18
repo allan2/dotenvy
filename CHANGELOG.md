@@ -7,11 +7,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-- MSRV updated to 1.68.0
-
 ### Changed
 
-- MSRV updated to 1.64.0
+- `dotenv` renamed to `load`
+- `dotenv_override` renamed to `load_override`
+- `dotenv` and `dotenv_override` still remain, displaying a deprecation notice
+- MSRV updated to 1.68.0
 
 ## [0.15.7] - 2023-03-22
 

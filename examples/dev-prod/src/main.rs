@@ -23,7 +23,7 @@ fn main() {
     println!("Running in {app_env} mode");
 
     if app_env == AppEnv::Dev {
-        match dotenvy::dotenv() {
+        match dotenvy::load() {
             Ok(path) => println!(".env read successfully from {}", path.display()),
             Err(e) => println!("Could not load .env file: {e}"),
         };
