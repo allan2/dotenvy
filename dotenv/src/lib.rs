@@ -353,13 +353,20 @@ pub fn dotenv() -> Result<PathBuf> {
 /// # Examples
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::dotenv_override()?;
+/// dotenvy::load_override()?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn dotenv_override() -> Result<PathBuf> {
+pub fn load_override() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
     iter.load_override()?;
+    Ok(path)
+}
+
+#[deprecated(since = "0.16.0", note = "Use `load_override` instead")]
+pub fn dotenv_override() -> Result<PathBuf> {
+    let (path, iter) = Finder::new().find()?;
+    iter.load()?;
     Ok(path)
 }
 
