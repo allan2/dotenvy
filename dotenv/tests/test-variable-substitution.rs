@@ -62,3 +62,25 @@ SUBSTITUTION_WITHOUT_QUOTES={}
     dir.close()?;
     Ok(())
 }
+
+#[test]
+fn test_no_variable_substitutions_when_undefined() -> Result<(), Box<dyn error::Error>> {
+    let dir = tempdir_with_dotenv(&format!(
+        r#"
+KEY1=value1
+KEY2=$NOKEY
+KEY3=$NOKEY+valueU
+"#,
+    ))?;
+
+    dotenvy::dotenv()?;
+
+    assert!(env::var("NOKEY").is_err());
+    assert_eq!(env::var("KEY1")?, "value1");
+    assert_eq!(env::var("KEY2")?, "$NOKEY");
+    assert_eq!(env::var("KEY3")?, "$NOKEY+valueU");
+
+    env::set_current_dir(dir.path().parent().unwrap())?;
+    dir.close()?;
+    Ok(())
+}
