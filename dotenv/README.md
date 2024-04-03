@@ -20,6 +20,18 @@ This library loads environment variables from a _.env_ file. This is convenient 
 
 ## Usage
 
+A simple `.env` file looks like this:
+
+```sh
+# a comment, will be ignored
+REDIS_ADDRESS=localhost:6379
+export MEANING_OF_LIFE=42
+```
+
+Note that prefixing lines with `export` will allow you to source the .env file to set the environment variables in your shell.
+
+See [dotenv](https://github.com/dotenv-rs/dotenv#variable-substitution) for further details on variable substitution.
+
 ### Loading at runtime
 
 ```rs
@@ -35,6 +47,8 @@ fn main() {
     }
 }
 ```
+
+
 
 ### Loading at compile time
 
