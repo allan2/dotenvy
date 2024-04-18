@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+- MSRV updated to 1.68.0
+
+### Added
+
+- option_dotenvy! macro ([PR #99](https://github.com/allan2/dotenvy/pull/99)) by [aidenfarley](https://github.com/aidenfarley)
+
 ### Changed
 - update to 2021 edition
 - update MSRV to 1.74.0
