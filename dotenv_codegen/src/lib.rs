@@ -27,6 +27,24 @@ unsafe fn dotenv_inner(input: TokenStream2) -> TokenStream2 {
     }
 }
 
+#[proc_macro]
+pub fn option_dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    option_dotenv_inner(input.into()).into()
+}
+
+fn option_dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    if dotenvy::dotenv().is_err() {
+        return quote! {::core::option::Option::None};
+    }
+
+    match expand_env(input) {
+        Ok(stream) => quote! {::core::option::Option::Some(#stream)},
+        Err(_) => {
+            quote! {::core::option::Option::None}
+        }
+    }
+}
+
 fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
     let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated
         .parse(input_raw.into())
