@@ -23,6 +23,24 @@ fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     }
 }
 
+#[proc_macro]
+pub fn option_dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    option_dotenv_inner(input.into()).into()
+}
+
+fn option_dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    if dotenvy::dotenv().is_err() {
+        return quote! {::core::option::Option::None};
+    }
+
+    match expand_env(input) {
+        Ok(stream) => quote! {::core::option::Option::Some(#stream)},
+        Err(_) => {
+            quote! {::core::option::Option::None}
+        }
+    }
+}
+
 fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::TokenStream> {
     let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated
         .parse(input_raw.into())
