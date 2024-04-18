@@ -17,6 +17,12 @@ fn two_argument_form_works() {
 
 #[test]
 fn option_dotenv_works() {
-    assert_eq!(dotenvy_macro::option_dotenv!("CODEGEN_TEST_VAR1"), Some("hello!"));
-    assert_eq!(dotenvy_macro::option_dotenv!("UNSET_VARIABLE"), None::<String>);
+    assert_eq!(
+        dotenvy_macro::option_dotenv!("CODEGEN_TEST_VAR1"),
+        Some("hello!")
+    );
+    assert_eq!(
+        dotenvy_macro::option_dotenv!("UNSET_VARIABLE"),
+        None::<String>
+    );
 }
