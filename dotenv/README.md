@@ -40,6 +40,17 @@ fn main() {
 
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
+```rs
+use dotenvy_macro::dotenv;
+
+fn main() {
+    // load environment variables from .env file
+    dotenvy_macro::dotenv!();
+
+    env!("PATH");
+}
+```
+
 ## Minimum supported Rust version
 
 Currently: **1.68.0**
