@@ -90,8 +90,8 @@ mod test {
         let err = Error::Io(io::ErrorKind::PermissionDenied.into());
         let io_err: io::Error = io::ErrorKind::PermissionDenied.into();
 
-        let err_desc = format!("{}", err);
-        let io_err_desc = format!("{}", io_err);
+        let err_desc = format!("{err}");
+        let io_err_desc = format!("{io_err}");
         assert_eq!(io_err_desc, err_desc);
     }
 
@@ -100,15 +100,15 @@ mod test {
         let err = Error::EnvVar(env::VarError::NotPresent);
         let var_err = env::VarError::NotPresent;
 
-        let err_desc = format!("{}", err);
-        let var_err_desc = format!("{}", var_err);
+        let err_desc = format!("{err}");
+        let var_err_desc = format!("{var_err}");
         assert_eq!(var_err_desc, err_desc);
     }
 
     #[test]
     fn test_lineparse_error_display() {
         let err = Error::LineParse("test line".to_string(), 2);
-        let err_desc = format!("{}", err);
+        let err_desc = format!("{err}");
         assert_eq!(
             "Error parsing line: 'test line', error at line index: 2",
             err_desc
