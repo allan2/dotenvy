@@ -1,6 +1,7 @@
 use std::env::{self, VarError};
 
 mod testenv;
+mod tests;
 
 pub use testenv::{test_in_default_env, test_in_env, KeyVal, TestEnv};
 
