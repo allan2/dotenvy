@@ -34,6 +34,35 @@ pub fn create_invalid_envfile() -> String {
     )
 }
 
+pub fn create_custom_envfile(env_vars: &[(&str, &str)]) -> String {
+    let mut envfile = String::new();
+    for (key, value) in env_vars {
+        envfile.push_str(key);
+        envfile.push('=');
+        envfile.push_str(value);
+        envfile.push('\n');
+    }
+    envfile
+}
+
+/// Assert that a slice of environment variables are set and have the expected
+/// values.
+///
+/// ## Arguments
+///
+/// * `vars` - A slice of key-expected value tuples
+///
+/// ## Examples
+///
+/// ```rust
+/// assert_env_vars(&[("TESTKEY", "test_val"), ("TEST_EXISTING_KEY", "from_env")]);
+/// ```
+pub fn assert_env_vars(vars: &[(&str, &str)]) {
+    for (key, expected) in vars {
+        assert_env_var(key, expected);
+    }
+}
+
 /// Assert that an environment variable is set and has the expected value.
 pub fn assert_env_var(key: &str, expected: &str) {
     match env::var(key) {
