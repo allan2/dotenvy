@@ -61,19 +61,19 @@ mod testenv_init_with_envfile {
 
     #[test]
     fn default_envfile_vars_state() {
-        let testenv = init_default_testenv();
+        let testenv = init_default_envfile_testenv();
         assert_default_keys_not_set_in_testenv(testenv);
     }
 
     #[test]
     fn default_envfile_exists() {
-        let testenv = init_default_testenv();
+        let testenv = init_default_envfile_testenv();
         assert_envfile_exists_in_testenv(testenv);
     }
 
     #[test]
     fn default_envfile_loaded_vars_state() {
-        let testenv = init_default_testenv();
+        let testenv = init_default_envfile_testenv();
         test_in_env(testenv, || {
             dotenv_wrap().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
@@ -85,7 +85,7 @@ mod testenv_init_with_envfile {
 
     #[test]
     fn custom_envfile_vars_state() {
-        let testenv = init_custom_testenv();
+        let testenv = init_custom_envfile_testenv();
         test_in_env(testenv, || {
             assert_default_keys_not_set();
             for (key, _) in CUSTOM_VARS {
@@ -96,13 +96,13 @@ mod testenv_init_with_envfile {
 
     #[test]
     fn custom_envfile_exists() {
-        let testenv = init_custom_testenv();
+        let testenv = init_custom_envfile_testenv();
         assert_envfile_exists_in_testenv(testenv);
     }
 
     #[test]
     fn custom_envfile_loaded_vars_state() {
-        let testenv = init_custom_testenv();
+        let testenv = init_custom_envfile_testenv();
         test_in_env(testenv, || {
             dotenv_wrap().expect(DOTENV_EXPECT);
             assert_default_keys_not_set();
@@ -110,14 +110,33 @@ mod testenv_init_with_envfile {
         });
     }
 
-    fn init_default_testenv() -> TestEnv {
+    #[test]
+    fn empty_envfile_exists() {
+        let testenv = init_empty_envfile_testenv();
+        assert_envfile_exists_in_testenv(testenv);
+    }
+
+    #[test]
+    fn empty_envfile_loaded_vars_state() {
+        let testenv = init_empty_envfile_testenv();
+        test_in_env(testenv, || {
+            dotenv_wrap().expect(DOTENV_EXPECT);
+            assert_default_keys_not_set();
+        });
+    }
+
+    fn init_default_envfile_testenv() -> TestEnv {
         let envfile = create_default_envfile();
         TestEnv::init_with_envfile(envfile)
     }
 
-    fn init_custom_testenv() -> TestEnv {
+    fn init_custom_envfile_testenv() -> TestEnv {
         let envfile = create_custom_envfile(CUSTOM_VARS);
         TestEnv::init_with_envfile(envfile)
+    }
+
+    fn init_empty_envfile_testenv() -> TestEnv {
+        TestEnv::init_with_envfile([])
     }
 }
 
