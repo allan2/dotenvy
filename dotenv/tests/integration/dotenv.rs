@@ -8,4 +8,3 @@ fn dotenv_ok_default_env() {
         assert_env_var(TEST_KEY, TEST_VALUE);
     });
 }
-

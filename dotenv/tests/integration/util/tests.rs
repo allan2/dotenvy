@@ -17,7 +17,6 @@ mod default_env {
         assert_envfile_exists_in_testenv(testenv);
     }
 
-
     #[test]
     fn envfile_loaded_vars_state() {
         test_in_default_env(|| {
