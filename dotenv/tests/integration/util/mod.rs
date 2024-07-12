@@ -1,8 +1,8 @@
-#![allow(dead_code)]
+use std::env::{self, VarError};
 
 mod testenv;
 
-use std::env::{self, VarError};
+pub use testenv::{test_in_default_env, test_in_env, KeyVal, TestEnv};
 
 /// Default key used in envfile
 pub const TEST_KEY: &str = "TESTKEY";
