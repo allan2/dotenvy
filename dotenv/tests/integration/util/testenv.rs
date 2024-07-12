@@ -31,7 +31,7 @@ pub struct TestEnv {
     temp_dir: TempDir,
     work_dir: PathBuf,
     env_vars: Vec<KeyVal>,
-    envfile_contents: Option<String>,
+    envfile_contents: Option<Vec<u8>>,
     envfile_path: PathBuf,
 }
 
@@ -109,20 +109,10 @@ impl TestEnv {
     ///
     /// No pre-existing env_vars set. The envfile_name is set to `.env`. The
     /// working directory is the created temporary directory.
-    pub fn init_with_envfile(contents: impl ToString) -> Self {
+    pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
         let mut test_env = Self::init();
         test_env.set_envfile_contents(contents);
         test_env
-    }
-
-    /// Change the name of the default `.env` file.
-    ///
-    /// It will still be placed in the root temporary directory. If you need to
-    /// put the envfile in a different directory, use
-    /// [`set_envfile_path`](TestEnv::set_envfile_path) instead.
-    pub fn set_envfile_name(&mut self, name: impl AsRef<Path>) -> &mut Self {
-        self.envfile_path = self.temp_path().join(name);
-        self
     }
 
     /// Change the absolute path to the envfile.
@@ -134,11 +124,12 @@ impl TestEnv {
     /// Specify the contents of the envfile.
     ///
     /// If this is the only change to the [`TestEnv`] being made, use
-    /// [`new_with_envfile`](TestEnv::new_with_envfile).
+    /// [`init_with_envfile`](TestEnv::init_with_envfile).
     ///
     /// Setting it to an empty string will cause an empty envfile to be created
-    pub fn set_envfile_contents(&mut self, contents: impl ToString) -> &mut Self {
-        self.envfile_contents = Some(contents.to_string());
+    pub fn set_envfile_contents(&mut self, contents: impl Into<Vec<u8>>) -> &mut Self {
+        let contents = contents.into();
+        self.envfile_contents = Some(contents);
         self
     }
 
@@ -232,11 +223,25 @@ impl TestEnv {
         &self.env_vars
     }
 
+    /// Get a reference to the bytes that will be placed in the envfile.
+    ///
+    /// If `None` is returned, an envfile will not be created
+    pub fn envfile_contents_as_bytes(&self) -> Option<&[u8]> {
+        self.envfile_contents.as_deref()
+    }
+
     /// Get a reference to the string that will be placed in the envfile.
     ///
     /// If `None` is returned, an envfile will not be created
-    pub fn envfile_contents(&self) -> Option<&str> {
-        self.envfile_contents.as_deref()
+    ///
+    /// ## Panics
+    ///
+    /// This will panic if the envfile contents are not valid UTF-8
+    pub fn envfile_contents_as_str(&self) -> Option<&str> {
+        self.envfile_contents_as_bytes().map(|bytes| {
+            let out = std::str::from_utf8(bytes).expect("valid UTF-8");
+            Some(out)
+        })?
     }
 
     /// Get a reference to the path of the envfile.
@@ -253,7 +258,7 @@ impl Default for TestEnv {
             key: TEST_EXISTING_KEY.into(),
             value: TEST_EXISTING_VALUE.into(),
         }];
-        let envfile_contents = Some(create_default_envfile());
+        let envfile_contents = Some(create_default_envfile().into());
         let envfile_path = work_dir.join(".env");
         Self {
             temp_dir,
@@ -307,7 +312,7 @@ fn reset_env(original_env: &EnvMap) {
 /// Writes the envfile, sets the working directory, and sets environment vars.
 fn create_env(test_env: &TestEnv) {
     // only create the envfile if its contents has been set
-    if let Some(contents) = test_env.envfile_contents() {
+    if let Some(contents) = test_env.envfile_contents_as_bytes() {
         create_envfile(&test_env.envfile_path, contents);
     }
 
@@ -319,14 +324,14 @@ fn create_env(test_env: &TestEnv) {
 }
 
 /// Create an envfile for use in tests.
-fn create_envfile(path: &Path, contents: &str) {
+fn create_envfile(path: &Path, contents: &[u8]) {
     if path.exists() {
         panic!("envfile `{}` already exists", path.display())
     }
     // inner function to group together io::Results
-    fn create_env_file_inner(path: &Path, contents: &str) -> io::Result<()> {
+    fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
         let mut file = fs::File::create(path)?;
-        file.write_all(contents.as_bytes())?;
+        file.write_all(contents)?;
         file.sync_all()
     }
     // call inner function
