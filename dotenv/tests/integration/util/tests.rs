@@ -125,6 +125,21 @@ mod testenv_init_with_envfile {
         });
     }
 
+    #[test]
+    fn custom_bom_envfile_exists() {
+        let testenv = init_custom_bom_envfile_testenv();
+        assert_envfile_exists_in_testenv(testenv);
+    }
+
+    #[test]
+    fn custom_bom_envfile_loaded_vars_state() {
+        let testenv = init_custom_bom_envfile_testenv();
+        test_in_env(testenv, || {
+            dotenv_wrap().expect(DOTENV_EXPECT);
+            assert_env_var(TEST_KEY, TEST_VALUE);
+        });
+    }
+
     fn init_default_envfile_testenv() -> TestEnv {
         let envfile = create_default_envfile();
         TestEnv::init_with_envfile(envfile)
@@ -137,6 +152,14 @@ mod testenv_init_with_envfile {
 
     fn init_empty_envfile_testenv() -> TestEnv {
         TestEnv::init_with_envfile([])
+    }
+
+    fn init_custom_bom_envfile_testenv() -> TestEnv {
+        let mut efb = EnvFileBuilder::new();
+        efb.add_key_value(TEST_KEY, TEST_VALUE);
+        efb.insert_utf8_bom();
+        let envfile = efb.into_owned_string();
+        TestEnv::init_with_envfile(envfile)
     }
 }
 
