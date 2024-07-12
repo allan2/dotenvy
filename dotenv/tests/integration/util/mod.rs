@@ -1,9 +1,11 @@
 use std::env::{self, VarError};
 
+mod envfile;
 mod testenv;
 mod tests;
 mod wrapper;
 
+pub use envfile::EnvFileBuilder;
 pub use testenv::{test_in_default_env, test_in_env, KeyVal, TestEnv};
 pub use wrapper::*;
 
@@ -37,14 +39,9 @@ pub fn create_invalid_envfile() -> String {
 }
 
 pub fn create_custom_envfile(env_vars: &[(&str, &str)]) -> String {
-    let mut envfile = String::new();
-    for (key, value) in env_vars {
-        envfile.push_str(key);
-        envfile.push('=');
-        envfile.push_str(value);
-        envfile.push('\n');
-    }
-    envfile
+    let mut efb = EnvFileBuilder::new();
+    efb.add_vars(env_vars);
+    efb.into_owned_string()
 }
 
 /// Assert that a slice of environment variables are set and have the expected
