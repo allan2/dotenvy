@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use super::*;
 
 const CUSTOM_VARS: &[(&str, &str)] = &[
@@ -29,7 +27,7 @@ mod default_env {
     #[test]
     fn envfile_loaded_vars_state() {
         test_in_default_env(|| {
-            dotenv_wrapper().expect(DOTENV_EXPECT);
+            dotenv_wrap().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             assert_env_var(TEST_EXISTING_KEY, TEST_EXISTING_VALUE);
             assert_env_var(TEST_KEY, TEST_VALUE);
@@ -53,7 +51,7 @@ mod testenv_init {
 
         test_in_env(init_testenv, || {
             assert!(!envfile_path.exists());
-            assert!(dotenv_wrapper().is_err());
+            assert!(dotenv_wrap().is_err());
         });
     }
 }
@@ -77,7 +75,7 @@ mod testenv_init_with_envfile {
     fn default_envfile_loaded_vars_state() {
         let testenv = init_default_testenv();
         test_in_env(testenv, || {
-            dotenv_wrapper().expect(DOTENV_EXPECT);
+            dotenv_wrap().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             // but existing key is not set in this testenv
             assert_env_var(TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE);
@@ -106,7 +104,7 @@ mod testenv_init_with_envfile {
     fn custom_envfile_loaded_vars_state() {
         let testenv = init_custom_testenv();
         test_in_env(testenv, || {
-            dotenv_wrapper().expect(DOTENV_EXPECT);
+            dotenv_wrap().expect(DOTENV_EXPECT);
             assert_default_keys_not_set();
             assert_env_vars(CUSTOM_VARS);
         });
@@ -128,7 +126,7 @@ fn assert_envfile_exists_in_testenv(testenv: TestEnv) {
 
     test_in_env(testenv, || {
         assert!(envfile_path.exists());
-        assert!(dotenv_wrapper().is_ok());
+        assert!(dotenv_wrap().is_ok());
     });
 }
 
@@ -139,8 +137,4 @@ fn assert_default_keys_not_set_in_testenv(testenv: TestEnv) {
 fn assert_default_keys_not_set() {
     assert_env_var_unset(TEST_EXISTING_KEY);
     assert_env_var_unset(TEST_KEY);
-}
-
-fn dotenv_wrapper() -> dotenvy::Result<PathBuf> {
-    dotenvy::dotenv()
 }

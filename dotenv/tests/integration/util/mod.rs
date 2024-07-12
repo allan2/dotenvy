@@ -2,8 +2,10 @@ use std::env::{self, VarError};
 
 mod testenv;
 mod tests;
+mod wrapper;
 
 pub use testenv::{test_in_default_env, test_in_env, KeyVal, TestEnv};
+pub use wrapper::*;
 
 /// Default key used in envfile
 pub const TEST_KEY: &str = "TESTKEY";
