@@ -43,8 +43,8 @@ mod init_with_envfile {
             dotenv_wrap().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             // but existing key is not set in this testenv
-            assert_env_var(TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE);
-            assert_env_var(TEST_KEY, TEST_VALUE);
+            assert_env_var(DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE);
+            assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });
     }
 
@@ -52,7 +52,7 @@ mod init_with_envfile {
     fn custom_envfile_vars_state() {
         let testenv = init_custom_envfile_testenv();
         test_in_env(testenv, || {
-            assert_default_keys_not_set();
+            assert_default_keys_unset();
             for (key, _) in CUSTOM_VARS {
                 assert_env_var_unset(key);
             }
@@ -70,7 +70,7 @@ mod init_with_envfile {
         let testenv = init_custom_envfile_testenv();
         test_in_env(testenv, || {
             dotenv_wrap().expect(DOTENV_EXPECT);
-            assert_default_keys_not_set();
+            assert_default_keys_unset();
             assert_env_vars(CUSTOM_VARS);
         });
     }
@@ -86,7 +86,7 @@ mod init_with_envfile {
         let testenv = init_empty_envfile_testenv();
         test_in_env(testenv, || {
             dotenv_wrap().expect(DOTENV_EXPECT);
-            assert_default_keys_not_set();
+            assert_default_keys_unset();
         });
     }
 
@@ -101,7 +101,7 @@ mod init_with_envfile {
         let testenv = init_custom_bom_envfile_testenv();
         test_in_env(testenv, || {
             dotenv_wrap().expect(DOTENV_EXPECT);
-            assert_env_var(TEST_KEY, TEST_VALUE);
+            assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });
     }
 
@@ -121,7 +121,7 @@ mod init_with_envfile {
 
     fn init_custom_bom_envfile_testenv() -> TestEnv {
         let mut efb = EnvFileBuilder::new();
-        efb.add_key_value(TEST_KEY, TEST_VALUE);
+        efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         efb.insert_utf8_bom();
         let envfile = efb.into_owned_string();
         TestEnv::init_with_envfile(envfile)

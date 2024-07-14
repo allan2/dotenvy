@@ -1,4 +1,4 @@
-use super::{create_default_envfile, TEST_EXISTING_KEY, TEST_EXISTING_VALUE};
+use super::{create_default_envfile, DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE};
 use once_cell::sync::OnceCell;
 use std::{
     collections::HashMap,
@@ -68,15 +68,15 @@ where
 /// environment.
 ///
 /// The default testing environment sets an existing environment variable
-/// `TEST_EXISTING_KEY`, which is set to `from_env`. It also creates a `.env`
-/// file with the two lines:
+/// `DEFAULT_EXISTING_KEY`, which is set to `loaded_from_env`. It also creates a
+/// `.env` file with the two lines:
 ///
 /// ```ini
-/// TESTKEY=test_val
-/// TEST_EXISTING_KEY=from_file
+/// DEFAULT_TEST_KEY=default_test_val
+/// DEFAULT_EXISTING_KEY=loaded_from_file
 /// ```
 ///
-/// Notice that file has the potential to override `TEST_EXISTING_KEY` depending
+/// Notice that file has the potential to override `DEFAULT_EXISTING_KEY` depending
 /// on the what's being tested.
 pub fn test_in_default_env<F>(test: F)
 where
@@ -255,8 +255,8 @@ impl Default for TestEnv {
         let temp_dir = tempdir().expect("create tempdir");
         let work_dir = temp_dir.path().to_owned();
         let env_vars = vec![KeyVal {
-            key: TEST_EXISTING_KEY.into(),
-            value: TEST_EXISTING_VALUE.into(),
+            key: DEFAULT_EXISTING_KEY.into(),
+            value: DEFAULT_EXISTING_VALUE.into(),
         }];
         let envfile_contents = Some(create_default_envfile().into());
         let envfile_path = work_dir.join(".env");

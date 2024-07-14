@@ -1,4 +1,39 @@
-/// Create envfile contents for testing
+use super::*;
+
+#[inline(always)]
+pub fn create_default_envfile() -> String {
+    format!(
+        "{}={}\n{}={}",
+        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE
+    )
+}
+
+/// Invalid due to missing `=` between key and value.
+#[inline(always)]
+pub fn create_invalid_envfile() -> String {
+    format!(
+        "{}{}\n{}{}",
+        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE
+    )
+}
+
+/// Create an envfile with custom key-value pairs.
+///
+/// ## Example
+///
+/// ```rust
+/// let contents = create_custom_envfile(&[
+///     ("CUSTOM_KEY", "test_val"),
+///     ("ANOTHER_KEY", "another_val"),
+/// ]);
+/// ```
+pub fn create_custom_envfile(env_vars: &[(&str, &str)]) -> String {
+    let mut efb = EnvFileBuilder::new();
+    efb.add_vars(env_vars);
+    efb.into_owned_string()
+}
+
+/// Advanced test-envfile constructor.
 ///
 /// Represented as bytes to allow for advanced manipulation and BOM testing.
 #[derive(Debug, Default)]

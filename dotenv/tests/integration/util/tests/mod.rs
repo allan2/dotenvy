@@ -21,10 +21,5 @@ fn assert_envfile_exists_in_testenv(testenv: TestEnv) {
 }
 
 fn assert_default_keys_not_set_in_testenv(testenv: TestEnv) {
-    test_in_env(testenv, assert_default_keys_not_set);
-}
-
-fn assert_default_keys_not_set() {
-    assert_env_var_unset(TEST_EXISTING_KEY);
-    assert_env_var_unset(TEST_KEY);
+    test_in_env(testenv, assert_default_keys_unset);
 }
