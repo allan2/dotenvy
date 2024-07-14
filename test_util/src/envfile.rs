@@ -21,11 +21,13 @@ pub fn create_invalid_envfile() -> String {
 ///
 /// ## Example
 ///
-/// ```rust
+/// ```no_run
+/// # use dotenvy_test_util::create_custom_envfile;
 /// let contents = create_custom_envfile(&[
 ///     ("CUSTOM_KEY", "test_val"),
 ///     ("ANOTHER_KEY", "another_val"),
 /// ]);
+/// assert_eq!(contents, "CUSTOM_KEY=test_val\nANOTHER_KEY=another_val\n");
 /// ```
 pub fn create_custom_envfile(env_vars: &[(&str, &str)]) -> String {
     let mut efb = EnvFileBuilder::new();

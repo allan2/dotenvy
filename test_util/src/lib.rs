@@ -1,8 +1,10 @@
 mod assertions;
 mod envfile;
 mod testenv;
-mod tests;
 mod wrapper;
+
+#[cfg(test)]
+mod tests;
 
 pub use assertions::*;
 pub use envfile::*;

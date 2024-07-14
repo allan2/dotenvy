@@ -8,9 +8,10 @@ use std::env::{self, VarError};
 ///
 /// * `vars` - A slice of key-expected value tuples
 ///
-/// ## Examples
+/// ## Example
 ///
-/// ```rust
+/// ```no_run
+/// # use dotenvy_test_util::assert_env_vars;
 /// assert_env_vars(&[
 ///     ("DEFAULT_TEST_KEY", "default_test_val"),
 ///     ("DEFAULT_EXISTING_KEY", "loaded_from_env"),

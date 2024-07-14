@@ -1,4 +1,4 @@
-use crate::util::*;
+use dotenvy_test_util::*;
 
 #[test]
 fn dotenv_ok_default_env() {
