@@ -43,7 +43,7 @@ mod init_with_envfile {
             dotenv_wrap().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             // but existing key is not set in this testenv
-            assert_env_var(DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE);
+            assert_env_var(DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE);
             assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });
     }

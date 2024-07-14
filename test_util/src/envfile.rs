@@ -4,7 +4,7 @@ use super::*;
 pub fn create_default_envfile() -> String {
     format!(
         "{}={}\n{}={}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE
+        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
     )
 }
 
@@ -13,7 +13,7 @@ pub fn create_default_envfile() -> String {
 pub fn create_invalid_envfile() -> String {
     format!(
         "{}{}\n{}{}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE
+        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
     )
 }
 

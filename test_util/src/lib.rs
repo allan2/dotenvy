@@ -21,4 +21,4 @@ pub const DEFAULT_EXISTING_KEY: &str = "DEFAULT_EXISTING_KEY";
 /// Default existing value set before test is run
 pub const DEFAULT_EXISTING_VALUE: &str = "loaded_from_env";
 /// Default overriding value in envfile
-pub const TEST_OVERRIDING_VALUE: &str = "loaded_from_file";
+pub const DEFAULT_OVERRIDING_VALUE: &str = "loaded_from_file";

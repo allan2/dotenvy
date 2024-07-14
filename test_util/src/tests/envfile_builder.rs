@@ -32,10 +32,10 @@ fn add_key_value() {
 fn add_multiple_key_values() {
     let mut efb = EnvFileBuilder::new();
     efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
-    efb.add_key_value(DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE);
+    efb.add_key_value(DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE);
     let expected = expected_envfile(&[
         (DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE),
-        (DEFAULT_EXISTING_KEY, TEST_OVERRIDING_VALUE),
+        (DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE),
     ]);
     assert_contents_str(efb, &expected);
 }
