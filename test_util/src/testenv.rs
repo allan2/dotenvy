@@ -31,8 +31,14 @@ pub struct TestEnv {
     temp_dir: TempDir,
     work_dir: PathBuf,
     env_vars: Vec<KeyVal>,
-    envfile_contents: Option<Vec<u8>>,
-    envfile_path: PathBuf,
+    envfiles: Vec<EnvFile>,
+}
+
+#[derive(Debug)]
+/// Simple path and byte contents representing a `.env` file
+pub struct EnvFile {
+    pub path: PathBuf,
+    pub contents: Vec<u8>,
 }
 
 /// Simple key value struct for representing environment variables
@@ -95,50 +101,35 @@ impl TestEnv {
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
         let work_dir = tempdir.path().to_owned();
-        let envfile_path = work_dir.join(".env");
         Self {
             temp_dir: tempdir,
             work_dir,
             env_vars: Default::default(),
-            envfile_contents: None,
-            envfile_path,
+            envfiles: vec![],
         }
     }
 
-    /// Testing environment with custom envfile_contents.
+    /// Testing environment with custom envfile contents.
     ///
     /// No pre-existing env_vars set. The envfile_name is set to `.env`. The
     /// working directory is the created temporary directory.
     pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
         let mut test_env = Self::init();
-        test_env.set_envfile_contents(contents);
+        test_env.add_envfile(".env", contents);
         test_env
     }
 
-    /// Change the absolute path to the envfile.
-    pub fn set_envfile_path(&mut self, path: PathBuf) -> &mut Self {
-        self.envfile_path = path;
-        self
-    }
-
-    /// Specify the contents of the envfile.
-    ///
-    /// If this is the only change to the [`TestEnv`] being made, use
-    /// [`init_with_envfile`](TestEnv::init_with_envfile).
-    ///
-    /// Setting it to an empty string will cause an empty envfile to be created
-    pub fn set_envfile_contents(&mut self, contents: impl Into<Vec<u8>>) -> &mut Self {
-        let contents = contents.into();
-        self.envfile_contents = Some(contents);
-        self
-    }
-
-    /// Set the working directory the test will run from.
-    ///
-    /// The default is the created temporary directory. This method is useful if
-    /// you wish to run a test from a subdirectory or somewhere else.
-    pub fn set_work_dir(&mut self, path: PathBuf) -> &mut Self {
-        self.work_dir = path;
+    /// Add an individual envfile.
+    pub fn add_envfile<P, C>(&mut self, path: P, contents: C) -> &mut Self
+    where
+        P: Into<PathBuf>,
+        C: Into<Vec<u8>>,
+    {
+        let envfile = EnvFile {
+            path: self.temp_dir.path().join(path.into()),
+            contents: contents.into(),
+        };
+        self.envfiles.push(envfile);
         self
     }
 
@@ -154,7 +145,7 @@ impl TestEnv {
         self
     }
 
-    /// Set the pre-existing environment variables.
+    /// Set all the pre-existing environment variables.
     ///
     /// These variables will get added to the process' environment before the
     /// test is run. This overrides any previous env vars added to the
@@ -167,7 +158,7 @@ impl TestEnv {
         self
     }
 
-    /// Set the pre-existing environment variables using [`str`] tuples.
+    /// Set all the pre-existing environment variables using [`str`] tuples.
     ///
     /// These variables will get added to the process' environment before the
     /// test is run. This overrides any previous env vars added to the
@@ -184,6 +175,15 @@ impl TestEnv {
             })
             .collect();
 
+        self
+    }
+
+    /// Set the working directory the test will run from.
+    ///
+    /// The default is the created temporary directory. This method is useful if
+    /// you wish to run a test from a subdirectory or somewhere else.
+    pub fn set_work_dir(&mut self, path: PathBuf) -> &mut Self {
+        self.work_dir = path;
         self
     }
 
@@ -207,46 +207,24 @@ impl TestEnv {
         child_dir
     }
 
-    /// Get a reference to the path of the temporary directory.
+    /// Reference to the path of the temporary directory.
     pub fn temp_path(&self) -> &Path {
         self.temp_dir.path()
     }
 
-    /// Get a reference to the working directory the test will be run from.
+    /// Reference to the working directory the test will be run from.
     pub fn work_dir(&self) -> &Path {
         &self.work_dir
     }
 
-    /// Get a reference to environment variables that will be set **before**
-    /// the test.
+    /// Reference to environment variables that will be set **before** the test.
     pub fn env_vars(&self) -> &[KeyVal] {
         &self.env_vars
     }
 
-    /// Get a reference to the bytes that will be placed in the envfile.
-    ///
-    /// If `None` is returned, an envfile will not be created
-    pub fn envfile_contents_as_bytes(&self) -> Option<&[u8]> {
-        self.envfile_contents.as_deref()
-    }
-
-    /// Get a reference to the string that will be placed in the envfile.
-    ///
-    /// If `None` is returned, an envfile will not be created
-    ///
-    /// ## Panics
-    ///
-    /// This will panic if the envfile contents are not valid UTF-8
-    pub fn envfile_contents_as_str(&self) -> Option<&str> {
-        self.envfile_contents_as_bytes().map(|bytes| {
-            let out = std::str::from_utf8(bytes).expect("valid UTF-8");
-            Some(out)
-        })?
-    }
-
-    /// Get a reference to the path of the envfile.
-    pub fn envfile_path(&self) -> &Path {
-        &self.envfile_path
+    /// Get a reference to the environment files that will created
+    pub fn envfiles(&self) -> &[EnvFile] {
+        &self.envfiles
     }
 }
 
@@ -258,14 +236,15 @@ impl Default for TestEnv {
             key: DEFAULT_EXISTING_KEY.into(),
             value: DEFAULT_EXISTING_VALUE.into(),
         }];
-        let envfile_contents = Some(create_default_envfile().into());
-        let envfile_path = work_dir.join(".env");
+        let envfiles = vec![EnvFile {
+            path: work_dir.join(".env"),
+            contents: create_default_envfile().into(),
+        }];
         Self {
             temp_dir,
             work_dir,
             env_vars,
-            envfile_contents,
-            envfile_path,
+            envfiles,
         }
     }
 }
@@ -311,12 +290,11 @@ fn reset_env(original_env: &EnvMap) {
 ///
 /// Writes the envfile, sets the working directory, and sets environment vars.
 fn create_env(test_env: &TestEnv) {
-    // only create the envfile if its contents has been set
-    if let Some(contents) = test_env.envfile_contents_as_bytes() {
-        create_envfile(&test_env.envfile_path, contents);
-    }
-
     env::set_current_dir(&test_env.work_dir).expect("setting working directory");
+
+    for EnvFile { path, contents } in &test_env.envfiles {
+        create_envfile(path, contents);
+    }
 
     for KeyVal { key, value } in &test_env.env_vars {
         env::set_var(key, value)

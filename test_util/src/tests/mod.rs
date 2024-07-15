@@ -11,12 +11,17 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
 
 const DOTENV_EXPECT: &str = "TestEnv should have .env file";
 
-fn assert_envfile_exists_in_testenv(testenv: TestEnv) {
-    let envfile_path = testenv.envfile_path().to_owned();
+fn assert_envfiles_exist_in_testenv(testenv: TestEnv) {
+    let paths = testenv
+        .envfiles()
+        .iter()
+        .map(|envfile| envfile.path.clone())
+        .collect::<Vec<_>>();
 
     test_in_env(testenv, || {
-        assert!(envfile_path.exists());
-        assert!(wrap::dotenv().is_ok());
+        for path in paths {
+            assert!(path.exists());
+        }
     });
 }
 

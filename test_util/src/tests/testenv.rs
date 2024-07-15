@@ -12,7 +12,7 @@ mod init {
     #[test]
     fn no_envfile() {
         let init_testenv = TestEnv::init();
-        let envfile_path = init_testenv.envfile_path().to_owned();
+        let envfile_path = init_testenv.temp_path().join(".env");
 
         test_in_env(init_testenv, || {
             assert!(!envfile_path.exists());
@@ -33,7 +33,7 @@ mod init_with_envfile {
     #[test]
     fn default_envfile_exists() {
         let testenv = init_default_envfile_testenv();
-        assert_envfile_exists_in_testenv(testenv);
+        assert_envfiles_exist_in_testenv(testenv);
     }
 
     #[test]
@@ -62,7 +62,7 @@ mod init_with_envfile {
     #[test]
     fn custom_envfile_exists() {
         let testenv = init_custom_envfile_testenv();
-        assert_envfile_exists_in_testenv(testenv);
+        assert_envfiles_exist_in_testenv(testenv);
     }
 
     #[test]
@@ -78,7 +78,7 @@ mod init_with_envfile {
     #[test]
     fn empty_envfile_exists() {
         let testenv = init_empty_envfile_testenv();
-        assert_envfile_exists_in_testenv(testenv);
+        assert_envfiles_exist_in_testenv(testenv);
     }
 
     #[test]
@@ -93,7 +93,7 @@ mod init_with_envfile {
     #[test]
     fn custom_bom_envfile_exists() {
         let testenv = init_custom_bom_envfile_testenv();
-        assert_envfile_exists_in_testenv(testenv);
+        assert_envfiles_exist_in_testenv(testenv);
     }
 
     #[test]
