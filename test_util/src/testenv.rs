@@ -38,8 +38,8 @@ pub struct TestEnv {
 /// Simple key value struct for representing environment variables
 #[derive(Debug, Clone)]
 pub struct KeyVal {
-    key: String,
-    value: String,
+    pub key: String,
+    pub value: String,
 }
 
 /// Run a test closure within a test environment.

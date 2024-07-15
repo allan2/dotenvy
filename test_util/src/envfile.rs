@@ -1,6 +1,11 @@
 use super::*;
 
 #[inline(always)]
+/// Create the default envfile contents.
+///
+/// [`DEFAULT_TEST_KEY`] set as [`DEFAULT_TEST_VALUE`]
+///
+/// [`DEFAULT_EXISTING_KEY`] set as [`DEFAULT_OVERRIDING_VALUE`]
 pub fn create_default_envfile() -> String {
     format!(
         "{}={}\n{}={}",
@@ -59,7 +64,7 @@ impl EnvFileBuilder {
     ///
     /// ## Panics
     ///
-    /// If the contents of the builder are not valid UTF-8.
+    /// If the contents of the builder is not valid UTF-8.
     pub fn build_string(&self) -> String {
         String::from_utf8(self.contents.clone()).expect("valid UTF-8")
     }
@@ -73,7 +78,7 @@ impl EnvFileBuilder {
     ///
     /// ## Panics
     ///
-    /// If the contents of the builder are not valid UTF-8.
+    /// If the contents of the builder is not valid UTF-8.
     pub fn into_owned_string(self) -> String {
         String::from_utf8(self.contents).expect("valid UTF-8")
     }
@@ -83,7 +88,9 @@ impl EnvFileBuilder {
         &self.contents
     }
 
-    /// Add
+    /// Add a slice of key-value pairs, separated by newlines.
+    ///
+    /// Includes a trailing newline.
     pub fn add_vars(&mut self, env_vars: &[(&str, &str)]) -> &mut Self {
         let mut many = String::new();
         for (key, value) in env_vars {

@@ -1,12 +1,12 @@
 use super::*;
 use std::env::{self, VarError};
 
-/// Assert that a slice of environment variables are set and have the expected
+/// Assert multiple environment variables are set and have the expected
 /// values.
 ///
 /// ## Arguments
 ///
-/// * `vars` - A slice of key-expected value tuples
+/// * `vars` - A slice of `(key, expected_value)` tuples
 ///
 /// ## Example
 ///
@@ -23,7 +23,7 @@ pub fn assert_env_vars(vars: &[(&str, &str)]) {
     }
 }
 
-/// Assert that an environment variable is set and has the expected value.
+/// Assert environment variable is set and has the expected value.
 pub fn assert_env_var(key: &str, expected: &str) {
     match env::var(key) {
         Ok(actual) => assert_eq!(
@@ -40,7 +40,7 @@ pub fn assert_env_var(key: &str, expected: &str) {
     }
 }
 
-/// Assert that an environment variable is not currently set.
+/// Assert environment variable is not currently set.
 pub fn assert_env_var_unset(key: &str) {
     match env::var(key) {
         Ok(actual) => panic!(
@@ -56,7 +56,7 @@ pub fn assert_env_var_unset(key: &str) {
     }
 }
 
-/// Assert that the default testing environment variables are not set.
+/// Assert default testing environment variables are not set.
 pub fn assert_default_keys_unset() {
     assert_env_var_unset(DEFAULT_EXISTING_KEY);
     assert_env_var_unset(DEFAULT_TEST_KEY);

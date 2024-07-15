@@ -1,3 +1,53 @@
+//! Test environment setup, assertions and helpers.
+//!
+//! Setup a [`TestEnv`] and run your tests via [`test_in_env`]. The environment
+//! can be tweaked with:
+//!
+//! - pre-existing environment variables,
+//! - different directory layouts,
+//! - custom `.env` file contents,
+//! - custom envfile name/path.
+//!
+//! Use the `create_` helper functions, such as [`create_custom_envfile`], to
+//! generate the `.env` file contents. If you need more control of the
+//! envfile's bytes, use the [`EnvFileBuilder`].
+//!
+//! In your tests, call the [`dotenvy`] API via the [`wrap`] module to keep any
+//! API changes in one place. Then make use of the `assert_` helpers, such as
+//! [`assert_env_var`] and [`assert_env_var_unset`], to check the state of the
+//! environment.
+//!
+//! ## Example
+//!
+//! ```no_run
+//! use dotenvy_test_util::*;
+//!
+//! const EXISTING_KEY: &str = "TEST_KEY";
+//! const EXISTING_VAL: &str = "test_val";
+//! const OVERRIDING_VAL: &str = "overriding_val";
+//!
+//! #[test]
+//! fn dotenv_override_existing_key() {
+//!     // setup testing environment
+//!     let mut testenv = TestEnv::init();
+//!
+//!     // with an existing environment variable
+//!     testenv.set_env_var(EXISTING_KEY, EXISTING_VAL);
+//!
+//!     // with an envfile that overrides it
+//!     testenv.set_envfile_contents(
+//!         create_custom_envfile(&[(EXISTING_KEY, OVERRIDING_VAL)]),
+//!     );
+//!
+//!     // execute the closure in the testing environment
+//!     test_in_env(testenv, || {
+//!         wrap::dotenv_override().expect(".env should be loaded");
+//!         assert_env_var(EXISTING_KEY, OVERRIDING_VAL);
+//!     });
+//!     // any changes to environment variables will be reset for other tests
+//! }
+//! ```
+
 mod assertions;
 mod envfile;
 mod testenv;
