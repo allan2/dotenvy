@@ -32,10 +32,11 @@
 //!     let mut testenv = TestEnv::init();
 //!
 //!     // with an existing environment variable
-//!     testenv.set_env_var(EXISTING_KEY, EXISTING_VAL);
+//!     testenv.add_env_var(EXISTING_KEY, EXISTING_VAL);
 //!
 //!     // with an envfile that overrides it
-//!     testenv.set_envfile_contents(
+//!     testenv.add_envfile(
+//!         ".env",
 //!         create_custom_envfile(&[(EXISTING_KEY, OVERRIDING_VAL)]),
 //!     );
 //!

@@ -23,7 +23,7 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 ///
 /// Creation methods:
 /// - [`TestEnv::init`]: blank environment (no envfile)
-/// - [`TestEnv::init_with_envfile`]: blank environment with an envfile
+/// - [`TestEnv::init_with_envfile`]: blank environment with a custom `.env`
 /// - [`TestEnv::default`]: default testing environment (1 existing var and 2
 ///       set in a `.env` file)
 #[derive(Debug)]
@@ -95,9 +95,8 @@ where
 impl TestEnv {
     /// Blank testing environment in a new temporary directory.
     ///
-    /// No envfile_contents or pre-existing variables to set. The envfile_name
-    /// is set to `.env` but won't be written until its content is set. The
-    /// working directory is the created temporary directory.
+    /// No envfile or pre-existing variables set. The working directory is the
+    /// created temporary directory.
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
         let work_dir = tempdir.path().to_owned();
@@ -111,7 +110,7 @@ impl TestEnv {
 
     /// Testing environment with custom envfile contents.
     ///
-    /// No pre-existing env_vars set. The envfile_name is set to `.env`. The
+    /// No pre-existing env_vars set. The envfile path is set to `.env`. The
     /// working directory is the created temporary directory.
     pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
         let mut test_env = Self::init();
