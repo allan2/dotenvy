@@ -137,10 +137,14 @@ impl TestEnv {
     ///
     /// This adds more pre-existing environment variables to the process before
     /// any tests are run.
-    pub fn add_env_var(&mut self, key: impl ToString, value: impl ToString) -> &mut Self {
+    pub fn add_env_var<K, V>(&mut self, key: K, value: V) -> &mut Self
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
         self.env_vars.push(KeyVal {
-            key: key.to_string(),
-            value: value.to_string(),
+            key: key.into(),
+            value: value.into(),
         });
         self
     }
@@ -182,8 +186,8 @@ impl TestEnv {
     ///
     /// The default is the created temporary directory. This method is useful if
     /// you wish to run a test from a subdirectory or somewhere else.
-    pub fn set_work_dir(&mut self, path: PathBuf) -> &mut Self {
-        self.work_dir = path;
+    pub fn set_work_dir(&mut self, path: impl Into<PathBuf>) -> &mut Self {
+        self.work_dir = path.into();
         self
     }
 
@@ -193,18 +197,17 @@ impl TestEnv {
     /// the envfile is created.
     ///
     /// Will create parent directories if they are missing.
-    pub fn add_child_dir_all(&self, rel_path: impl AsRef<Path>) -> PathBuf {
-        let rel_path = rel_path.as_ref();
-        let child_dir = self.temp_path().join(rel_path);
-        if let Err(err) = fs::create_dir_all(&child_dir) {
+    pub fn add_child_dir_all(&self, path: impl AsRef<Path>) {
+        let path = path.as_ref();
+        let child_dir = self.temp_path().join(path);
+        if let Err(err) = fs::create_dir_all(child_dir) {
             panic!(
                 "unable to create child directory: `{}` in `{}`: {}",
                 self.temp_path().display(),
-                rel_path.display(),
+                path.display(),
                 err
             );
         }
-        child_dir
     }
 
     /// Reference to the path of the temporary directory.
@@ -288,7 +291,7 @@ fn reset_env(original_env: &EnvMap) {
 
 /// Create an environment to run tests in.
 ///
-/// Writes the envfile, sets the working directory, and sets environment vars.
+/// Writes the envfiles, sets the working directory, and sets environment vars.
 fn create_env(test_env: &TestEnv) {
     env::set_current_dir(&test_env.work_dir).expect("setting working directory");
 
