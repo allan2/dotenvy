@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use super::*;
 
 mod default_env;
@@ -11,20 +13,30 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
 
 const DOTENV_EXPECT: &str = "TestEnv should have .env file";
 
-fn assert_envfiles_exist_in_testenv(testenv: TestEnv) {
-    let paths = testenv
-        .envfiles()
-        .iter()
-        .map(|envfile| envfile.path.clone())
-        .collect::<Vec<_>>();
+fn assert_envfiles_in_testenv(testenv: &TestEnv) {
+    let files = testenv.envfiles();
 
     test_in_env(testenv, || {
-        for path in paths {
-            assert!(path.exists());
+        for EnvFile { path, contents } in files {
+            assert_envfile(path, contents);
         }
     });
 }
 
-fn assert_default_keys_not_set_in_testenv(testenv: TestEnv) {
+fn assert_envfile(path: &Path, expected: &[u8]) {
+    assert!(path.exists(), "{} should exist in testenv", path.display());
+
+    let actual = std::fs::read(path)
+        .unwrap_or_else(|e| panic!("failed to read {} in testenv: {}", path.display(), e));
+
+    assert_eq!(
+        expected,
+        &actual,
+        "{} has incorrect contents",
+        path.display()
+    );
+}
+
+fn assert_default_keys_not_set_in_testenv(testenv: &TestEnv) {
     test_in_env(testenv, assert_default_keys_unset);
 }

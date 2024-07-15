@@ -34,7 +34,7 @@ pub struct TestEnv {
     envfiles: Vec<EnvFile>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Simple path and byte contents representing a `.env` file
 pub struct EnvFile {
     pub path: PathBuf,
@@ -52,7 +52,7 @@ pub struct KeyVal {
 ///
 /// Resets the environment variables, loads the [`TestEnv`], then runs the test
 /// closure. Ensures only one thread has access to the process environment.
-pub fn test_in_env<F>(test_env: TestEnv, test: F)
+pub fn test_in_env<F>(test_env: &TestEnv, test: F)
 where
     F: FnOnce(),
 {
@@ -62,9 +62,9 @@ where
     let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
     // we reset the environment anyway upon acquiring the lock
     reset_env(&original_env);
-    create_env(&test_env);
+    create_env(test_env);
     test();
-    // drop the lock and the `TestEnv` - should delete the tempdir
+    // drop the lock
 }
 
 /// Run a test closure within the default test environment.
@@ -89,7 +89,7 @@ where
     F: FnOnce(),
 {
     let test_env = TestEnv::default();
-    test_in_env(test_env, test);
+    test_in_env(&test_env, test);
 }
 
 impl TestEnv {

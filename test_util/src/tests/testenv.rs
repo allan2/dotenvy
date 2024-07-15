@@ -6,7 +6,7 @@ mod init {
     #[test]
     fn vars_state() {
         let init_testenv = TestEnv::init();
-        assert_default_keys_not_set_in_testenv(init_testenv);
+        assert_default_keys_not_set_in_testenv(&init_testenv);
     }
 
     #[test]
@@ -14,7 +14,7 @@ mod init {
         let init_testenv = TestEnv::init();
         let envfile_path = init_testenv.temp_path().join(".env");
 
-        test_in_env(init_testenv, || {
+        test_in_env(&init_testenv, || {
             assert!(!envfile_path.exists());
             assert!(wrap::dotenv().is_err());
         });
@@ -27,19 +27,19 @@ mod init_with_envfile {
     #[test]
     fn default_envfile_vars_state() {
         let testenv = init_default_envfile_testenv();
-        assert_default_keys_not_set_in_testenv(testenv);
+        assert_default_keys_not_set_in_testenv(&testenv);
     }
 
     #[test]
     fn default_envfile_exists() {
         let testenv = init_default_envfile_testenv();
-        assert_envfiles_exist_in_testenv(testenv);
+        assert_envfiles_in_testenv(&testenv);
     }
 
     #[test]
     fn default_envfile_loaded_vars_state() {
         let testenv = init_default_envfile_testenv();
-        test_in_env(testenv, || {
+        test_in_env(&testenv, || {
             wrap::dotenv().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             // but existing key is not set in this testenv
@@ -51,7 +51,7 @@ mod init_with_envfile {
     #[test]
     fn custom_envfile_vars_state() {
         let testenv = init_custom_envfile_testenv();
-        test_in_env(testenv, || {
+        test_in_env(&testenv, || {
             assert_default_keys_unset();
             for (key, _) in CUSTOM_VARS {
                 assert_env_var_unset(key);
@@ -62,13 +62,13 @@ mod init_with_envfile {
     #[test]
     fn custom_envfile_exists() {
         let testenv = init_custom_envfile_testenv();
-        assert_envfiles_exist_in_testenv(testenv);
+        assert_envfiles_in_testenv(&testenv);
     }
 
     #[test]
     fn custom_envfile_loaded_vars_state() {
         let testenv = init_custom_envfile_testenv();
-        test_in_env(testenv, || {
+        test_in_env(&testenv, || {
             wrap::dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
             assert_env_vars(CUSTOM_VARS);
@@ -78,13 +78,13 @@ mod init_with_envfile {
     #[test]
     fn empty_envfile_exists() {
         let testenv = init_empty_envfile_testenv();
-        assert_envfiles_exist_in_testenv(testenv);
+        assert_envfiles_in_testenv(&testenv);
     }
 
     #[test]
     fn empty_envfile_loaded_vars_state() {
         let testenv = init_empty_envfile_testenv();
-        test_in_env(testenv, || {
+        test_in_env(&testenv, || {
             wrap::dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
         });
@@ -93,13 +93,13 @@ mod init_with_envfile {
     #[test]
     fn custom_bom_envfile_exists() {
         let testenv = init_custom_bom_envfile_testenv();
-        assert_envfiles_exist_in_testenv(testenv);
+        assert_envfiles_in_testenv(&testenv);
     }
 
     #[test]
     fn custom_bom_envfile_loaded_vars_state() {
         let testenv = init_custom_bom_envfile_testenv();
-        test_in_env(testenv, || {
+        test_in_env(&testenv, || {
             wrap::dotenv().expect(DOTENV_EXPECT);
             assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });

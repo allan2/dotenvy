@@ -11,7 +11,7 @@ fn vars_state() {
 #[test]
 fn envfile_exists() {
     let testenv = TestEnv::default();
-    assert_envfiles_exist_in_testenv(testenv);
+    assert_envfiles_in_testenv(&testenv);
 }
 
 #[test]
