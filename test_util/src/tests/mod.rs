@@ -16,7 +16,7 @@ fn assert_envfile_exists_in_testenv(testenv: TestEnv) {
 
     test_in_env(testenv, || {
         assert!(envfile_path.exists());
-        assert!(dotenv_wrap().is_ok());
+        assert!(wrap::dotenv().is_ok());
     });
 }
 

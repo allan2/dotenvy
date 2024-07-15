@@ -1,7 +1,7 @@
 mod assertions;
 mod envfile;
 mod testenv;
-mod wrapper;
+pub mod wrap;
 
 #[cfg(test)]
 mod tests;
@@ -9,7 +9,6 @@ mod tests;
 pub use assertions::*;
 pub use envfile::*;
 pub use testenv::*;
-pub use wrapper::*;
 
 /// Default key used in envfile
 pub const DEFAULT_TEST_KEY: &str = "DEFAULT_TEST_KEY";

@@ -17,7 +17,7 @@ fn envfile_exists() {
 #[test]
 fn envfile_loaded_vars_state() {
     test_in_default_env(|| {
-        dotenv_wrap().expect(DOTENV_EXPECT);
+        wrap::dotenv().expect(DOTENV_EXPECT);
         // dotenv() does not override existing var
         assert_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
         assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
