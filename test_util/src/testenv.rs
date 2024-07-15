@@ -119,13 +119,30 @@ impl TestEnv {
     }
 
     /// Add an individual envfile.
+    ///
+    /// ## Arguments
+    ///
+    /// - `path`: relative from the temporary directory
+    /// - `contents`: bytes or string
+    ///
+    /// ## Panics
+    ///
+    /// - if the path is empty or the same as the temporary directory
+    /// - if the envfile already exists
     pub fn add_envfile<P, C>(&mut self, path: P, contents: C) -> &mut Self
     where
-        P: Into<PathBuf>,
+        P: AsRef<Path>,
         C: Into<Vec<u8>>,
     {
+        let path = self.temp_dir.path().join(path);
+        if path == self.temp_path() {
+            panic!("path cannot be empty or the same as the temporary directory");
+        }
+        if self.envfiles.iter().any(|f| f.path == path) {
+            panic!("envfile already in testenv: {}", path.display());
+        }
         let envfile = EnvFile {
-            path: self.temp_dir.path().join(path.into()),
+            path,
             contents: contents.into(),
         };
         self.envfiles.push(envfile);

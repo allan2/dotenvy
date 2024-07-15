@@ -127,3 +127,60 @@ mod init_with_envfile {
         TestEnv::init_with_envfile(envfile)
     }
 }
+
+mod add_envfile {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn panics_add_twice() {
+        let mut testenv = TestEnv::init();
+        testenv.add_envfile(".env", create_default_envfile());
+        testenv.add_envfile(".env", create_custom_envfile(CUSTOM_VARS));
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_same_path_as_init() {
+        let mut testenv = TestEnv::init_with_envfile(create_default_envfile());
+        testenv.add_envfile(".env", create_default_envfile());
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_same_path_as_default() {
+        let mut testenv = TestEnv::default();
+        testenv.add_envfile(".env", create_invalid_envfile());
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_path() {
+        let mut testenv = TestEnv::init();
+        testenv.add_envfile("", create_default_envfile());
+    }
+
+    #[test]
+    fn allow_empty_contents() {
+        let mut testenv = TestEnv::init();
+        testenv.add_envfile(".env", []);
+        assert_envfiles_in_testenv(&testenv);
+    }
+
+    #[test]
+    fn allow_absolute_path() {
+        let mut testenv = TestEnv::init();
+        let path = testenv.temp_path().join(".env");
+        assert!(path.is_absolute());
+        testenv.add_envfile(&path, create_default_envfile());
+        assert_envfiles_in_testenv(&testenv);
+    }
+
+    #[test]
+    fn two_files() {
+        let mut testenv = TestEnv::init();
+        testenv.add_envfile(".env", create_default_envfile());
+        testenv.add_envfile(".env.local", create_custom_envfile(CUSTOM_VARS));
+        assert_envfiles_in_testenv(&testenv);
+    }
+}
