@@ -1,12 +1,8 @@
 #![forbid(unsafe_code)]
 
-use std::env::{self, VarError};
-
 use quote::quote;
-use syn::parse::Parser;
-use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::Token;
+use std::env::{self, VarError};
+use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, Token};
 
 #[proc_macro]
 pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

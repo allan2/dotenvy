@@ -1,17 +1,16 @@
 mod common;
 
-use crate::common::*;
-use dotenvy::*;
-use std::{env, error::Error, result::Result};
+use crate::common::make_test_dotenv;
+use std::{env, error};
 
 #[test]
-fn test_from_path() -> Result<(), Box<dyn Error>> {
+fn test_from_path() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
     let mut path = env::current_dir()?;
     path.push(".env");
 
-    from_path(&path)?;
+    dotenvy::from_path(&path)?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
     assert_eq!(env::var("EXISTING")?, "from_env");

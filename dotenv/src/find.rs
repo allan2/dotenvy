@@ -1,9 +1,13 @@
-use std::fs::File;
-use std::path::{Path, PathBuf};
-use std::{env, fs, io};
-
-use crate::errors::*;
-use crate::iter::Iter;
+use crate::{
+    errors::{Error, Result},
+    iter::Iter,
+};
+use std::{
+    env,
+    fs::{self, File},
+    io,
+    path::{Path, PathBuf},
+};
 
 pub struct Finder<'a> {
     filename: &'a Path,
@@ -16,7 +20,7 @@ impl<'a> Finder<'a> {
         }
     }
 
-    pub fn filename(mut self, filename: &'a Path) -> Self {
+    pub const fn filename(mut self, filename: &'a Path) -> Self {
         self.filename = filename;
         self
     }

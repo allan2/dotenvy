@@ -16,9 +16,9 @@ jobs:
 
     steps:
       - name: Get results
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ci
+          workflow: ci.yml
           run_id: ${{ env.PR_RUN_ID }}
           name: code_coverage_result
 
@@ -41,9 +41,9 @@ jobs:
           sed -i '/!\[\|<!--/!d' code-coverage-results.md
 
       - name: Get PR number
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
-          workflow: ci
+          workflow: ci.yml
           run_id: ${{ env.PR_RUN_ID }}
           name: pr_number
 

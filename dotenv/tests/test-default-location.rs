@@ -1,16 +1,13 @@
 mod common;
 
-use dotenvy::*;
-
-use std::{env, error::Error, result::Result};
-
-use crate::common::*;
+use crate::common::make_test_dotenv;
+use std::{env, error};
 
 #[test]
-fn test_default_location() -> Result<(), Box<dyn Error>> {
+fn test_default_location() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
-    dotenv()?;
+    dotenvy::dotenv()?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
     assert_eq!(env::var("EXISTING")?, "from_env");

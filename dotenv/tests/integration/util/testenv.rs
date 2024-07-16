@@ -1,12 +1,13 @@
+use super::{create_default_envfile, TEST_EXISTING_KEY, TEST_EXISTING_VALUE};
 use once_cell::sync::OnceCell;
-use std::collections::HashMap;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, PoisonError};
-use std::{env, fs, io};
+use std::{
+    collections::HashMap,
+    env, fs,
+    io::{self, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex, PoisonError},
+};
 use tempfile::{tempdir, TempDir};
-
-use super::*;
 
 /// Env var convenience type.
 type EnvMap = HashMap<String, String>;
@@ -89,7 +90,7 @@ impl TestEnv {
     /// Blank testing environment in a new temporary directory.
     ///
     /// No envfile_contents or pre-existing variables to set. The envfile_name
-    /// is set to `.env` but wont be written until its contents is set. The
+    /// is set to `.env` but won't be written until its content is set. The
     /// working directory is the created temporary directory.
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
@@ -225,7 +226,7 @@ impl TestEnv {
         &self.work_dir
     }
 
-    /// Get a reference to environnement variables that will be set **before**
+    /// Get a reference to environment variables that will be set **before**
     /// the test.
     pub fn env_vars(&self) -> &[KeyVal] {
         &self.env_vars

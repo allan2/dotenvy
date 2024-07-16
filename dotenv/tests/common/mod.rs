@@ -1,6 +1,8 @@
-use std::fs::File;
-use std::io::prelude::*;
-use std::{env, io};
+use std::{
+    env,
+    fs::File,
+    io::{self, Write},
+};
 use tempfile::{tempdir, TempDir};
 
 pub fn tempdir_with_dotenv(dotenv_text: &str) -> io::Result<TempDir> {

@@ -1,11 +1,13 @@
 mod common;
 
-use crate::common::*;
-use dotenvy::*;
-use std::{env, error::Error, result::Result};
+use std::{env, error};
+
+use dotenvy::from_path_override;
+
+use crate::common::make_test_dotenv;
 
 #[test]
-fn test_from_path_override() -> Result<(), Box<dyn Error>> {
+fn test_from_path_override() -> Result<(), Box<dyn error::Error>> {
     let dir = make_test_dotenv()?;
 
     let mut path = env::current_dir()?;

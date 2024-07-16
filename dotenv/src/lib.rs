@@ -1,3 +1,6 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::missing_errors_doc, clippy::too_many_lines)]
+
 //! [`dotenv`]: https://crates.io/crates/dotenv
 //! A well-maintained fork of the [`dotenv`] crate
 //!
@@ -209,13 +212,12 @@ pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// #     Ok(())
 /// # }
 /// ```
-
 pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
     let (_, iter) = Finder::new().filename(filename.as_ref()).find()?;
     Ok(iter)
 }
 
-/// Loads environment variables from [`io::Read`](std::io::Read).
+/// Loads environment variables from [`io::Read`].
 ///
 /// This is useful for loading environment variables from IPC or the network.
 ///
@@ -233,12 +235,14 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// # Examples
 ///
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
+/// # #[cfg(unix)]
 /// dotenvy::from_read(stream)?;
 /// #     Ok(())
 /// # }
@@ -249,7 +253,7 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
     Ok(())
 }
 
-/// Loads environment variables from [`io::Read`](std::io::Read),
+/// Loads environment variables from [`io::Read`],
 /// overriding existing environment variables.
 ///
 /// This is useful for loading environment variables from IPC or the network.
@@ -265,12 +269,14 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 ///
 /// # Examples
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
+/// # #[cfg(unix)]
 /// dotenvy::from_read_override(stream)?;
 /// #     Ok(())
 /// # }
@@ -281,18 +287,20 @@ pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
     Ok(())
 }
 
-/// Returns an iterator over environment variables from [`io::Read`](std::io::Read).
+/// Returns an iterator over environment variables from [`io::Read`].
 ///
 /// # Examples
 ///
 /// ```no_run
-/// # #![cfg(unix)]
 /// use std::io::Read;
+/// # #[cfg(unix)]
 /// use std::os::unix::net::UnixStream;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
 ///
+/// # #[cfg(unix)]
 /// for item in dotenvy::from_read_iter(stream) {
 ///     let (key, val) = item?;
 ///     println!("{}={}", key, val);

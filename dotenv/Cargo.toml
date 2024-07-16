@@ -9,23 +9,24 @@ authors = [
   "Sean Griffin <sean@seantheprogrammer.com>",
   "Adam Sharp <adam@sharplet.me>",
   "Arpad Borsos <arpad.borsos@googlemail.com>",
-  "Allan Zhang <al@ayz.ai>",
+  "Allan Zhang <allanzhang7@gmail.com>",
 ]
 description = "A well-maintained fork of the dotenv crate"
 homepage = "https://github.com/allan2/dotenvy"
 readme = "README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
+categories = ["configuration"]
 license = "MIT"
 repository = "https://github.com/allan2/dotenvy"
 edition = "2018"
-rust-version = "1.56.1"
+rust-version = "1.68.0"
 
 [[bin]]
 name = "dotenvy"
 required-features = ["cli"]
 
 [dependencies]
-clap = { version = "3.2", optional = true }
+clap = { version = "4.3.11", optional = true }
 
 [dev-dependencies]
 tempfile = "3.3.0"
