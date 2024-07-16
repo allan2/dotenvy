@@ -30,7 +30,7 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 pub struct TestEnv {
     temp_dir: TempDir,
     work_dir: PathBuf,
-    env_vars: Vec<KeyVal>,
+    env_vars: EnvMap,
     envfiles: Vec<EnvFile>,
 }
 
@@ -39,13 +39,6 @@ pub struct TestEnv {
 pub struct EnvFile {
     pub path: PathBuf,
     pub contents: Vec<u8>,
-}
-
-/// Simple key value struct for representing environment variables
-#[derive(Debug, Clone)]
-pub struct KeyVal {
-    pub key: String,
-    pub value: String,
 }
 
 /// Run a test closure within a test environment.
@@ -155,7 +148,8 @@ impl TestEnv {
     {
         let key = key.into();
         self.assert_env_var_is_valid(&key);
-        self.add_env_var_assume_valid(key, value.into())
+        self.env_vars.insert(key, value.into());
+        self
     }
 
     /// Set all the pre-existing environment variables.
@@ -164,30 +158,14 @@ impl TestEnv {
     /// test is run. This overrides any previous env vars added to the
     /// [`TestEnv`].
     ///
-    /// If you wish to just use a slice of tuples, use
-    /// [`set_env_vars_tuple`](TestEnv::set_env_vars_tuple) instead.
-    pub fn set_env_vars(&mut self, env_vars: Vec<KeyVal>) -> &mut Self {
-        self.env_vars = env_vars;
-        self
-    }
-
-    /// Set all the pre-existing environment variables using [`str`] tuples.
+    /// ## Panics
     ///
-    /// These variables will get added to the process' environment before the
-    /// test is run. This overrides any previous env vars added to the
-    /// [`TestEnv`].
-    ///
-    /// If you wish to add an owned `Vec<KeyVal>` instead of `str` tuples, use
-    /// [`set_env_vars`](TestEnv::set_env_vars) instead.
-    pub fn set_env_vars_tuple(&mut self, env_vars: &[(&str, &str)]) -> &mut Self {
-        self.env_vars = env_vars
-            .iter()
-            .map(|(key, value)| KeyVal {
-                key: key.to_string(),
-                value: value.to_string(),
-            })
-            .collect();
-
+    /// - if an env var is set twice
+    /// - if a key is empty
+    pub fn set_env_vars(&mut self, env_vars: &[(&str, &str)]) -> &mut Self {
+        for &(key, value) in env_vars {
+            self.add_env_var(key, value);
+        }
         self
     }
 
@@ -212,8 +190,8 @@ impl TestEnv {
         if let Err(err) = fs::create_dir_all(child_dir) {
             panic!(
                 "unable to create child directory: `{}` in `{}`: {}",
-                self.temp_path().display(),
                 path.display(),
+                self.temp_path().display(),
                 err
             );
         }
@@ -230,7 +208,7 @@ impl TestEnv {
     }
 
     /// Reference to environment variables that will be set **before** the test.
-    pub fn env_vars(&self) -> &[KeyVal] {
+    pub fn env_vars(&self) -> &EnvMap {
         &self.env_vars
     }
 
@@ -245,11 +223,6 @@ impl TestEnv {
         self
     }
 
-    fn add_env_var_assume_valid(&mut self, key: String, value: String) -> &mut Self {
-        self.env_vars.push(KeyVal { key, value });
-        self
-    }
-
     fn assert_envfile_path_is_valid(&self, path: &Path) {
         if path == self.temp_path() {
             panic!("path cannot be empty or the same as the temporary directory");
@@ -261,49 +234,20 @@ impl TestEnv {
 
     fn assert_env_var_is_valid(&self, key: &str) {
         if key.is_empty() {
-            panic!("env_var key cannot be empty");
+            panic!("key cannot be empty");
         }
-        if self.env_vars.iter().any(|kv| kv.key == key) {
-            panic!("env var already in testenv: {}", key);
+        if self.env_vars.contains_key(key) {
+            panic!("key already in testenv: {}", key);
         }
     }
 }
 
 impl Default for TestEnv {
     fn default() -> Self {
-        let temp_dir = tempdir().expect("create tempdir");
-        let work_dir = temp_dir.path().to_owned();
-        let env_vars = vec![KeyVal {
-            key: DEFAULT_EXISTING_KEY.into(),
-            value: DEFAULT_EXISTING_VALUE.into(),
-        }];
-        let envfiles = vec![EnvFile {
-            path: work_dir.join(".env"),
-            contents: create_default_envfile().into(),
-        }];
-        Self {
-            temp_dir,
-            work_dir,
-            env_vars,
-            envfiles,
-        }
-    }
-}
-
-impl From<(&str, &str)> for KeyVal {
-    fn from(kv: (&str, &str)) -> Self {
-        let (key, value) = kv;
-        Self {
-            key: key.to_string(),
-            value: value.to_string(),
-        }
-    }
-}
-
-impl From<(String, String)> for KeyVal {
-    fn from(kv: (String, String)) -> Self {
-        let (key, value) = kv;
-        Self { key, value }
+        let mut testenv = TestEnv::init();
+        testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
+        testenv.add_envfile(".env", create_default_envfile());
+        testenv
     }
 }
 
@@ -337,7 +281,7 @@ fn create_env(test_env: &TestEnv) {
         create_envfile(path, contents);
     }
 
-    for KeyVal { key, value } in &test_env.env_vars {
+    for (key, value) in &test_env.env_vars {
         env::set_var(key, value)
     }
 }

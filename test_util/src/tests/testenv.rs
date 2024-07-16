@@ -225,4 +225,59 @@ mod add_env_var {
         testenv.add_env_var(vars[1].0, vars[1].1);
         assert_env_vars_in_testenv(&testenv, &vars);
     }
+
+    #[test]
+    fn owned_strings() {
+        let mut testenv = TestEnv::init();
+        testenv.add_env_var("TEST_KEY".to_string(), "test_val".to_string());
+        assert_env_vars_in_testenv(&testenv, &[("TEST_KEY", "test_val")]);
+    }
+}
+
+mod set_env_vars {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn panics_double_key() {
+        let mut testenv = TestEnv::init();
+        let mut vars = VARS.to_vec();
+        vars.push(VARS[0]);
+        testenv.set_env_vars(&vars);
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_empty_key() {
+        let mut testenv = TestEnv::init();
+        testenv.set_env_vars(&[("", "value")]);
+    }
+
+    #[test]
+    fn from_tuples_slice() {
+        let mut testenv = TestEnv::init();
+        testenv.set_env_vars(VARS.as_slice());
+        assert_vars_in_testenv(&testenv);
+    }
+
+    #[test]
+    fn from_tuples_ref() {
+        let mut testenv = TestEnv::init();
+        testenv.set_env_vars(&VARS);
+        assert_vars_in_testenv(&testenv);
+    }
+
+    #[test]
+    fn from_vec_slice() {
+        let mut testenv = TestEnv::init();
+        let vec = VARS.to_vec();
+        testenv.set_env_vars(vec.as_slice());
+        assert_vars_in_testenv(&testenv);
+    }
+
+    const VARS: [(&str, &str); 2] = [("TEST_KEY", "one_value"), ("TEST_KEY_2", "two_value")];
+
+    fn assert_vars_in_testenv(testenv: &TestEnv) {
+        assert_env_vars_in_testenv(testenv, &VARS);
+    }
 }
