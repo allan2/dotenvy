@@ -22,10 +22,7 @@ struct LineParser<'a> {
 }
 
 impl<'a> LineParser<'a> {
-    fn new(
-        line: &'a str,
-        substitution_data: &'a mut HashMap<String, Option<String>>,
-    ) -> LineParser<'a> {
+    fn new(line: &'a str, substitution_data: &'a mut HashMap<String, Option<String>>) -> Self {
         LineParser {
             original_line: line,
             substitution_data,
@@ -327,13 +324,10 @@ export   SHELL_LOVER=1
 
     #[test]
     fn test_parse_line_comment() {
-        let result: Result<Vec<(String, String)>> = Iter::new(
-            r#"
+        let input = br"
 # foo=bar
-#    "#
-                .as_bytes(),
-        )
-        .collect();
+#    ";
+        let result: Result<Vec<(String, String)>> = Iter::new(&input[..]).collect();
         assert!(result.unwrap().is_empty());
     }
 
@@ -341,10 +335,10 @@ export   SHELL_LOVER=1
     fn test_parse_line_invalid() {
         // Note 4 spaces after 'invalid' below
         let actual_iter = Iter::new(
-            r#"
+            r"
   invalid    
 very bacon = yes indeed
-=value"#
+=value"
                 .as_bytes(),
         );
 
@@ -371,17 +365,18 @@ KEY7="line 1\nline 2"
             .as_bytes(),
         );
 
-        let expected_iter = vec![
-            ("KEY", r#"my cool value"#),
-            ("KEY2", r#"$sweet"#),
+        let vec = vec![
+            ("KEY", r"my cool value"),
+            ("KEY2", r"$sweet"),
             ("KEY3", r#"awesome stuff "mang""#),
-            ("KEY4", r#"sweet $\fgs'fds"#),
+            ("KEY4", r"sweet $\fgs'fds"),
             ("KEY5", r#"'"yay\ stuff"#),
             ("KEY6", "lol"),
             ("KEY7", "line 1\nline 2"),
-        ]
-        .into_iter()
-        .map(|(key, value)| (key.to_string(), value.to_string()));
+        ];
+        let expected_iter = vec
+            .into_iter()
+            .map(|(key, value)| (key.to_string(), value.to_string()));
 
         for (expected, actual) in expected_iter.zip(actual_iter) {
             assert!(actual.is_ok());
@@ -470,10 +465,10 @@ mod variable_substitution_tests {
     #[test]
     fn same_variable_reused() {
         assert_parsed_string(
-            r#"
+            r"
     KEY=VALUE
     KEY1=$KEY$KEY
-    "#,
+    ",
             vec![("KEY", "VALUE"), ("KEY1", "VALUEVALUE")],
         );
     }
@@ -481,9 +476,9 @@ mod variable_substitution_tests {
     #[test]
     fn with_dot() {
         assert_parsed_string(
-            r#"
+            r"
     KEY.Value=VALUE
-    "#,
+    ",
             vec![("KEY.Value", "VALUE")],
         );
     }
@@ -491,10 +486,10 @@ mod variable_substitution_tests {
     #[test]
     fn recursive_substitution() {
         assert_parsed_string(
-            r#"
+            r"
             KEY=${KEY1}+KEY_VALUE
             KEY1=${KEY}+KEY1_VALUE
-            "#,
+            ",
             vec![("KEY", "+KEY_VALUE"), ("KEY1", "+KEY_VALUE+KEY1_VALUE")],
         );
     }
@@ -538,11 +533,11 @@ mod variable_substitution_tests {
     #[test]
     fn consequent_substitutions() {
         assert_parsed_string(
-            r#"
+            r"
     KEY1=test_user
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
-    "#,
+    ",
             vec![
                 ("KEY1", "test_user"),
                 ("KEY2", "test_user_2"),
@@ -554,10 +549,10 @@ mod variable_substitution_tests {
     #[test]
     fn consequent_substitutions_with_one_missing() {
         assert_parsed_string(
-            r#"
+            r"
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
-    "#,
+    ",
             vec![("KEY2", "_2"), ("KEY", "><>_2<")],
         );
     }
@@ -576,9 +571,8 @@ mod error_tests {
             format!(
                 r#"
     KEY=VALUE
-    KEY1={}
-    "#,
-                wrong_value
+    KEY1={wrong_value}
+    "#
             )
             .as_bytes(),
         )
@@ -587,14 +581,14 @@ mod error_tests {
         assert_eq!(parsed_values.len(), 2);
 
         if let Ok(first_line) = &parsed_values[0] {
-            assert_eq!(first_line, &(String::from("KEY"), String::from("VALUE")))
+            assert_eq!(first_line, &(String::from("KEY"), String::from("VALUE")));
         } else {
-            panic!("Expected the first value to be parsed")
+            panic!("Expected the first value to be parsed");
         }
 
         if let Err(LineParse(second_value, index)) = &parsed_values[1] {
             assert_eq!(second_value, wrong_value);
-            assert_eq!(*index, wrong_value.len() - 1)
+            assert_eq!(*index, wrong_value.len() - 1);
         } else {
             panic!("Expected the second value not to be parsed")
         }
@@ -610,7 +604,7 @@ mod error_tests {
 
         if let Err(LineParse(second_value, index)) = &parsed_values[0] {
             assert_eq!(second_value, wrong_key_value);
-            assert_eq!(*index, 0)
+            assert_eq!(*index, 0);
         } else {
             panic!("Expected the second value not to be parsed")
         }
@@ -625,7 +619,7 @@ mod error_tests {
 
         if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
             assert_eq!(wrong_value, wrong_format);
-            assert_eq!(*index, 0)
+            assert_eq!(*index, 0);
         } else {
             panic!("Expected the second value not to be parsed")
         }
@@ -634,14 +628,13 @@ mod error_tests {
     #[test]
     fn should_not_parse_illegal_escape() {
         let wrong_escape = r">\f<";
-        let parsed_values: Vec<_> =
-            Iter::new(format!("VALUE={}", wrong_escape).as_bytes()).collect();
+        let parsed_values: Vec<_> = Iter::new(format!("VALUE={wrong_escape}").as_bytes()).collect();
 
         assert_eq!(parsed_values.len(), 1);
 
         if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
             assert_eq!(wrong_value, wrong_escape);
-            assert_eq!(*index, wrong_escape.find('\\').unwrap() + 1)
+            assert_eq!(*index, wrong_escape.find('\\').unwrap() + 1);
         } else {
             panic!("Expected the second value not to be parsed")
         }
