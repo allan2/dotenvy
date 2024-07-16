@@ -135,18 +135,8 @@ impl TestEnv {
         C: Into<Vec<u8>>,
     {
         let path = self.temp_dir.path().join(path);
-        if path == self.temp_path() {
-            panic!("path cannot be empty or the same as the temporary directory");
-        }
-        if self.envfiles.iter().any(|f| f.path == path) {
-            panic!("envfile already in testenv: {}", path.display());
-        }
-        let envfile = EnvFile {
-            path,
-            contents: contents.into(),
-        };
-        self.envfiles.push(envfile);
-        self
+        self.assert_envfile_path_is_valid(&path);
+        self.add_envfile_assume_valid(path, contents.into())
     }
 
     /// Add an individual environment variable.
@@ -244,6 +234,21 @@ impl TestEnv {
     /// Get a reference to the environment files that will created
     pub fn envfiles(&self) -> &[EnvFile] {
         &self.envfiles
+    }
+
+    fn add_envfile_assume_valid(&mut self, path: PathBuf, contents: Vec<u8>) -> &mut Self {
+        let envfile = EnvFile { path, contents };
+        self.envfiles.push(envfile);
+        self
+    }
+
+    fn assert_envfile_path_is_valid(&self, path: &Path) {
+        if path == self.temp_path() {
+            panic!("path cannot be empty or the same as the temporary directory");
+        }
+        if self.envfiles.iter().any(|f| f.path == path) {
+            panic!("envfile already in testenv: {}", path.display());
+        }
     }
 }
 
