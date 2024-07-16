@@ -143,16 +143,19 @@ impl TestEnv {
     ///
     /// This adds more pre-existing environment variables to the process before
     /// any tests are run.
+    ///
+    /// ## Panics
+    ///
+    /// - if the env var already exists in the testenv
+    /// - if the key is empty
     pub fn add_env_var<K, V>(&mut self, key: K, value: V) -> &mut Self
     where
         K: Into<String>,
         V: Into<String>,
     {
-        self.env_vars.push(KeyVal {
-            key: key.into(),
-            value: value.into(),
-        });
-        self
+        let key = key.into();
+        self.assert_env_var_is_valid(&key);
+        self.add_env_var_assume_valid(key, value.into())
     }
 
     /// Set all the pre-existing environment variables.
@@ -242,12 +245,26 @@ impl TestEnv {
         self
     }
 
+    fn add_env_var_assume_valid(&mut self, key: String, value: String) -> &mut Self {
+        self.env_vars.push(KeyVal { key, value });
+        self
+    }
+
     fn assert_envfile_path_is_valid(&self, path: &Path) {
         if path == self.temp_path() {
             panic!("path cannot be empty or the same as the temporary directory");
         }
         if self.envfiles.iter().any(|f| f.path == path) {
             panic!("envfile already in testenv: {}", path.display());
+        }
+    }
+
+    fn assert_env_var_is_valid(&self, key: &str) {
+        if key.is_empty() {
+            panic!("env_var key cannot be empty");
+        }
+        if self.env_vars.iter().any(|kv| kv.key == key) {
+            panic!("env var already in testenv: {}", key);
         }
     }
 }

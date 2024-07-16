@@ -184,3 +184,45 @@ mod add_envfile {
         assert_envfiles_in_testenv(&testenv);
     }
 }
+
+mod add_env_var {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn panics_add_twice() {
+        let mut testenv = TestEnv::init();
+        testenv.add_env_var("TEST_KEY", "one_value");
+        testenv.add_env_var("TEST_KEY", "two_value");
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_same_var_as_default() {
+        let mut testenv = TestEnv::default();
+        testenv.add_env_var(DEFAULT_EXISTING_KEY, "value");
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_emtpy_key() {
+        let mut testenv = TestEnv::init();
+        testenv.add_env_var("", "value");
+    }
+
+    #[test]
+    fn allow_empty_value() {
+        let mut testenv = TestEnv::init();
+        testenv.add_env_var("TEST_KEY", "");
+        assert_env_vars_in_testenv(&testenv, &[("TEST_KEY", "")]);
+    }
+
+    #[test]
+    fn two_vars() {
+        let mut testenv = TestEnv::init();
+        let vars = [("TEST_KEY", "one_value"), ("TEST_KEY_2", "two_value")];
+        testenv.add_env_var(vars[0].0, vars[0].1);
+        testenv.add_env_var(vars[1].0, vars[1].1);
+        assert_env_vars_in_testenv(&testenv, &vars);
+    }
+}

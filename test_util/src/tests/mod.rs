@@ -40,3 +40,7 @@ fn assert_envfile(path: &Path, expected: &[u8]) {
 fn assert_default_keys_not_set_in_testenv(testenv: &TestEnv) {
     test_in_env(testenv, assert_default_keys_unset);
 }
+
+fn assert_env_vars_in_testenv(testenv: &TestEnv, vars: &[(&str, &str)]) {
+    test_in_env(testenv, || assert_env_vars(vars));
+}
