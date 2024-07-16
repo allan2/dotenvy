@@ -34,29 +34,24 @@ impl<'a> Finder<'a> {
 }
 
 /// Searches for `filename` in `directory` and parent directories until found or root is reached.
-#[allow(clippy::option_if_let_else)]
-pub fn find(directory: &Path, filename: &Path) -> Result<PathBuf> {
-    let candidate = directory.join(filename);
+pub fn find(mut directory: &Path, filename: &Path) -> Result<PathBuf> {
+    loop {
+        let candidate = directory.join(filename);
 
-    match fs::metadata(&candidate) {
-        Ok(metadata) => {
-            if metadata.is_file() {
-                return Ok(candidate);
-            }
+        match fs::metadata(&candidate) {
+            Ok(metadata) if metadata.is_file() => return Ok(candidate),
+            Ok(_) => {}
+            Err(error) if matches!(error.kind(), io::ErrorKind::NotFound) => {}
+            Err(error) => return Err(Error::Io(error)),
         }
-        Err(error) => {
-            if error.kind() != io::ErrorKind::NotFound {
-                return Err(Error::Io(error));
-            }
-        }
-    }
 
-    if let Some(parent) = directory.parent() {
-        find(parent, filename)
-    } else {
-        Err(Error::Io(io::Error::new(
-            io::ErrorKind::NotFound,
-            "dotenv file not found in parent directory",
-        )))
+        if let Some(parent) = directory.parent() {
+            directory = parent;
+        } else {
+            return Err(Error::Io(io::Error::new(
+                io::ErrorKind::NotFound,
+                "path not found",
+            )));
+        }
     }
 }
