@@ -173,8 +173,19 @@ impl TestEnv {
     ///
     /// The default is the created temporary directory. This method is useful if
     /// you wish to run a test from a subdirectory or somewhere else.
-    pub fn set_work_dir(&mut self, path: impl Into<PathBuf>) -> &mut Self {
-        self.work_dir = path.into();
+    ///
+    /// ## Arguments
+    ///
+    /// - `path`: relative from the temporary directory
+    ///
+    /// ## Panics
+    ///
+    /// - if the path does not exist
+    pub fn set_work_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
+        self.work_dir = self.temp_path().join(path.as_ref());
+        if !self.work_dir.exists() {
+            panic!("work_dir does not exist: {}", self.work_dir.display());
+        }
         self
     }
 
@@ -184,7 +195,7 @@ impl TestEnv {
     /// the envfile is created.
     ///
     /// Will create parent directories if they are missing.
-    pub fn add_child_dir_all(&self, path: impl AsRef<Path>) {
+    pub fn add_child_dir(&self, path: impl AsRef<Path>) {
         let path = path.as_ref();
         let child_dir = self.temp_path().join(path);
         if let Err(err) = fs::create_dir_all(child_dir) {

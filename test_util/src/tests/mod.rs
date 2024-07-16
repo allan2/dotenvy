@@ -44,3 +44,8 @@ fn assert_default_keys_not_set_in_testenv(testenv: &TestEnv) {
 fn assert_env_vars_in_testenv(testenv: &TestEnv, vars: &[(&str, &str)]) {
     test_in_env(testenv, || assert_env_vars(vars));
 }
+
+fn assert_path_exists_in_testenv(testenv: &TestEnv, path: impl AsRef<Path>) {
+    let path = testenv.temp_path().join(path.as_ref());
+    assert!(path.exists(), "{} should exist in testenv", path.display());
+}

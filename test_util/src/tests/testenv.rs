@@ -19,6 +19,24 @@ mod init {
             assert!(wrap::dotenv().is_err());
         });
     }
+
+    #[test]
+    fn work_dir_is_temp() {
+        let testenv = TestEnv::init();
+        assert_eq!(testenv.work_dir(), testenv.temp_path());
+    }
+
+    #[test]
+    fn env_vars_are_empty() {
+        let testenv = TestEnv::init();
+        assert!(testenv.env_vars().is_empty());
+    }
+
+    #[test]
+    fn envfiles_are_empty() {
+        let testenv = TestEnv::init();
+        assert!(testenv.envfiles().is_empty());
+    }
 }
 
 mod init_with_envfile {
@@ -279,5 +297,74 @@ mod set_env_vars {
 
     fn assert_vars_in_testenv(testenv: &TestEnv) {
         assert_env_vars_in_testenv(testenv, &VARS);
+    }
+}
+
+mod set_work_dir {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn panics_non_existing() {
+        let mut testenv = TestEnv::init();
+        testenv.set_work_dir("subdir");
+    }
+
+    #[test]
+    fn allow_absolute_path() {
+        let mut testenv = TestEnv::init();
+        let path = testenv.temp_path().join("subdir");
+        assert!(path.is_absolute());
+        std::fs::create_dir_all(&path).expect("failed to create subdir");
+        testenv.set_work_dir(&path);
+        assert_path_exists_in_testenv(&testenv, "subdir");
+    }
+
+    #[test]
+    fn relative_path() {
+        let mut testenv = TestEnv::init();
+        std::fs::create_dir_all(testenv.temp_path().join("subdir"))
+            .expect("failed to create subdir");
+        testenv.set_work_dir("subdir");
+        assert_path_exists_in_testenv(&testenv, "subdir");
+    }
+
+    #[test]
+    fn in_testenv() {
+        let mut testenv = TestEnv::init();
+        std::fs::create_dir_all(testenv.temp_path().join("subdir"))
+            .expect("failed to create subdir");
+        testenv.set_work_dir("subdir");
+        test_in_env(&testenv, || {
+            let current_dir = std::env::current_dir().expect("failed to get current dir");
+            assert_eq!(current_dir, testenv.work_dir());
+        });
+    }
+}
+
+mod add_child_dir {
+    use super::*;
+
+    #[test]
+    fn subdir() {
+        let testenv = TestEnv::init();
+        testenv.add_child_dir("subdir");
+        assert_path_exists_in_testenv(&testenv, "subdir");
+    }
+
+    #[test]
+    fn allow_absolute_path() {
+        let testenv = TestEnv::init();
+        let path = testenv.temp_path().join("subdir");
+        assert!(path.is_absolute());
+        testenv.add_child_dir(&path);
+        assert_path_exists_in_testenv(&testenv, "subdir");
+    }
+
+    #[test]
+    fn create_parents() {
+        let testenv = TestEnv::init();
+        testenv.add_child_dir("subdir/subsubdir");
+        assert_path_exists_in_testenv(&testenv, "subdir/subsubdir");
     }
 }
