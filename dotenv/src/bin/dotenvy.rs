@@ -19,7 +19,7 @@ fn make_command(name: &str, args: Vec<&str>) -> process::Command {
         command.arg(arg);
     }
 
-    return command;
+    command
 }
 
 fn main() {
