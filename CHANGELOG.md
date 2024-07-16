@@ -7,11 +7,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-- MSRV updated to 1.68.0
-
 ### Changed
 
-- MSRV updated to 1.64.0
+- Fix doctests on windows not compiling ([PR #79](https://github.com/allan2/dotenvy/pull/79) by [vallentin](https://github.com/vallentin).
+- MSRV updated to 1.68.0
 
 ## [0.15.7] - 2023-03-22
 
