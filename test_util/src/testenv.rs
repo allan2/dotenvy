@@ -182,7 +182,11 @@ impl TestEnv {
     ///
     /// - if the path does not exist
     pub fn set_work_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
-        self.work_dir = self.temp_path().join(path.as_ref());
+        self.work_dir = self
+            .temp_path()
+            .join(path.as_ref())
+            .canonicalize()
+            .expect("canonicalize work_dir");
         if !self.work_dir.exists() {
             panic!("work_dir does not exist: {}", self.work_dir.display());
         }
