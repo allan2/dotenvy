@@ -103,9 +103,8 @@ fn comments_ignored_in_utf8bom_envfile() {
     let mut efb = EnvFileBuilder::new();
     efb.insert_utf8_bom();
     efb.add_strln("# TEST_KEY=TEST_VAL");
-    let envfile = efb.into_owned_bytes();
 
-    let testenv = TestEnv::init_with_envfile(envfile);
+    let testenv = TestEnv::init_with_envfile(efb);
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");

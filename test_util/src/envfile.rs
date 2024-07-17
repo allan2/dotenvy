@@ -138,3 +138,23 @@ impl EnvFileBuilder {
         self
     }
 }
+
+impl From<EnvFileBuilder> for Vec<u8> {
+    fn from(builder: EnvFileBuilder) -> Self {
+        builder.into_owned_bytes()
+    }
+}
+
+impl From<Vec<u8>> for EnvFileBuilder {
+    fn from(contents: Vec<u8>) -> Self {
+        Self { contents }
+    }
+}
+
+impl From<String> for EnvFileBuilder {
+    fn from(contents: String) -> Self {
+        Self {
+            contents: contents.into_bytes(),
+        }
+    }
+}

@@ -84,6 +84,28 @@ fn add_strln() {
     assert_contents_str(efb, "test\n");
 }
 
+#[test]
+fn from_vec_u8() {
+    let vec: Vec<u8> = Vec::from(create_default_envfile());
+    let efb = EnvFileBuilder::from(vec);
+    assert_contents_str(efb, &create_default_envfile());
+}
+
+#[test]
+fn to_vec_u8() {
+    let mut efb = EnvFileBuilder::new();
+    efb.add_str(create_default_envfile().as_str());
+    let vec = Vec::from(efb);
+    let expected = create_default_envfile().into_bytes();
+    assert_eq!(expected, vec);
+}
+
+#[test]
+fn from_string() {
+    let efb = EnvFileBuilder::from(create_default_envfile());
+    assert_contents_str(efb, &create_default_envfile());
+}
+
 fn assert_contents_empty(efb: EnvFileBuilder) {
     let contents = efb.into_owned_bytes();
     assert!(contents.is_empty());
