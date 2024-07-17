@@ -61,3 +61,15 @@ pub fn assert_default_keys_unset() {
     assert_env_var_unset(DEFAULT_EXISTING_KEY);
     assert_env_var_unset(DEFAULT_TEST_KEY);
 }
+
+/// Assert default testing environment variables are set.
+/// Assuming the default envfile is loaded.
+pub fn assert_default_keys() {
+    assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
+    assert_default_existing_var();
+}
+
+/// Assert default existing environment variable is set.
+pub fn assert_default_existing_var() {
+    assert_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
+}
