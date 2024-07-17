@@ -11,7 +11,7 @@ environment variables, and running multiple tests at once.
 
 By setting up a `TestEnv`, and running a closure via `test_in_env`.
 
-Before executing the closure, the `TestEnv` will:
+**Before** executing the closure, the `TestEnv` will:
 
 - Create a temporary directory
 - Lock the environment from other tests
@@ -19,12 +19,9 @@ Before executing the closure, the `TestEnv` will:
 - Add any custom env_vars to the environment
 - Create any custom envfiles in the temporary directory
 
-In the closure you can: 
+**In the closure** you can use the assertion functions to test the environment.
 
-- Use the `wrap` module to call dotenvy's api
-- Use the assertion functions to test the environment
-
-After executing the closure, the `TestEnv` will:
+**After** executing the closure, the `TestEnv` will:
 
 - Remove the temporary directory
 - Restore the environment variables to the original state
@@ -37,6 +34,7 @@ See the API docs for more details. For now, they must be built locally with
 
 ```rust
 use dotenvy_test_util::*;
+use dotenvy::dotenv_override;
 
 const EXISTING_KEY: &str = "TEST_KEY";
 const EXISTING_VAL: &str = "test_val";
@@ -58,7 +56,7 @@ fn dotenv_override_existing_key() {
 
     // execute a closure in the testing environment
     test_in_env(&testenv, || {
-        wrap::dotenv_override().expect(".env should be loaded");
+        dotenv_override().expect(".env should be loaded");
         assert_env_var(EXISTING_KEY, OVERRIDING_VAL);
     });
     // any changes to environment variables will be reset for other tests
@@ -71,11 +69,12 @@ Use the default `TestEnv` for simple tests.
 
 ```rust
 use dotenvy_test_util::*;
+use dotenvy::dotenv;
 
 #[test]
 fn dotenv_works() {
     test_in_default_env(|| {
-        wrap::dotenv().expect(".env should be loaded");        
+        dotenv().expect(".env should be loaded");        
         assert_env_var(DEFAULT_KEY, DEFAULT_VAL);
     })  
 }
@@ -97,6 +96,7 @@ for byte-order-mark(BOM) testing, and other edge cases.
 
 ```rust
 use dotenvy_test_util::*;
+use dotenvy::dotenv;
 
 #[test]
 fn comments_ignored_in_utf8bom_envfile() {
@@ -108,7 +108,7 @@ fn comments_ignored_in_utf8bom_envfile() {
     let testenv = TestEnv::init_with_envfile(envfile);
 
     test_in_env(&testenv, || {
-        wrap::dotenv().expect(".env should be loaded");
+        dotenv().expect(".env should be loaded");
         assert_env_var_unset("TEST_KEY");
     });
 }
@@ -119,6 +119,7 @@ simple.
 
 ```rust
 use dotenvy_test_util::*;
+use dotenvy::dotenv;
 
 #[test]
 fn comments_ignored() {
@@ -127,7 +128,7 @@ fn comments_ignored() {
     let testenv = TestEnv::init_with_envfile(envfile);
 
     test_in_env(&testenv, || {
-        wrap::dotenv().expect(".env should be loaded");
+        dotenv().expect(".env should be loaded");
         assert_env_var_unset("TEST_KEY");
     });
 }

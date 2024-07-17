@@ -13,15 +13,15 @@
 //! generate the `.env` file contents. If you need more control of the
 //! envfile's bytes, use the [`EnvFileBuilder`].
 //!
-//! In your tests, call the [`dotenvy`] API via the [`wrap`] module to keep any
-//! API changes in one place. Then make use of the `assert_` helpers, such as
-//! [`assert_env_var`] and [`assert_env_var_unset`], to check the state of the
-//! environment.
+//! In your tests, call the [`dotenvy`] API, then make use of the `assert_`
+//! helpers, such as [`assert_env_var`] and [`assert_env_var_unset`], to check
+//! the state of the environment.
 //!
 //! ## Example
 //!
 //! ```no_run
 //! use dotenvy_test_util::*;
+//! use dotenvy::dotenv_override;
 //!
 //! const EXISTING_KEY: &str = "TEST_KEY";
 //! const EXISTING_VAL: &str = "test_val";
@@ -43,7 +43,7 @@
 //!
 //!     // execute a closure in the testing environment
 //!     test_in_env(&testenv, || {
-//!         wrap::dotenv_override().expect(".env should be loaded");
+//!         dotenv_override().expect(".env should be loaded");
 //!         assert_env_var(EXISTING_KEY, OVERRIDING_VAL);
 //!     });
 //!     // any changes to environment variables will be reset for other tests
@@ -53,7 +53,6 @@
 mod assertions;
 mod envfile;
 mod testenv;
-pub mod wrap;
 
 #[cfg(test)]
 mod tests;

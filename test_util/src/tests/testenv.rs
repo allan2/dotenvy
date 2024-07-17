@@ -1,4 +1,5 @@
 use super::*;
+use dotenvy::dotenv;
 
 mod init {
     use super::*;
@@ -16,7 +17,7 @@ mod init {
 
         test_in_env(&init_testenv, || {
             assert!(!envfile_path.exists());
-            assert!(wrap::dotenv().is_err());
+            assert!(dotenv().is_err());
         });
     }
 
@@ -58,7 +59,7 @@ mod init_with_envfile {
     fn default_envfile_loaded_vars_state() {
         let testenv = init_default_envfile_testenv();
         test_in_env(&testenv, || {
-            wrap::dotenv().expect(DOTENV_EXPECT);
+            dotenv().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
             // but existing key is not set in this testenv
             assert_env_var(DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE);
@@ -87,7 +88,7 @@ mod init_with_envfile {
     fn custom_envfile_loaded_vars_state() {
         let testenv = init_custom_envfile_testenv();
         test_in_env(&testenv, || {
-            wrap::dotenv().expect(DOTENV_EXPECT);
+            dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
             assert_env_vars(CUSTOM_VARS);
         });
@@ -103,7 +104,7 @@ mod init_with_envfile {
     fn empty_envfile_loaded_vars_state() {
         let testenv = init_empty_envfile_testenv();
         test_in_env(&testenv, || {
-            wrap::dotenv().expect(DOTENV_EXPECT);
+            dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
         });
     }
@@ -118,7 +119,7 @@ mod init_with_envfile {
     fn custom_bom_envfile_loaded_vars_state() {
         let testenv = init_custom_bom_envfile_testenv();
         test_in_env(&testenv, || {
-            wrap::dotenv().expect(DOTENV_EXPECT);
+            dotenv().expect(DOTENV_EXPECT);
             assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });
     }
