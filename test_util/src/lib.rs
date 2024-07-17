@@ -6,6 +6,7 @@
 //! - pre-existing environment variables,
 //! - different directory layouts,
 //! - custom `.env` file contents,
+//! - multiple `.env` files,
 //! - custom envfile name/path.
 //!
 //! Use the `create_` helper functions, such as [`create_custom_envfile`], to
@@ -40,8 +41,8 @@
 //!         create_custom_envfile(&[(EXISTING_KEY, OVERRIDING_VAL)]),
 //!     );
 //!
-//!     // execute the closure in the testing environment
-//!     test_in_env(testenv, || {
+//!     // execute a closure in the testing environment
+//!     test_in_env(&testenv, || {
 //!         wrap::dotenv_override().expect(".env should be loaded");
 //!         assert_env_var(EXISTING_KEY, OVERRIDING_VAL);
 //!     });
