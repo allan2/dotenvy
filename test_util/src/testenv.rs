@@ -45,7 +45,7 @@ pub struct EnvFile {
 ///
 /// Resets the environment variables, loads the [`TestEnv`], then runs the test
 /// closure. Ensures only one thread has access to the process environment.
-pub fn test_in_env<F>(test_env: &TestEnv, test: F)
+pub fn test_in_env<F>(testenv: &TestEnv, test: F)
 where
     F: FnOnce(),
 {
@@ -55,7 +55,7 @@ where
     let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
     // we reset the environment anyway upon acquiring the lock
     reset_env(&original_env);
-    create_env(test_env);
+    create_env(testenv);
     test();
     // drop the lock
 }
@@ -81,8 +81,8 @@ pub fn test_in_default_env<F>(test: F)
 where
     F: FnOnce(),
 {
-    let test_env = TestEnv::default();
-    test_in_env(&test_env, test);
+    let testenv = TestEnv::default();
+    test_in_env(&testenv, test);
 }
 
 impl TestEnv {
@@ -106,9 +106,9 @@ impl TestEnv {
     /// No pre-existing env_vars set. The envfile path is set to `.env`. The
     /// working directory is the created temporary directory.
     pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
-        let mut test_env = Self::init();
-        test_env.add_envfile(".env", contents);
-        test_env
+        let mut testenv = Self::init();
+        testenv.add_envfile(".env", contents);
+        testenv
     }
 
     /// Add an individual envfile.
@@ -289,14 +289,14 @@ fn reset_env(original_env: &EnvMap) {
 /// Create an environment to run tests in.
 ///
 /// Writes the envfiles, sets the working directory, and sets environment vars.
-fn create_env(test_env: &TestEnv) {
-    env::set_current_dir(&test_env.work_dir).expect("setting working directory");
+fn create_env(testenv: &TestEnv) {
+    env::set_current_dir(&testenv.work_dir).expect("setting working directory");
 
-    for EnvFile { path, contents } in &test_env.envfiles {
+    for EnvFile { path, contents } in &testenv.envfiles {
         create_envfile(path, contents);
     }
 
-    for (key, value) in &test_env.env_vars {
+    for (key, value) in &testenv.env_vars {
         env::set_var(key, value)
     }
 }
