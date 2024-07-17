@@ -3,6 +3,7 @@ use std::path::Path;
 use super::*;
 
 mod default_env;
+mod envfile;
 mod envfile_builder;
 mod testenv;
 
@@ -48,4 +49,15 @@ fn assert_env_vars_in_testenv(testenv: &TestEnv, vars: &[(&str, &str)]) {
 fn assert_path_exists_in_testenv(testenv: &TestEnv, path: impl AsRef<Path>) {
     let path = testenv.temp_path().join(path.as_ref());
     assert!(path.exists(), "{} should exist in testenv", path.display());
+}
+
+fn expected_envfile(env_vars: &[(&str, &str)]) -> String {
+    let mut envfile = String::new();
+    for (key, value) in env_vars {
+        envfile.push_str(key);
+        envfile.push('=');
+        envfile.push_str(value);
+        envfile.push('\n');
+    }
+    envfile
 }

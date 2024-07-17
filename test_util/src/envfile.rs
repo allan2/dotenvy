@@ -1,11 +1,11 @@
 use super::*;
 
-#[inline(always)]
 /// Create the default envfile contents.
 ///
 /// [`DEFAULT_TEST_KEY`] set as [`DEFAULT_TEST_VALUE`]
 ///
 /// [`DEFAULT_EXISTING_KEY`] set as [`DEFAULT_OVERRIDING_VALUE`]
+#[inline(always)]
 pub fn create_default_envfile() -> String {
     format!(
         "{}={}\n{}={}",

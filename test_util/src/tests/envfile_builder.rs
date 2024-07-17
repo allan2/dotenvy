@@ -93,14 +93,3 @@ fn assert_contents_str(efb: EnvFileBuilder, expected: &str) {
     let contents = efb.into_owned_string();
     assert_eq!(expected, contents,);
 }
-
-fn expected_envfile(env_vars: &[(&str, &str)]) -> String {
-    let mut envfile = String::new();
-    for (key, value) in env_vars {
-        envfile.push_str(key);
-        envfile.push('=');
-        envfile.push_str(value);
-        envfile.push('\n');
-    }
-    envfile
-}
