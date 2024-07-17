@@ -28,7 +28,9 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 ///       set in a `.env` file)
 #[derive(Debug)]
 pub struct TestEnv {
-    temp_dir: TempDir,
+    // Temporary directory that will be deleted on drop
+    _temp_dir: TempDir,
+    dir_path: PathBuf,
     work_dir: PathBuf,
     env_vars: EnvMap,
     envfiles: Vec<EnvFile>,
@@ -92,10 +94,14 @@ impl TestEnv {
     /// created temporary directory.
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
-        let work_dir = tempdir.path().to_owned();
+        let dir_path = tempdir
+            .path()
+            .canonicalize()
+            .expect("canonicalize dir_path");
         Self {
-            temp_dir: tempdir,
-            work_dir,
+            _temp_dir: tempdir,
+            work_dir: dir_path.clone(),
+            dir_path,
             env_vars: Default::default(),
             envfiles: vec![],
         }
@@ -127,7 +133,7 @@ impl TestEnv {
         P: AsRef<Path>,
         C: Into<Vec<u8>>,
     {
-        let path = self.temp_dir.path().join(path);
+        let path = self.dir_path.join(path);
         self.assert_envfile_path_is_valid(&path);
         self.add_envfile_assume_valid(path, contents.into())
     }
@@ -214,7 +220,7 @@ impl TestEnv {
 
     /// Reference to the path of the temporary directory.
     pub fn temp_path(&self) -> &Path {
-        self.temp_dir.path()
+        &self.dir_path
     }
 
     /// Reference to the working directory the test will be run from.
