@@ -1,16 +1,11 @@
 #[test]
 fn dotenv_works() {
-    assert_eq!(dotenvy_macro::dotenv!("CODEGEN_TEST_VAR1"), "hello!");
+    dotenvy_macro::dotenv!();
+    assert_eq!(env!("CODEGEN_TEST_VAR1"), "hello!");
 }
 
 #[test]
-fn two_argument_form_works() {
-    assert_eq!(
-        dotenvy_macro::dotenv!(
-            "CODEGEN_TEST_VAR2",
-            "err, you should be running this in the 'dotenv_codegen' \
-             directory to pick up the right .env file."
-        ),
-        "'quotes within quotes'"
-    );
+fn dotenv_override_works() {
+    dotenvy_macro::dotenv_override!();
+    assert_eq!(env!("USER"), "dotenv!");
 }
