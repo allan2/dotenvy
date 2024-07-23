@@ -22,3 +22,13 @@ fn envfile_loaded_vars_state() {
         assert_default_keys();
     });
 }
+
+#[test]
+fn only_default_existing() {
+    let testenv = create_testenv_with_default_var();
+    let envfile_path = testenv.temp_path().join(".env");
+    test_in_env(&testenv, || {
+        assert_default_existing_var();
+        assert!(!envfile_path.exists());
+    });
+}

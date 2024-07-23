@@ -87,6 +87,14 @@ where
     test_in_env(&testenv, test);
 }
 
+/// Create a [`TestEnv`] without an envfile, but with the
+/// default existing environment variable.
+pub fn create_testenv_with_default_var() -> TestEnv {
+    let mut testenv = TestEnv::init();
+    testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
+    testenv
+}
+
 impl TestEnv {
     /// Blank testing environment in a new temporary directory.
     ///
