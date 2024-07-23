@@ -205,7 +205,7 @@ impl TestEnv {
     /// the envfile is created.
     ///
     /// Will create parent directories if they are missing.
-    pub fn add_child_dir(&self, path: impl AsRef<Path>) {
+    pub fn add_child_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
         let path = path.as_ref();
         let child_dir = self.temp_path().join(path);
         if let Err(err) = fs::create_dir_all(child_dir) {
@@ -216,6 +216,7 @@ impl TestEnv {
                 err
             );
         }
+        self
     }
 
     /// Reference to the path of the temporary directory.

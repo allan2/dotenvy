@@ -348,14 +348,14 @@ mod add_child_dir {
 
     #[test]
     fn subdir() {
-        let testenv = TestEnv::init();
+        let mut testenv = TestEnv::init();
         testenv.add_child_dir("subdir");
         assert_path_exists_in_testenv(&testenv, "subdir");
     }
 
     #[test]
     fn allow_absolute_path() {
-        let testenv = TestEnv::init();
+        let mut testenv = TestEnv::init();
         let path = testenv.temp_path().join("subdir");
         assert!(path.is_absolute());
         testenv.add_child_dir(&path);
@@ -364,7 +364,7 @@ mod add_child_dir {
 
     #[test]
     fn create_parents() {
-        let testenv = TestEnv::init();
+        let mut testenv = TestEnv::init();
         testenv.add_child_dir("subdir/subsubdir");
         assert_path_exists_in_testenv(&testenv, "subdir/subsubdir");
     }
