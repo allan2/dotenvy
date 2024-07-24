@@ -101,11 +101,7 @@ fn parent_dir_absolute_path() {
     testenv.add_envfile("custom.env", KEYVAL_1);
     testenv.set_work_dir("child");
     test_in_env(&testenv, || {
-        let path = testenv
-            .temp_path()
-            .join("custom.env")
-            .canonicalize()
-            .expect("canonicalize envfile");
+        let path = canonicalize_envfile_path(&testenv, "custom.env");
         from_filename(path).unwrap();
         assert_env_var(KEY_1, VAL_1);
     });

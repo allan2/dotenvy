@@ -1,7 +1,6 @@
 use crate::util::*;
 use dotenvy::dotenv_iter;
 use dotenvy_test_util::*;
-use std::collections::HashMap;
 
 #[test]
 fn default_env_ok() {
@@ -81,21 +80,7 @@ fn one_var_empty() {
 
 #[test]
 fn two_vars_into_hash_map() {
-    let vars = [("FOOO", "bar"), ("BAZ", "qux")];
-    let envfile = create_custom_envfile(&vars);
-    let testenv = TestEnv::init_with_envfile(envfile);
-
-    test_in_env(&testenv, || {
-        let map: HashMap<String, String> = dotenv_iter()
-            .expect("valid file")
-            .map(|item| item.expect("valid item"))
-            .collect();
-
-        for (key, expected) in vars {
-            let actual = map.get(key).expect("valid key");
-            assert_eq!(expected, actual);
-        }
-    });
+    check_iter_default_envfile_into_hash_map(dotenv_iter);
 }
 
 #[test]
