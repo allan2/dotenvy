@@ -37,6 +37,15 @@ fn empty_custom_file() {
 }
 
 #[test]
+fn return_path_valid() {
+    let testenv = TestEnv::default();
+    test_in_env(&testenv, || {
+        let actual = from_filename_override(".env").unwrap();
+        assert_default_envfile_path(&testenv, &actual);
+    });
+}
+
+#[test]
 fn one_var_custom_file() {
     let mut testenv = TestEnv::init();
     testenv.add_envfile(".custom.env", KEYVAL_1);

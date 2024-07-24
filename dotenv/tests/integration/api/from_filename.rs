@@ -29,6 +29,15 @@ fn empty_custom_file() {
 }
 
 #[test]
+fn return_path_valid() {
+    let testenv = TestEnv::default();
+    test_in_env(&testenv, || {
+        let actual = from_filename(".env").unwrap();
+        assert_default_envfile_path(&testenv, &actual);
+    });
+}
+
+#[test]
 fn default_file_not_read_on_missing_file() {
     test_in_default_env(|| {
         let err = from_filename("nonexistent.env").unwrap_err();
