@@ -1,67 +1,69 @@
-#![allow(dead_code)]
+use std::{
+    collections::HashMap,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
-mod testenv;
+use dotenvy::{Error, Iter, Result};
+use dotenvy_test_util::*;
 
-use std::env::{self, VarError};
+/// common assertions
+mod assert;
+/// particular tests in a testenv
+mod test;
 
-/// Default key used in envfile
-pub const TEST_KEY: &str = "TESTKEY";
-/// Default value used in envfile
-pub const TEST_VALUE: &str = "test_val";
+pub use assert::*;
+pub use test::*;
 
-/// Default existing key set before test is run
-pub const TEST_EXISTING_KEY: &str = "TEST_EXISTING_KEY";
-/// Default existing value set before test is run
-pub const TEST_EXISTING_VALUE: &str = "from_env";
-/// Default overriding value in envfile
-pub const TEST_OVERRIDING_VALUE: &str = "from_file";
+pub const KEY_1: &str = "FOOO";
+pub const VAL_1: &str = "bar";
+pub const KEYVAL_1: &str = "FOOO=bar";
 
-#[inline(always)]
-pub fn create_default_envfile() -> String {
-    format!(
-        "{}={}\n{}={}",
-        TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
-    )
+pub const KEY_2: &str = "BARR";
+pub const VAL_2: &str = "foo";
+pub const KEYVAL_2: &str = "BARR=foo";
+
+/// Call and unwrap the default api function
+pub fn api_fn() {
+    dotenvy::dotenv().unwrap();
 }
 
-/// missing equals
-#[inline(always)]
-pub fn create_invalid_envfile() -> String {
-    format!(
-        "{}{}\n{}{}",
-        TEST_KEY, TEST_VALUE, TEST_EXISTING_KEY, TEST_OVERRIDING_VALUE
-    )
+/// Call, unwrap and return the `PathBuf` of the default api function
+pub fn api_fn_path() -> PathBuf {
+    dotenvy::dotenv().unwrap()
 }
 
-/// Assert that an environment variable is set and has the expected value.
-pub fn assert_env_var(key: &str, expected: &str) {
-    match env::var(key) {
-        Ok(actual) => assert_eq!(
-            expected, actual,
-            "\n\nFor Environment Variable `{}`:\n  EXPECTED: `{}`\n    ACTUAL: `{}`\n",
-            key, expected, actual
-        ),
-        Err(VarError::NotPresent) => panic!("env var `{}` not found", key),
-        Err(VarError::NotUnicode(val)) => panic!(
-            "env var `{}` currently has invalid unicode: `{}`",
-            key,
-            val.to_string_lossy()
-        ),
-    }
+/// Call, unwrap and return the `Error` of the default api function
+pub fn api_fn_err() -> Error {
+    dotenvy::dotenv().unwrap_err()
 }
 
-/// Assert that an environment variable is not currently set.
-pub fn assert_env_var_unset(key: &str) {
-    match env::var(key) {
-        Ok(actual) => panic!(
-            "env var `{}` should not be set, currently it is: `{}`",
-            key, actual
-        ),
-        Err(VarError::NotUnicode(val)) => panic!(
-            "env var `{}` should not be set, currently has invalid unicode: `{}`",
-            key,
-            val.to_string_lossy()
-        ),
-        _ => (),
-    }
+pub fn check_iter_default_envfile_into_hash_map<F>(iter_fn: F)
+where
+    F: FnOnce() -> Result<Iter<File>>,
+{
+    let vars = [("FOOO", "bar"), ("BAZ", "qux")];
+    let envfile = create_custom_envfile(&vars);
+    let testenv = TestEnv::init_with_envfile(envfile);
+
+    test_in_env(&testenv, || {
+        let map: HashMap<String, String> = iter_fn()
+            .expect("valid file")
+            .map(|item| item.expect("valid item"))
+            .collect();
+
+        for (key, expected) in vars {
+            let actual = map.get(key).expect("valid key");
+            assert_eq!(expected, actual);
+        }
+    });
+}
+
+/// Relative to the temp dir
+pub fn canonicalize_envfile_path(testenv: &TestEnv, envfile: impl AsRef<Path>) -> PathBuf {
+    testenv
+        .temp_path()
+        .join(envfile.as_ref())
+        .canonicalize()
+        .expect("canonicalize envfile")
 }
