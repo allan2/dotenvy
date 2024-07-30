@@ -132,7 +132,7 @@ impl EnvFileBuilder {
     pub fn insert_utf8_bom(&mut self) -> &mut Self {
         // https://www.compart.com/en/unicode/U+FEFF
         let bom = b"\xEF\xBB\xBF";
-        self.contents.splice(0..0, bom.iter().cloned());
+        self.contents.splice(0..0, bom.iter().copied());
         self
     }
 }
