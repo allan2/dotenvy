@@ -321,13 +321,15 @@ fn create_env(testenv: &TestEnv) {
 
 /// Create an envfile for use in tests.
 fn create_envfile(path: &Path, contents: &[u8]) {
-    assert!(!path.exists(), "envfile `{}` already exists", path.display());
-    // inner function to group together io::Results
     fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
         let mut file = fs::File::create(path)?;
         file.write_all(contents)?;
         file.sync_all()
     }
+
+    assert!(!path.exists(), "envfile `{}` already exists", path.display());
+    // inner function to group together io::Results
+
     // call inner function
     if let Err(err) = create_env_file_inner(path, contents) {
         // handle any io::Result::Err
