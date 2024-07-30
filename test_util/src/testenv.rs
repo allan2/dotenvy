@@ -201,9 +201,11 @@ impl TestEnv {
             .join(path.as_ref())
             .canonicalize()
             .expect("canonicalize work_dir");
-        if !self.work_dir.exists() {
-            panic!("work_dir does not exist: {}", self.work_dir.display());
-        }
+        assert!(
+            self.work_dir.exists(),
+            "work_dir does not exist: {}",
+            self.work_dir.display()
+        );
         self
     }
 
@@ -253,21 +255,23 @@ impl TestEnv {
     }
 
     fn assert_envfile_path_is_valid(&self, path: &Path) {
-        if path == self.temp_path() {
-            panic!("path cannot be empty or the same as the temporary directory");
-        }
-        if self.envfiles.iter().any(|f| f.path == path) {
-            panic!("envfile already in testenv: {}", path.display());
-        }
+        assert!(
+            path != self.temp_path(),
+            "path cannot be empty or the same as the temporary directory"
+        );
+        assert!(
+            !self.envfiles.iter().any(|f| f.path == path),
+            "envfile already in testenv: {}",
+            path.display()
+        )
     }
 
     fn assert_env_var_is_valid(&self, key: &str) {
-        if key.is_empty() {
-            panic!("key cannot be empty");
-        }
-        if self.env_vars.contains_key(key) {
-            panic!("key already in testenv: {key}");
-        }
+        assert!(!key.is_empty(), "key cannot be empty");
+        assert!(
+            !self.env_vars.contains_key(key),
+            "key already in testenv: {key}"
+        )
     }
 }
 
@@ -317,9 +321,7 @@ fn create_env(testenv: &TestEnv) {
 
 /// Create an envfile for use in tests.
 fn create_envfile(path: &Path, contents: &[u8]) {
-    if path.exists() {
-        panic!("envfile `{}` already exists", path.display())
-    }
+    assert!(!path.exists(), "envfile `{}` already exists", path.display());
     // inner function to group together io::Results
     fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
         let mut file = fs::File::create(path)?;
