@@ -1,3 +1,6 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(clippy::must_use_candidate, clippy::missing_panics_doc, clippy::wildcard_imports, clippy::module_name_repetitions)]
+
 //! Test environment setup, assertions and helpers.
 //!
 //! Setup a [`TestEnv`] and run your tests via [`test_in_env`]. The environment
