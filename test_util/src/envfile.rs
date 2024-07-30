@@ -5,7 +5,6 @@ use super::*;
 /// [`DEFAULT_TEST_KEY`] set as [`DEFAULT_TEST_VALUE`]
 ///
 /// [`DEFAULT_EXISTING_KEY`] set as [`DEFAULT_OVERRIDING_VALUE`]
-#[inline(always)]
 pub fn create_default_envfile() -> String {
     format!(
         "{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}={DEFAULT_OVERRIDING_VALUE}",
@@ -13,7 +12,6 @@ pub fn create_default_envfile() -> String {
 }
 
 /// Invalid due to missing `=` between key and value.
-#[inline(always)]
 pub fn create_invalid_envfile() -> String {
     format!(
         "{DEFAULT_TEST_KEY}{DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}{DEFAULT_OVERRIDING_VALUE}",
