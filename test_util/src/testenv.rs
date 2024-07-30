@@ -117,7 +117,7 @@ impl TestEnv {
 
     /// Testing environment with custom envfile contents.
     ///
-    /// No pre-existing env_vars set. The envfile path is set to `.env`. The
+    /// No pre-existing env vars set. The envfile path is set to `.env`. The
     /// working directory is the created temporary directory.
     pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
         let mut testenv = Self::init();
