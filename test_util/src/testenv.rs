@@ -110,7 +110,7 @@ impl TestEnv {
             _temp_dir: tempdir,
             work_dir: dir_path.clone(),
             dir_path,
-            env_vars: Default::default(),
+            env_vars: HashMap::default(),
             envfiles: vec![],
         }
     }
