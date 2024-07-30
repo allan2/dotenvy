@@ -239,7 +239,7 @@ impl TestEnv {
     }
 
     /// Reference to environment variables that will be set **before** the test.
-    pub fn env_vars(&self) -> &EnvMap {
+    pub const fn env_vars(&self) -> &EnvMap {
         &self.env_vars
     }
 

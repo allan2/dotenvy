@@ -47,7 +47,7 @@ pub struct EnvFileBuilder {
 }
 
 impl EnvFileBuilder {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             contents: Vec::new(),
         }
