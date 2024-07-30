@@ -327,7 +327,11 @@ fn create_envfile(path: &Path, contents: &[u8]) {
         file.sync_all()
     }
 
-    assert!(!path.exists(), "envfile `{}` already exists", path.display());
+    assert!(
+        !path.exists(),
+        "envfile `{}` already exists",
+        path.display()
+    );
     // inner function to group together io::Results
 
     // call inner function

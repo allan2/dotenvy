@@ -1,5 +1,11 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
-#![allow(clippy::must_use_candidate, clippy::missing_panics_doc, clippy::wildcard_imports, clippy::module_name_repetitions)]
+#![allow(
+    clippy::must_use_candidate,
+    clippy::missing_panics_doc,
+    clippy::wildcard_imports,
+    clippy::module_name_repetitions,
+    clippy::should_panic_without_expect
+)]
 
 //! Test environment setup, assertions and helpers.
 //!
