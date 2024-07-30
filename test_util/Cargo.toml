@@ -3,6 +3,7 @@ name = "dotenvy_test_util"
 version = "0.1.0"
 authors = [
     "Christopher Morton <sonro@gmx.com>",
+    "Allan Zhang <allanzhang7@gmail.com>",
 ]
 description = "Test utilities for dotenvy"
 homepage = "https://github.com/allan2/dotenvy"
