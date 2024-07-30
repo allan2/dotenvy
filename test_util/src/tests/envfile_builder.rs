@@ -16,7 +16,7 @@ fn default_builds_empty() {
 fn add_key_empty_value() {
     let mut efb = EnvFileBuilder::new();
     efb.add_key_value(DEFAULT_TEST_KEY, "");
-    let expected = format!("{}=\n", DEFAULT_TEST_KEY);
+    let expected = format!("{DEFAULT_TEST_KEY}=\n");
     assert_contents_str(efb, &expected);
 }
 
@@ -24,7 +24,7 @@ fn add_key_empty_value() {
 fn add_key_value() {
     let mut efb = EnvFileBuilder::new();
     efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
-    let expected = format!("{}={}\n", DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
+    let expected = format!("{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n");
     assert_contents_str(efb, &expected);
 }
 

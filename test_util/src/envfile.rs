@@ -8,8 +8,7 @@ use super::*;
 #[inline(always)]
 pub fn create_default_envfile() -> String {
     format!(
-        "{}={}\n{}={}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
+        "{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}={DEFAULT_OVERRIDING_VALUE}",
     )
 }
 
@@ -17,8 +16,7 @@ pub fn create_default_envfile() -> String {
 #[inline(always)]
 pub fn create_invalid_envfile() -> String {
     format!(
-        "{}{}\n{}{}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
+        "{DEFAULT_TEST_KEY}{DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}{DEFAULT_OVERRIDING_VALUE}",
     )
 }
 
@@ -105,7 +103,7 @@ impl EnvFileBuilder {
 
     /// Add a key-value pair and newline
     pub fn add_key_value(&mut self, key: &str, value: &str) -> &mut Self {
-        self.add_strln(&format!("{}={}", key, value))
+        self.add_strln(&format!("{key}={value}"))
     }
 
     /// Add a string without a newline

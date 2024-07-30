@@ -218,10 +218,9 @@ impl TestEnv {
         let child_dir = self.temp_path().join(path);
         if let Err(err) = fs::create_dir_all(child_dir) {
             panic!(
-                "unable to create child directory: `{}` in `{}`: {}",
+                "unable to create child directory: `{}` in `{}`: {err}",
                 path.display(),
-                self.temp_path().display(),
-                err
+                self.temp_path().display()
             );
         }
         self
@@ -267,7 +266,7 @@ impl TestEnv {
             panic!("key cannot be empty");
         }
         if self.env_vars.contains_key(key) {
-            panic!("key already in testenv: {}", key);
+            panic!("key already in testenv: {key}");
         }
     }
 }
@@ -330,6 +329,6 @@ fn create_envfile(path: &Path, contents: &[u8]) {
     // call inner function
     if let Err(err) = create_env_file_inner(path, contents) {
         // handle any io::Result::Err
-        panic!("error creating envfile `{}`: {}", path.display(), err);
+        panic!("error creating envfile `{}`: {err}", path.display());
     }
 }

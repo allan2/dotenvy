@@ -3,8 +3,7 @@ use super::*;
 #[test]
 fn create_default() {
     let expected = format!(
-        "{}={}\n{}={}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
+        "{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}={DEFAULT_OVERRIDING_VALUE}",
     );
     let actual = create_default_envfile();
     assert_eq!(
@@ -16,8 +15,7 @@ fn create_default() {
 #[test]
 fn create_invalid() {
     let expected = format!(
-        "{}{}\n{}{}",
-        DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE, DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE
+        "{DEFAULT_TEST_KEY}{DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}{DEFAULT_OVERRIDING_VALUE}",
     );
     let actual = create_invalid_envfile();
     assert_eq!(

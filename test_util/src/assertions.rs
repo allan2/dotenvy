@@ -28,13 +28,11 @@ pub fn assert_env_var(key: &str, expected: &str) {
     match env::var(key) {
         Ok(actual) => assert_eq!(
             expected, actual,
-            "\n\nFor Environment Variable `{}`:\n  EXPECTED: `{}`\n    ACTUAL: `{}`\n",
-            key, expected, actual
+            "\n\nFor Environment Variable `{key}`:\n  EXPECTED: `{expected}`\n    ACTUAL: `{actual}`\n",
         ),
-        Err(VarError::NotPresent) => panic!("env var `{}` not found", key),
+        Err(VarError::NotPresent) => panic!("env var `{key}` not found"),
         Err(VarError::NotUnicode(val)) => panic!(
-            "env var `{}` currently has invalid unicode: `{}`",
-            key,
+            "env var `{key}` currently has invalid unicode: `{}`",
             val.to_string_lossy()
         ),
     }
@@ -43,13 +41,9 @@ pub fn assert_env_var(key: &str, expected: &str) {
 /// Assert environment variable is not currently set.
 pub fn assert_env_var_unset(key: &str) {
     match env::var(key) {
-        Ok(actual) => panic!(
-            "env var `{}` should not be set, currently it is: `{}`",
-            key, actual
-        ),
+        Ok(actual) => panic!("env var `{key}` should not be set, currently it is: `{actual}`",),
         Err(VarError::NotUnicode(val)) => panic!(
-            "env var `{}` should not be set, currently has invalid unicode: `{}`",
-            key,
+            "env var `{key}` should not be set, currently has invalid unicode: `{}`",
             val.to_string_lossy()
         ),
         _ => (),
