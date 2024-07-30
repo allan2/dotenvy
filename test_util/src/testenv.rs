@@ -277,7 +277,7 @@ impl TestEnv {
 
 impl Default for TestEnv {
     fn default() -> Self {
-        let mut testenv = TestEnv::init();
+        let mut testenv = Self::init();
         testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
         testenv.add_envfile(".env", create_default_envfile());
         testenv
