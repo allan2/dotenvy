@@ -263,7 +263,7 @@ impl TestEnv {
             !self.envfiles.iter().any(|f| f.path == path),
             "envfile already in testenv: {}",
             path.display()
-        )
+        );
     }
 
     fn assert_env_var_is_valid(&self, key: &str) {
@@ -271,7 +271,7 @@ impl TestEnv {
         assert!(
             !self.env_vars.contains_key(key),
             "key already in testenv: {key}"
-        )
+        );
     }
 }
 
@@ -315,7 +315,7 @@ fn create_env(testenv: &TestEnv) {
     }
 
     for (key, value) in &testenv.env_vars {
-        env::set_var(key, value)
+        env::set_var(key, value);
     }
 }
 
