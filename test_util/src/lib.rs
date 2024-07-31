@@ -58,6 +58,8 @@
 //!     // any changes to environment variables will be reset for other tests
 //! }
 //! ```
+//!
+//! [`dotenvy`]: https://docs.rs/dotenvy
 
 mod assertions;
 mod envfile;
