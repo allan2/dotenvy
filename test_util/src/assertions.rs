@@ -57,7 +57,7 @@ pub fn assert_default_keys_unset() {
 }
 
 /// Assert default testing environment variables are set.
-/// Assuming the default envfile is loaded.
+/// Assuming the default env file is loaded.
 pub fn assert_default_keys() {
     assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
     assert_default_existing_var();

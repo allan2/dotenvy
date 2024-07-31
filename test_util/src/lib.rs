@@ -16,11 +16,11 @@
 //! - different directory layouts,
 //! - custom `.env` file contents,
 //! - multiple `.env` files,
-//! - custom envfile name/path.
+//! - custom env file name/path.
 //!
-//! Use the `create_` helper functions, such as [`create_custom_envfile`], to
+//! Use the `create_` helper functions, such as [`create_custom_env_file`], to
 //! generate the `.env` file contents. If you need more control of the
-//! envfile's bytes, use the [`EnvFileBuilder`].
+//! env file's bytes, use the [`EnvFileBuilder`].
 //!
 //! In your tests, call the [`dotenvy`] API, then make use of the `assert_`
 //! helpers, such as [`assert_env_var`] and [`assert_env_var_unset`], to check
@@ -44,10 +44,10 @@
 //!     // with an existing environment variable
 //!     testenv.add_env_var(EXISTING_KEY, EXISTING_VAL);
 //!
-//!     // with an envfile that overrides it
-//!     testenv.add_envfile(
+//!     // with an env file that overrides it
+//!     testenv.add_env_file(
 //!         ".env",
-//!         create_custom_envfile(&[(EXISTING_KEY, OVERRIDING_VAL)]),
+//!         create_custom_env_file(&[(EXISTING_KEY, OVERRIDING_VAL)]),
 //!     );
 //!
 //!     // execute a closure in the testing environment
@@ -62,24 +62,24 @@
 //! [`dotenvy`]: https://docs.rs/dotenvy
 
 mod assertions;
-mod envfile;
+mod env_file;
 mod testenv;
 
 #[cfg(test)]
 mod tests;
 
 pub use assertions::*;
-pub use envfile::*;
+pub use env_file::*;
 pub use testenv::*;
 
-/// Default key used in envfile
+/// Default key used in env file
 pub const DEFAULT_TEST_KEY: &str = "DEFAULT_TEST_KEY";
-/// Default value used in envfile
+/// Default value used in env file
 pub const DEFAULT_TEST_VALUE: &str = "default_test_val";
 
 /// Default existing key set before test is run
 pub const DEFAULT_EXISTING_KEY: &str = "DEFAULT_EXISTING_KEY";
 /// Default existing value set before test is run
 pub const DEFAULT_EXISTING_VALUE: &str = "loaded_from_env";
-/// Default overriding value in envfile
+/// Default overriding value in env file
 pub const DEFAULT_OVERRIDING_VALUE: &str = "loaded_from_file";

@@ -1,42 +1,42 @@
 use super::*;
 
-/// Create the default envfile contents.
+/// Create the default env file contents.
 ///
 /// [`DEFAULT_TEST_KEY`] set as [`DEFAULT_TEST_VALUE`]
 ///
 /// [`DEFAULT_EXISTING_KEY`] set as [`DEFAULT_OVERRIDING_VALUE`]
-pub fn create_default_envfile() -> String {
+pub fn create_default_env_file() -> String {
     format!(
         "{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}={DEFAULT_OVERRIDING_VALUE}",
     )
 }
 
 /// Invalid due to missing `=` between key and value.
-pub fn create_invalid_envfile() -> String {
+pub fn create_invalid_env_file() -> String {
     format!(
         "{DEFAULT_TEST_KEY}{DEFAULT_TEST_VALUE}\n{DEFAULT_EXISTING_KEY}{DEFAULT_OVERRIDING_VALUE}",
     )
 }
 
-/// Create an envfile with custom key-value pairs.
+/// Create an env file with custom key-value pairs.
 ///
 /// ## Example
 ///
 /// ```no_run
-/// # use dotenvy_test_util::create_custom_envfile;
-/// let contents = create_custom_envfile(&[
+/// # use dotenvy_test_util::create_custom_env_file;
+/// let contents = create_custom_env_file(&[
 ///     ("CUSTOM_KEY", "test_val"),
 ///     ("ANOTHER_KEY", "another_val"),
 /// ]);
 /// assert_eq!(contents, "CUSTOM_KEY=test_val\nANOTHER_KEY=another_val\n");
 /// ```
-pub fn create_custom_envfile(env_vars: &[(&str, &str)]) -> String {
+pub fn create_custom_env_file(env_vars: &[(&str, &str)]) -> String {
     let mut efb = EnvFileBuilder::new();
     efb.add_vars(env_vars);
     efb.into_owned_string()
 }
 
-/// Advanced test-envfile constructor.
+/// Advanced test-env file constructor.
 ///
 /// Represented as bytes to allow for advanced manipulation and BOM testing.
 #[derive(Debug, Default)]

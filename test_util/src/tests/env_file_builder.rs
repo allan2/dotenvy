@@ -33,7 +33,7 @@ fn add_multiple_key_values() {
     let mut efb = EnvFileBuilder::new();
     efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
     efb.add_key_value(DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE);
-    let expected = expected_envfile(&[
+    let expected = expected_env_file(&[
         (DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE),
         (DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE),
     ]);
@@ -44,7 +44,7 @@ fn add_multiple_key_values() {
 fn add_vars() {
     let mut efb = EnvFileBuilder::new();
     efb.add_vars(CUSTOM_VARS);
-    let expected = expected_envfile(CUSTOM_VARS);
+    let expected = expected_env_file(CUSTOM_VARS);
     assert_contents_str(efb, &expected);
 }
 
@@ -86,24 +86,24 @@ fn add_strln() {
 
 #[test]
 fn from_vec_u8() {
-    let vec: Vec<u8> = Vec::from(create_default_envfile());
+    let vec: Vec<u8> = Vec::from(create_default_env_file());
     let efb = EnvFileBuilder::from(vec);
-    assert_contents_str(efb, &create_default_envfile());
+    assert_contents_str(efb, &create_default_env_file());
 }
 
 #[test]
 fn to_vec_u8() {
     let mut efb = EnvFileBuilder::new();
-    efb.add_str(create_default_envfile().as_str());
+    efb.add_str(create_default_env_file().as_str());
     let vec = Vec::from(efb);
-    let expected = create_default_envfile().into_bytes();
+    let expected = create_default_env_file().into_bytes();
     assert_eq!(expected, vec);
 }
 
 #[test]
 fn from_string() {
-    let efb = EnvFileBuilder::from(create_default_envfile());
-    assert_contents_str(efb, &create_default_envfile());
+    let efb = EnvFileBuilder::from(create_default_env_file());
+    assert_contents_str(efb, &create_default_env_file());
 }
 
 fn assert_contents_empty(efb: EnvFileBuilder) {

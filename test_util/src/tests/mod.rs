@@ -3,8 +3,8 @@ use std::path::Path;
 use super::*;
 
 mod default_env;
-mod envfile;
-mod envfile_builder;
+mod env_file;
+mod env_file_builder;
 mod testenv;
 
 const CUSTOM_VARS: &[(&str, &str)] = &[
@@ -14,17 +14,17 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
 
 const DOTENV_EXPECT: &str = "TestEnv should have .env file";
 
-fn assert_envfiles_in_testenv(testenv: &TestEnv) {
-    let files = testenv.envfiles();
+fn assert_env_files_in_testenv(testenv: &TestEnv) {
+    let files = testenv.env_files();
 
     test_in_env(testenv, || {
         for EnvFile { path, contents } in files {
-            assert_envfile(path, contents);
+            assert_env_file(path, contents);
         }
     });
 }
 
-fn assert_envfile(path: &Path, expected: &[u8]) {
+fn assert_env_file(path: &Path, expected: &[u8]) {
     assert!(path.exists(), "{} should exist in testenv", path.display());
 
     let actual = std::fs::read(path)
@@ -51,13 +51,13 @@ fn assert_path_exists_in_testenv(testenv: &TestEnv, path: impl AsRef<Path>) {
     assert!(path.exists(), "{} should exist in testenv", path.display());
 }
 
-fn expected_envfile(env_vars: &[(&str, &str)]) -> String {
-    let mut envfile = String::new();
+fn expected_env_file(env_vars: &[(&str, &str)]) -> String {
+    let mut env_file = String::new();
     for (key, value) in env_vars {
-        envfile.push_str(key);
-        envfile.push('=');
-        envfile.push_str(value);
-        envfile.push('\n');
+        env_file.push_str(key);
+        env_file.push('=');
+        env_file.push_str(value);
+        env_file.push('\n');
     }
-    envfile
+    env_file
 }

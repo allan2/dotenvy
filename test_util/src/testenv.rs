@@ -1,4 +1,4 @@
-use super::{create_default_envfile, DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE};
+use super::{create_default_env_file, DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE};
 use once_cell::sync::OnceCell;
 use std::{
     collections::HashMap,
@@ -18,12 +18,12 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 /// A test environment.
 ///
 /// Will create a new temporary directory. Use its builder methods to configure
-/// the directory structure, preset variables, envfile name and contents, and
+/// the directory structure, preset variables, env file name and contents, and
 /// the working directory to run the test from.
 ///
 /// Creation methods:
-/// - [`TestEnv::init`]: blank environment (no envfile)
-/// - [`TestEnv::init_with_envfile`]: blank environment with a custom `.env`
+/// - [`TestEnv::init`]: blank environment (no env file)
+/// - [`TestEnv::init_with_env_file`]: blank environment with a custom `.env`
 /// - [`TestEnv::default`]: default testing environment (1 existing var and 2
 ///       set in a `.env` file)
 #[derive(Debug)]
@@ -33,7 +33,7 @@ pub struct TestEnv {
     dir_path: PathBuf,
     work_dir: PathBuf,
     env_vars: EnvMap,
-    envfiles: Vec<EnvFile>,
+    env_files: Vec<EnvFile>,
 }
 
 #[derive(Debug, Clone)]
@@ -87,7 +87,7 @@ where
     test_in_env(&testenv, test);
 }
 
-/// Create a [`TestEnv`] without an envfile, but with the
+/// Create a [`TestEnv`] without an env file, but with the
 /// default existing environment variable.
 pub fn create_testenv_with_default_var() -> TestEnv {
     let mut testenv = TestEnv::init();
@@ -98,7 +98,7 @@ pub fn create_testenv_with_default_var() -> TestEnv {
 impl TestEnv {
     /// Blank testing environment in a new temporary directory.
     ///
-    /// No envfile or pre-existing variables set. The working directory is the
+    /// No env file or pre-existing variables set. The working directory is the
     /// created temporary directory.
     pub fn init() -> Self {
         let tempdir = tempdir().expect("create tempdir");
@@ -111,21 +111,21 @@ impl TestEnv {
             work_dir: dir_path.clone(),
             dir_path,
             env_vars: HashMap::default(),
-            envfiles: vec![],
+            env_files: vec![],
         }
     }
 
-    /// Testing environment with custom envfile contents.
+    /// Testing environment with custom env file contents.
     ///
-    /// No pre-existing env vars set. The envfile path is set to `.env`. The
+    /// No pre-existing env vars set. The env file path is set to `.env`. The
     /// working directory is the created temporary directory.
-    pub fn init_with_envfile(contents: impl Into<Vec<u8>>) -> Self {
+    pub fn init_with_env_file(contents: impl Into<Vec<u8>>) -> Self {
         let mut testenv = Self::init();
-        testenv.add_envfile(".env", contents);
+        testenv.add_env_file(".env", contents);
         testenv
     }
 
-    /// Add an individual envfile.
+    /// Add an individual env file.
     ///
     /// ## Arguments
     ///
@@ -135,15 +135,15 @@ impl TestEnv {
     /// ## Panics
     ///
     /// - if the path is empty or the same as the temporary directory
-    /// - if the envfile already exists
-    pub fn add_envfile<P, C>(&mut self, path: P, contents: C) -> &mut Self
+    /// - if the env file already exists
+    pub fn add_env_file<P, C>(&mut self, path: P, contents: C) -> &mut Self
     where
         P: AsRef<Path>,
         C: Into<Vec<u8>>,
     {
         let path = self.dir_path.join(path);
-        self.assert_envfile_path_is_valid(&path);
-        self.add_envfile_assume_valid(path, contents.into())
+        self.assert_env_file_path_is_valid(&path);
+        self.add_env_file_assume_valid(path, contents.into())
     }
 
     /// Add an individual environment variable.
@@ -212,7 +212,7 @@ impl TestEnv {
     /// Create a child folder within the temporary directory.
     ///
     /// This will not change the working directory the test is run in, or where
-    /// the envfile is created.
+    /// the env file is created.
     ///
     /// Will create parent directories if they are missing.
     pub fn add_child_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
@@ -244,24 +244,24 @@ impl TestEnv {
     }
 
     /// Get a reference to the environment files that will created
-    pub fn envfiles(&self) -> &[EnvFile] {
-        &self.envfiles
+    pub fn env_files(&self) -> &[EnvFile] {
+        &self.env_files
     }
 
-    fn add_envfile_assume_valid(&mut self, path: PathBuf, contents: Vec<u8>) -> &mut Self {
-        let envfile = EnvFile { path, contents };
-        self.envfiles.push(envfile);
+    fn add_env_file_assume_valid(&mut self, path: PathBuf, contents: Vec<u8>) -> &mut Self {
+        let env_file = EnvFile { path, contents };
+        self.env_files.push(env_file);
         self
     }
 
-    fn assert_envfile_path_is_valid(&self, path: &Path) {
+    fn assert_env_file_path_is_valid(&self, path: &Path) {
         assert!(
             path != self.temp_path(),
             "path cannot be empty or the same as the temporary directory"
         );
         assert!(
-            !self.envfiles.iter().any(|f| f.path == path),
-            "envfile already in testenv: {}",
+            !self.env_files.iter().any(|f| f.path == path),
+            "env_file already in testenv: {}",
             path.display()
         );
     }
@@ -279,7 +279,7 @@ impl Default for TestEnv {
     fn default() -> Self {
         let mut testenv = Self::init();
         testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
-        testenv.add_envfile(".env", create_default_envfile());
+        testenv.add_env_file(".env", create_default_env_file());
         testenv
     }
 }
@@ -306,12 +306,12 @@ fn reset_env(original_env: &EnvMap) {
 
 /// Create an environment to run tests in.
 ///
-/// Writes the envfiles, sets the working directory, and sets environment vars.
+/// Writes the env files, sets the working directory, and sets environment vars.
 fn create_env(testenv: &TestEnv) {
     env::set_current_dir(&testenv.work_dir).expect("setting working directory");
 
-    for EnvFile { path, contents } in &testenv.envfiles {
-        create_envfile(path, contents);
+    for EnvFile { path, contents } in &testenv.env_files {
+        create_env_file(path, contents);
     }
 
     for (key, value) in &testenv.env_vars {
@@ -319,8 +319,8 @@ fn create_env(testenv: &TestEnv) {
     }
 }
 
-/// Create an envfile for use in tests.
-fn create_envfile(path: &Path, contents: &[u8]) {
+/// Create an env file for use in tests.
+fn create_env_file(path: &Path, contents: &[u8]) {
     fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
         let mut file = fs::File::create(path)?;
         file.write_all(contents)?;
@@ -329,7 +329,7 @@ fn create_envfile(path: &Path, contents: &[u8]) {
 
     assert!(
         !path.exists(),
-        "envfile `{}` already exists",
+        "env_file `{}` already exists",
         path.display()
     );
     // inner function to group together io::Results
@@ -337,6 +337,6 @@ fn create_envfile(path: &Path, contents: &[u8]) {
     // call inner function
     if let Err(err) = create_env_file_inner(path, contents) {
         // handle any io::Result::Err
-        panic!("error creating envfile `{}`: {err}", path.display());
+        panic!("error creating env_file `{}`: {err}", path.display());
     }
 }

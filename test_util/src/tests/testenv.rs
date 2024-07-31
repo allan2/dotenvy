@@ -11,12 +11,12 @@ mod init {
     }
 
     #[test]
-    fn no_envfile() {
+    fn no_env_file() {
         let init_testenv = TestEnv::init();
-        let envfile_path = init_testenv.temp_path().join(".env");
+        let env_file_path = init_testenv.temp_path().join(".env");
 
         test_in_env(&init_testenv, || {
-            assert!(!envfile_path.exists());
+            assert!(!env_file_path.exists());
             assert!(dotenv().is_err());
         });
     }
@@ -34,30 +34,30 @@ mod init {
     }
 
     #[test]
-    fn envfiles_are_empty() {
+    fn env_files_are_empty() {
         let testenv = TestEnv::init();
-        assert!(testenv.envfiles().is_empty());
+        assert!(testenv.env_files().is_empty());
     }
 }
 
-mod init_with_envfile {
+mod init_with_env_file {
     use super::*;
 
     #[test]
-    fn default_envfile_vars_state() {
-        let testenv = init_default_envfile_testenv();
+    fn default_env_file_vars_state() {
+        let testenv = init_default_env_file_testenv();
         assert_default_keys_not_set_in_testenv(&testenv);
     }
 
     #[test]
-    fn default_envfile_exists() {
-        let testenv = init_default_envfile_testenv();
-        assert_envfiles_in_testenv(&testenv);
+    fn default_env_file_exists() {
+        let testenv = init_default_env_file_testenv();
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
-    fn default_envfile_loaded_vars_state() {
-        let testenv = init_default_envfile_testenv();
+    fn default_env_file_loaded_vars_state() {
+        let testenv = init_default_env_file_testenv();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
@@ -68,8 +68,8 @@ mod init_with_envfile {
     }
 
     #[test]
-    fn custom_envfile_vars_state() {
-        let testenv = init_custom_envfile_testenv();
+    fn custom_env_file_vars_state() {
+        let testenv = init_custom_env_file_testenv();
         test_in_env(&testenv, || {
             assert_default_keys_unset();
             for (key, _) in CUSTOM_VARS {
@@ -79,14 +79,14 @@ mod init_with_envfile {
     }
 
     #[test]
-    fn custom_envfile_exists() {
-        let testenv = init_custom_envfile_testenv();
-        assert_envfiles_in_testenv(&testenv);
+    fn custom_env_file_exists() {
+        let testenv = init_custom_env_file_testenv();
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
-    fn custom_envfile_loaded_vars_state() {
-        let testenv = init_custom_envfile_testenv();
+    fn custom_env_file_loaded_vars_state() {
+        let testenv = init_custom_env_file_testenv();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
@@ -95,14 +95,14 @@ mod init_with_envfile {
     }
 
     #[test]
-    fn empty_envfile_exists() {
-        let testenv = init_empty_envfile_testenv();
-        assert_envfiles_in_testenv(&testenv);
+    fn empty_env_file_exists() {
+        let testenv = init_empty_env_file_testenv();
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
-    fn empty_envfile_loaded_vars_state() {
-        let testenv = init_empty_envfile_testenv();
+    fn empty_env_file_loaded_vars_state() {
+        let testenv = init_empty_env_file_testenv();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_default_keys_unset();
@@ -110,80 +110,80 @@ mod init_with_envfile {
     }
 
     #[test]
-    fn custom_bom_envfile_exists() {
-        let testenv = init_custom_bom_envfile_testenv();
-        assert_envfiles_in_testenv(&testenv);
+    fn custom_bom_env_file_exists() {
+        let testenv = init_custom_bom_env_file_testenv();
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
-    fn custom_bom_envfile_loaded_vars_state() {
-        let testenv = init_custom_bom_envfile_testenv();
+    fn custom_bom_env_file_loaded_vars_state() {
+        let testenv = init_custom_bom_env_file_testenv();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         });
     }
 
-    fn init_default_envfile_testenv() -> TestEnv {
-        let envfile = create_default_envfile();
-        TestEnv::init_with_envfile(envfile)
+    fn init_default_env_file_testenv() -> TestEnv {
+        let env_file = create_default_env_file();
+        TestEnv::init_with_env_file(env_file)
     }
 
-    fn init_custom_envfile_testenv() -> TestEnv {
-        let envfile = create_custom_envfile(CUSTOM_VARS);
-        TestEnv::init_with_envfile(envfile)
+    fn init_custom_env_file_testenv() -> TestEnv {
+        let env_file = create_custom_env_file(CUSTOM_VARS);
+        TestEnv::init_with_env_file(env_file)
     }
 
-    fn init_empty_envfile_testenv() -> TestEnv {
-        TestEnv::init_with_envfile([])
+    fn init_empty_env_file_testenv() -> TestEnv {
+        TestEnv::init_with_env_file([])
     }
 
-    fn init_custom_bom_envfile_testenv() -> TestEnv {
+    fn init_custom_bom_env_file_testenv() -> TestEnv {
         let mut efb = EnvFileBuilder::new();
         efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
         efb.insert_utf8_bom();
-        let envfile = efb.into_owned_string();
-        TestEnv::init_with_envfile(envfile)
+        let env_file = efb.into_owned_string();
+        TestEnv::init_with_env_file(env_file)
     }
 }
 
-mod add_envfile {
+mod add_env_file {
     use super::*;
 
     #[test]
     #[should_panic]
     fn panics_add_twice() {
         let mut testenv = TestEnv::init();
-        testenv.add_envfile(".env", create_default_envfile());
-        testenv.add_envfile(".env", create_custom_envfile(CUSTOM_VARS));
+        testenv.add_env_file(".env", create_default_env_file());
+        testenv.add_env_file(".env", create_custom_env_file(CUSTOM_VARS));
     }
 
     #[test]
     #[should_panic]
     fn panics_same_path_as_init() {
-        let mut testenv = TestEnv::init_with_envfile(create_default_envfile());
-        testenv.add_envfile(".env", create_default_envfile());
+        let mut testenv = TestEnv::init_with_env_file(create_default_env_file());
+        testenv.add_env_file(".env", create_default_env_file());
     }
 
     #[test]
     #[should_panic]
     fn panics_same_path_as_default() {
         let mut testenv = TestEnv::default();
-        testenv.add_envfile(".env", create_invalid_envfile());
+        testenv.add_env_file(".env", create_invalid_env_file());
     }
 
     #[test]
     #[should_panic]
     fn panics_path() {
         let mut testenv = TestEnv::init();
-        testenv.add_envfile("", create_default_envfile());
+        testenv.add_env_file("", create_default_env_file());
     }
 
     #[test]
     fn allow_empty_contents() {
         let mut testenv = TestEnv::init();
-        testenv.add_envfile(".env", []);
-        assert_envfiles_in_testenv(&testenv);
+        testenv.add_env_file(".env", []);
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
@@ -191,16 +191,16 @@ mod add_envfile {
         let mut testenv = TestEnv::init();
         let path = testenv.temp_path().join(".env");
         assert!(path.is_absolute());
-        testenv.add_envfile(&path, create_default_envfile());
-        assert_envfiles_in_testenv(&testenv);
+        testenv.add_env_file(&path, create_default_env_file());
+        assert_env_files_in_testenv(&testenv);
     }
 
     #[test]
     fn two_files() {
         let mut testenv = TestEnv::init();
-        testenv.add_envfile(".env", create_default_envfile());
-        testenv.add_envfile(".env.local", create_custom_envfile(CUSTOM_VARS));
-        assert_envfiles_in_testenv(&testenv);
+        testenv.add_env_file(".env", create_default_env_file());
+        testenv.add_env_file(".env.local", create_custom_env_file(CUSTOM_VARS));
+        assert_env_files_in_testenv(&testenv);
     }
 }
 

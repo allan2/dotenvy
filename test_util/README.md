@@ -17,7 +17,7 @@ By setting up a `TestEnv`, and running a closure via `test_in_env`.
 - Lock the environment from other tests
 - Store the existing environment variables
 - Add any custom env_vars to the environment
-- Create any custom envfiles in the temporary directory
+- Create any custom env files in the temporary directory
 
 **In the closure** you can use the assertion functions to test the environment.
 
@@ -48,10 +48,10 @@ fn dotenv_override_existing_key() {
     // with an existing environment variable
     testenv.add_env_var(EXISTING_KEY, EXISTING_VAL);
 
-    // with an envfile that overrides it
-    testenv.add_envfile(
+    // with an env file that overrides it
+    testenv.add_env_file(
         ".env",
-        create_custom_envfile(&[(EXISTING_KEY, OVERRIDING_VAL)]),
+        create_custom_env_file(&[(EXISTING_KEY, OVERRIDING_VAL)]),
     );
 
     // execute a closure in the testing environment
@@ -84,14 +84,14 @@ The default `TestEnv` has 1 existing environment variable:
 
 - `DEFAULT_EXISTING_KEY` set to `DEFAULT_EXISTING_VAL`
 
-It has an envfile `.env` that sets:
+It has an env file `.env` that sets:
 
 - `DEFAULT_TEST_KEY` to `DEFAULT_TEST_VAL`
 - `DEFAULT_EXISTING_KEY` to `DEFAULT_OVERRIDING_VAL`
 
 ### Customised Envfile
 
-Use the `EnvFileBuilder` to manipulate the content of an envfile. Useful
+Use the `EnvFileBuilder` to manipulate the content of an env file. Useful
 for byte-order-mark(BOM) testing, and other edge cases.
 
 ```rust
@@ -99,12 +99,12 @@ use dotenvy_test_util::*;
 use dotenvy::dotenv;
 
 #[test]
-fn comments_ignored_in_utf8bom_envfile() {
+fn comments_ignored_in_utf8bom_env_file() {
     let mut efb = EnvFileBuilder::new();
     efb.insert_utf8_bom();
     efb.add_strln("# TEST_KEY=TEST_VAL");
 
-    let testenv = TestEnv::init_with_envfile(efb);
+    let testenv = TestEnv::init_with_env_file(efb);
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");
@@ -113,7 +113,7 @@ fn comments_ignored_in_utf8bom_envfile() {
 }
 ```
 
-Or use anything that can be converted to a `Vec<u8>` if your envfile is
+Or use anything that can be converted to a `Vec<u8>` if your env_file is
 simple.
 
 ```rust
@@ -122,9 +122,9 @@ use dotenvy::dotenv;
 
 #[test]
 fn comments_ignored() {
-    let envfile = "# TEST_KEY=TEST_VAL\n";
+    let env_file = "# TEST_KEY=TEST_VAL\n";
 
-    let testenv = TestEnv::init_with_envfile(envfile);
+    let testenv = TestEnv::init_with_env_file(env_file);
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");
