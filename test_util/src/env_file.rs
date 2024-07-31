@@ -39,7 +39,7 @@ pub fn create_custom_env_file(env_vars: &[(&str, &str)]) -> String {
 /// Advanced test-env file constructor.
 ///
 /// Represented as bytes to allow for advanced manipulation and BOM testing.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct EnvFileBuilder {
     contents: Vec<u8>,
 }
@@ -157,5 +157,59 @@ impl From<String> for EnvFileBuilder {
         Self {
             contents: contents.into_bytes(),
         }
+    }
+}
+
+impl AsRef<[u8]> for EnvFileBuilder {
+    fn as_ref(&self) -> &[u8] {
+        self.as_bytes()
+    }
+}
+
+impl PartialEq<String> for EnvFileBuilder {
+    fn eq(&self, other: &String) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl PartialEq<str> for EnvFileBuilder {
+    fn eq(&self, other: &str) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl PartialEq<Vec<u8>> for EnvFileBuilder {
+    fn eq(&self, other: &Vec<u8>) -> bool {
+        self.as_bytes() == other
+    }
+}
+
+impl PartialEq<[u8]> for EnvFileBuilder {
+    fn eq(&self, other: &[u8]) -> bool {
+        self.as_bytes() == other
+    }
+}
+
+impl PartialEq<EnvFileBuilder> for String {
+    fn eq(&self, other: &EnvFileBuilder) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl PartialEq<EnvFileBuilder> for &str {
+    fn eq(&self, other: &EnvFileBuilder) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl PartialEq<EnvFileBuilder> for Vec<u8> {
+    fn eq(&self, other: &EnvFileBuilder) -> bool {
+        self == other.as_bytes()
+    }
+}
+
+impl PartialEq<EnvFileBuilder> for &[u8] {
+    fn eq(&self, other: &EnvFileBuilder) -> bool {
+        *self == other.as_bytes()
     }
 }
