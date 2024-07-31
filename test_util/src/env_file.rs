@@ -84,6 +84,11 @@ impl EnvFileBuilder {
         &self.contents
     }
 
+    /// Returns true when the contents of the builder is empty.
+    pub fn is_empty(&self) -> bool {
+        self.contents.is_empty()
+    }
+
     /// Add a slice of key-value pairs, separated by newlines.
     ///
     /// Includes a trailing newline.

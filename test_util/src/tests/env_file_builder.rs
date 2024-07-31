@@ -3,13 +3,13 @@ use super::*;
 #[test]
 fn new_builds_empty() {
     let efb = EnvFileBuilder::new();
-    assert_contents_empty(efb);
+    assert!(efb.is_empty());
 }
 
 #[test]
 fn default_builds_empty() {
     let efb = EnvFileBuilder::default();
-    assert_contents_empty(efb);
+    assert!(efb.is_empty());
 }
 
 #[test]
@@ -104,11 +104,6 @@ fn to_vec_u8() {
 fn from_string() {
     let efb = EnvFileBuilder::from(create_default_env_file());
     assert_contents_str(efb, &create_default_env_file());
-}
-
-fn assert_contents_empty(efb: EnvFileBuilder) {
-    let contents = efb.into_owned_bytes();
-    assert!(contents.is_empty());
 }
 
 fn assert_contents_str(efb: EnvFileBuilder, expected: &str) {
