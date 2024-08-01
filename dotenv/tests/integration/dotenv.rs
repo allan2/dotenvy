@@ -11,13 +11,13 @@ EXISTING_KEY=loaded_from_file
 ";
 
 #[test]
-fn dotenv_ok() {
-    let mut testenv = TestEnv::new();
-    testenv.add_env_file(".env", TEST_ENV_FILE);
-    testenv.add_env_var(EXISTING_KEY, EXISTING_VALUE);
+fn dotenv_ok() -> Result<(), Error> {
+    let mut testenv = TestEnv::new()?;
+    testenv.add_env_file(".env", TEST_ENV_FILE)?;
+    testenv.add_env_var(EXISTING_KEY, EXISTING_VALUE)?;
     test_in_env(&testenv, || {
         dotenvy::dotenv().ok();
         assert_env_var(TEST_KEY, TEST_VALUE);
         assert_env_var(EXISTING_KEY, EXISTING_VALUE);
-    });
+    })
 }

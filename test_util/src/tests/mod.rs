@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::path::Path;
 
 use super::*;
@@ -11,7 +9,6 @@ const TEST_KEY: &str = "TEST_KEY";
 const TEST_VALUE: &str = "test_val";
 
 const EXISTING_KEY: &str = "EXISTING_KEY";
-const EXISTING_VALUE: &str = "loaded_from_env";
 const OVERRIDING_VALUE: &str = "loaded_from_file";
 
 const CUSTOM_VARS: &[(&str, &str)] = &[
@@ -21,25 +18,25 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
 
 const DOTENV_EXPECT: &str = "TestEnv should have .env file";
 
-fn test_env_files(testenv: &TestEnv) {
+fn test_env_files(testenv: &TestEnv) -> Result<(), Error> {
     let files = testenv.env_files();
 
     test_in_env(testenv, || {
         for EnvFile { path, contents } in files {
             assert_env_file(path, contents);
         }
-    });
+    })
 }
 
-fn test_keys_not_set(testenv: &TestEnv) {
-    test_in_env(testenv, assert_test_keys_unset);
+fn test_keys_not_set(testenv: &TestEnv) -> Result<(), Error> {
+    test_in_env(testenv, assert_test_keys_unset)
 }
 
-fn test_env_vars(testenv: &TestEnv, vars: &[(&str, &str)]) {
-    test_in_env(testenv, || assert_env_vars(vars));
+fn test_env_vars(testenv: &TestEnv, vars: &[(&str, &str)]) -> Result<(), Error> {
+    test_in_env(testenv, || assert_env_vars(vars))
 }
 
-fn test_path_exists(testenv: &TestEnv, path: impl AsRef<Path>) {
+fn assert_path_exists(testenv: &TestEnv, path: impl AsRef<Path>) {
     let path = testenv.temp_path().join(path.as_ref());
     assert!(path.exists(), "{} should exist in testenv", path.display());
 }

@@ -41,24 +41,24 @@ const EXISTING_VAL: &str = "test_val";
 const OVERRIDING_VAL: &str = "overriding_val";
 
 #[test]
-fn dotenv_override_existing_key() {
+fn dotenv_override_existing_key() -> Result<(), Error> {
     // setup testing environment
-    let mut testenv = TestEnv::init();
+    let mut testenv = TestEnv::init()?;
 
     // with an existing environment variable
-    testenv.add_env_var(EXISTING_KEY, EXISTING_VAL);
+    testenv.add_env_var(EXISTING_KEY, EXISTING_VAL)?;
 
     // with an env file that overrides it
     testenv.add_env_file(
         ".env",
         create_custom_env_file(&[(EXISTING_KEY, OVERRIDING_VAL)]),
-    );
+    )?;
 
     // execute a closure in the testing environment
     test_in_env(&testenv, || {
         dotenv_override().expect(".env should be loaded");
         assert_env_var(EXISTING_KEY, OVERRIDING_VAL);
-    });
+    })
     // any changes to environment variables will be reset for other tests
 }
 ```
@@ -73,17 +73,17 @@ use dotenvy_test_util::*;
 use dotenvy::dotenv;
 
 #[test]
-fn comments_ignored_in_utf8bom_env_file() {
+fn comments_ignored_in_utf8bom_env_file() -> Result<(), Error> {
     let mut efb = EnvFileBuilder::new();
     efb.insert_utf8_bom();
     efb.add_strln("# TEST_KEY=TEST_VAL");
 
-    let testenv = TestEnv::init_with_env_file(efb);
+    let testenv = TestEnv::init_with_env_file(efb)?;
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");
         assert_env_var_unset("TEST_KEY");
-    });
+    })
 }
 ```
 
@@ -95,15 +95,15 @@ use dotenvy_test_util::*;
 use dotenvy::dotenv;
 
 #[test]
-fn comments_ignored() {
+fn comments_ignored() -> Result<(), Error> {
     let env_file = "# TEST_KEY=TEST_VAL\n";
 
-    let testenv = TestEnv::init_with_env_file(env_file);
+    let testenv = TestEnv::init_with_env_file(env_file)?;
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");
         assert_env_var_unset("TEST_KEY");
-    });
+    })
 }
 ```
 

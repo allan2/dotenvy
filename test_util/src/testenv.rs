@@ -8,7 +8,7 @@ use std::{
 };
 use tempfile::{tempdir, TempDir};
 
-use crate::EnvFile;
+use crate::{EnvFile, Error};
 
 /// Env var convenience type.
 type EnvMap = HashMap<String, String>;
@@ -39,7 +39,11 @@ pub struct TestEnv {
 ///
 /// Resets the environment variables, loads the [`TestEnv`], then runs the test
 /// closure. Ensures only one thread has access to the process environment.
-pub fn test_in_env<F>(testenv: &TestEnv, test: F)
+///
+/// ## Errors
+///
+/// - if the test fails
+pub fn test_in_env<F>(testenv: &TestEnv, test: F) -> Result<(), Error>
 where
     F: FnOnce(),
 {
@@ -49,9 +53,10 @@ where
     let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
     // we reset the environment anyway upon acquiring the lock
     reset_env(&original_env);
-    create_env(testenv);
+    create_env(testenv)?;
     test();
     reset_env(&original_env);
+    Ok(())
     // drop the lock
 }
 
@@ -60,29 +65,37 @@ impl TestEnv {
     ///
     /// No env file or pre-existing variables set. The working directory is the
     /// created temporary directory.
-    pub fn new() -> Self {
-        let tempdir = tempdir().expect("create tempdir");
-        let dir_path = tempdir
-            .path()
-            .canonicalize()
-            .expect("canonicalize dir_path");
-        Self {
+    ///
+    /// ## Errors
+    ///
+    /// - if creating the temporary directory fails
+    /// - if canonicalizing the temporary directory's path fails
+    pub fn new() -> Result<Self, Error> {
+        let tempdir = tempdir().map_err(Error::CreatingTempDir)?;
+        let dir_path = canonicalize_path(tempdir.path())?;
+        let testenv = Self {
             _temp_dir: tempdir,
             work_dir: dir_path.clone(),
             dir_path,
             env_vars: HashMap::default(),
             env_files: vec![],
-        }
+        };
+        Ok(testenv)
     }
 
     /// Testing environment with custom env file contents.
     ///
     /// No pre-existing env vars set. The env file path is set to `.env`. The
     /// working directory is the created temporary directory.
-    pub fn new_with_env_file(contents: impl Into<Vec<u8>>) -> Self {
-        let mut testenv = Self::new();
-        testenv.add_env_file(".env", contents);
-        testenv
+    ///
+    /// ## Errors
+    ///
+    /// - if creating the temporary directory fails
+    /// - if canonicalizing the temporary directory's path fails
+    pub fn new_with_env_file(contents: impl Into<Vec<u8>>) -> Result<Self, Error> {
+        let mut testenv = Self::new()?;
+        testenv.add_env_file(".env", contents)?;
+        Ok(testenv)
     }
 
     /// Add an individual env file.
@@ -92,18 +105,19 @@ impl TestEnv {
     /// - `path`: relative from the temporary directory
     /// - `contents`: bytes or string
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// - if the path is empty or the same as the temporary directory
     /// - if the env file already exists
-    pub fn add_env_file<P, C>(&mut self, path: P, contents: C) -> &mut Self
+    pub fn add_env_file<P, C>(&mut self, path: P, contents: C) -> Result<&mut Self, Error>
     where
         P: AsRef<Path>,
         C: Into<Vec<u8>>,
     {
         let path = self.dir_path.join(path);
-        self.assert_env_file_path_is_valid(&path);
-        self.add_env_file_assume_valid(path, contents.into())
+        self.check_env_file_path_is_valid(&path)?;
+        self.add_env_file_assume_valid(path, contents.into());
+        Ok(self)
     }
 
     /// Add an individual environment variable.
@@ -111,19 +125,19 @@ impl TestEnv {
     /// This adds more pre-existing environment variables to the process before
     /// any tests are run.
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// - if the env var already exists in the testenv
     /// - if the key is empty
-    pub fn add_env_var<K, V>(&mut self, key: K, value: V) -> &mut Self
+    pub fn add_env_var<K, V>(&mut self, key: K, value: V) -> Result<&mut Self, Error>
     where
         K: Into<String>,
         V: Into<String>,
     {
         let key = key.into();
-        self.assert_env_var_is_valid(&key);
+        self.check_env_var_is_valid(&key)?;
         self.env_vars.insert(key, value.into());
-        self
+        Ok(self)
     }
 
     /// Set all the pre-existing environment variables.
@@ -132,15 +146,15 @@ impl TestEnv {
     /// test is run. This overrides any previous env vars added to the
     /// [`TestEnv`].
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// - if an env var is set twice
     /// - if a key is empty
-    pub fn set_env_vars(&mut self, env_vars: &[(&str, &str)]) -> &mut Self {
+    pub fn set_env_vars(&mut self, env_vars: &[(&str, &str)]) -> Result<&mut Self, Error> {
         for &(key, value) in env_vars {
-            self.add_env_var(key, value);
+            self.add_env_var(key, value)?;
         }
-        self
+        Ok(self)
     }
 
     /// Set the working directory the test will run from.
@@ -152,21 +166,17 @@ impl TestEnv {
     ///
     /// - `path`: relative from the temporary directory
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// - if the path does not exist
-    pub fn set_work_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
-        self.work_dir = self
-            .temp_path()
-            .join(path.as_ref())
-            .canonicalize()
-            .expect("canonicalize work_dir");
-        assert!(
-            self.work_dir.exists(),
-            "work_dir does not exist: {}",
-            self.work_dir.display()
-        );
-        self
+    /// - if canonicalizing the path fails
+    pub fn set_work_dir(&mut self, path: impl AsRef<Path>) -> Result<&mut Self, Error> {
+        let path = self.dir_path.join(path);
+        if !path.exists() {
+            return Err(Error::PathNotFound(path));
+        }
+        self.work_dir = canonicalize_path(path)?;
+        Ok(self)
     }
 
     /// Create a child folder within the temporary directory.
@@ -175,17 +185,15 @@ impl TestEnv {
     /// the env file is created.
     ///
     /// Will create parent directories if they are missing.
-    pub fn add_child_dir(&mut self, path: impl AsRef<Path>) -> &mut Self {
+    ///
+    /// ## Errors
+    ///
+    /// - if creating the directory fails
+    pub fn add_child_dir(&mut self, path: impl AsRef<Path>) -> Result<&mut Self, Error> {
         let path = path.as_ref();
         let child_dir = self.temp_path().join(path);
-        if let Err(err) = fs::create_dir_all(child_dir) {
-            panic!(
-                "unable to create child directory: `{}` in `{}`: {err}",
-                path.display(),
-                self.temp_path().display()
-            );
-        }
-        self
+        fs::create_dir_all(&child_dir).map_err(|err| Error::CreatingChildDir(child_dir, err))?;
+        Ok(self)
     }
 
     /// Reference to the path of the temporary directory.
@@ -214,30 +222,24 @@ impl TestEnv {
         self
     }
 
-    fn assert_env_file_path_is_valid(&self, path: &Path) {
-        assert!(
-            path != self.temp_path(),
-            "path cannot be empty or the same as the temporary directory"
-        );
-        assert!(
-            !self.env_files.iter().any(|f| f.path == path),
-            "env_file already in testenv: {}",
-            path.display()
-        );
+    fn check_env_file_path_is_valid(&self, path: &Path) -> Result<(), Error> {
+        if path == self.temp_path() {
+            return Err(Error::EnvFilePathSameAsTempDir);
+        }
+        if self.env_files.iter().any(|f| f.path == path) {
+            return Err(Error::EnvFileConflict(path.to_owned()));
+        }
+        Ok(())
     }
 
-    fn assert_env_var_is_valid(&self, key: &str) {
-        assert!(!key.is_empty(), "key cannot be empty");
-        assert!(
-            !self.env_vars.contains_key(key),
-            "key already in testenv: {key}"
-        );
-    }
-}
-
-impl Default for TestEnv {
-    fn default() -> Self {
-        Self::new()
+    fn check_env_var_is_valid(&self, key: &str) -> Result<(), Error> {
+        if key.is_empty() {
+            return Err(Error::KeyEmpty);
+        }
+        if self.env_vars.contains_key(key) {
+            return Err(Error::KeyConflict(key.to_owned()));
+        }
+        Ok(())
     }
 }
 
@@ -264,36 +266,42 @@ fn reset_env(original_env: &EnvMap) {
 /// Create an environment to run tests in.
 ///
 /// Writes the env files, sets the working directory, and sets environment vars.
-fn create_env(testenv: &TestEnv) {
-    env::set_current_dir(&testenv.work_dir).expect("setting working directory");
+fn create_env(testenv: &TestEnv) -> Result<(), Error> {
+    env::set_current_dir(&testenv.work_dir)
+        .map_err(|err| Error::SettingCurrentDir(testenv.work_dir.clone(), err))?;
 
     for EnvFile { path, contents } in &testenv.env_files {
-        create_env_file(path, contents);
+        create_env_file(path, contents)?;
     }
 
     for (key, value) in &testenv.env_vars {
         env::set_var(key, value);
     }
+
+    Ok(())
 }
 
 /// Create an env file for use in tests.
-fn create_env_file(path: &Path, contents: &[u8]) {
-    fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
-        let mut file = fs::File::create(path)?;
-        file.write_all(contents)?;
-        file.sync_all()
+fn create_env_file(path: &Path, contents: &[u8]) -> Result<(), Error> {
+    if path.exists() {
+        return Err(Error::EnvFileConflict(path.to_owned()));
     }
 
-    assert!(
-        !path.exists(),
-        "env_file `{}` already exists",
-        path.display()
-    );
-    // inner function to group together io::Results
+    create_env_file_inner(path, contents)
+        .map_err(|err| Error::CreatingEnvFile(path.to_owned(), err))?;
 
-    // call inner function
-    if let Err(err) = create_env_file_inner(path, contents) {
-        // handle any io::Result::Err
-        panic!("error creating env_file `{}`: {err}", path.display());
-    }
+    Ok(())
+}
+
+// inner function to group together io::Results
+fn create_env_file_inner(path: &Path, contents: &[u8]) -> io::Result<()> {
+    let mut file = fs::File::create(path)?;
+    file.write_all(contents)?;
+    file.sync_all()
+}
+
+fn canonicalize_path(path: impl AsRef<Path>) -> Result<PathBuf, Error> {
+    let path = path.as_ref();
+    path.canonicalize()
+        .map_err(|err| Error::CanonicalizingPath(path.to_owned(), err))
 }

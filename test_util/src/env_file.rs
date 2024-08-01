@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::Error;
+
 #[derive(Debug, Clone)]
 /// Simple path and byte contents representing a `.env` file
 pub struct EnvFile {
@@ -29,11 +31,11 @@ impl EnvFileContents {
 
     /// Build a string from the contents of the builder.
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// If the contents of the builder is not valid UTF-8.
-    pub fn build_string(&self) -> String {
-        String::from_utf8(self.contents.clone()).expect("valid UTF-8")
+    pub fn build_string(&self) -> Result<String, Error> {
+        Ok(String::from_utf8(self.contents.clone())?)
     }
 
     /// Transform the builder into a byte vector.
@@ -43,11 +45,11 @@ impl EnvFileContents {
 
     /// Transform the builder into a string.
     ///
-    /// ## Panics
+    /// ## Errors
     ///
     /// If the contents of the builder is not valid UTF-8.
-    pub fn into_owned_string(self) -> String {
-        String::from_utf8(self.contents).expect("valid UTF-8")
+    pub fn into_owned_string(self) -> Result<String, Error> {
+        Ok(String::from_utf8(self.contents)?)
     }
 
     /// Get a reference to the contents of the builder.
