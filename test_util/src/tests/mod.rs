@@ -1,11 +1,18 @@
+#![allow(dead_code)]
+
 use std::path::Path;
 
 use super::*;
 
-mod default_env;
-mod env_file;
 mod env_file_builder;
 mod testenv;
+
+const TEST_KEY: &str = "TEST_KEY";
+const TEST_VALUE: &str = "test_val";
+
+const EXISTING_KEY: &str = "EXISTING_KEY";
+const EXISTING_VALUE: &str = "loaded_from_env";
+const OVERRIDING_VALUE: &str = "loaded_from_file";
 
 const CUSTOM_VARS: &[(&str, &str)] = &[
     ("CUSTOM_KEY_1", "CUSTOM_VALUE_1"),
@@ -14,7 +21,7 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
 
 const DOTENV_EXPECT: &str = "TestEnv should have .env file";
 
-fn assert_env_files_in_testenv(testenv: &TestEnv) {
+fn test_env_files(testenv: &TestEnv) {
     let files = testenv.env_files();
 
     test_in_env(testenv, || {
@@ -22,6 +29,24 @@ fn assert_env_files_in_testenv(testenv: &TestEnv) {
             assert_env_file(path, contents);
         }
     });
+}
+
+fn test_keys_not_set(testenv: &TestEnv) {
+    test_in_env(testenv, assert_test_keys_unset);
+}
+
+fn test_env_vars(testenv: &TestEnv, vars: &[(&str, &str)]) {
+    test_in_env(testenv, || assert_env_vars(vars));
+}
+
+fn test_path_exists(testenv: &TestEnv, path: impl AsRef<Path>) {
+    let path = testenv.temp_path().join(path.as_ref());
+    assert!(path.exists(), "{} should exist in testenv", path.display());
+}
+
+fn assert_test_keys_unset() {
+    assert_env_var_unset(TEST_KEY);
+    assert_env_var_unset(EXISTING_KEY);
 }
 
 fn assert_env_file(path: &Path, expected: &[u8]) {
@@ -38,22 +63,24 @@ fn assert_env_file(path: &Path, expected: &[u8]) {
     );
 }
 
-fn assert_default_keys_not_set_in_testenv(testenv: &TestEnv) {
-    test_in_env(testenv, assert_default_keys_unset);
-}
-
-fn assert_env_vars_in_testenv(testenv: &TestEnv, vars: &[(&str, &str)]) {
-    test_in_env(testenv, || assert_env_vars(vars));
-}
-
-fn assert_path_exists_in_testenv(testenv: &TestEnv, path: impl AsRef<Path>) {
-    let path = testenv.temp_path().join(path.as_ref());
-    assert!(path.exists(), "{} should exist in testenv", path.display());
-}
-
 fn expected_env_file(env_vars: &[(&str, &str)]) -> String {
     let mut env_file = String::new();
     for (key, value) in env_vars {
+        env_file.push_str(key);
+        env_file.push('=');
+        env_file.push_str(value);
+        env_file.push('\n');
+    }
+    env_file
+}
+
+fn create_test_env_file() -> String {
+    format!("{TEST_KEY}={TEST_VALUE}\n{EXISTING_KEY}={OVERRIDING_VALUE}")
+}
+
+fn create_custom_env_file() -> String {
+    let mut env_file = String::new();
+    for (key, value) in CUSTOM_VARS {
         env_file.push_str(key);
         env_file.push('=');
         env_file.push_str(value);

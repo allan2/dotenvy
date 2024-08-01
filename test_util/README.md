@@ -63,32 +63,6 @@ fn dotenv_override_existing_key() {
 }
 ```
 
-### Default TestEnv
-
-Use the default `TestEnv` for simple tests.
-
-```rust
-use dotenvy_test_util::*;
-use dotenvy::dotenv;
-
-#[test]
-fn dotenv_works() {
-    test_in_default_env(|| {
-        dotenv().expect(".env should be loaded");        
-        assert_env_var(DEFAULT_KEY, DEFAULT_VAL);
-    })  
-}
-```
-
-The default `TestEnv` has 1 existing environment variable:
-
-- `DEFAULT_EXISTING_KEY` set to `DEFAULT_EXISTING_VAL`
-
-It has an env file `.env` that sets:
-
-- `DEFAULT_TEST_KEY` to `DEFAULT_TEST_VAL`
-- `DEFAULT_EXISTING_KEY` to `DEFAULT_OVERRIDING_VAL`
-
 ### Customised Envfile
 
 Use the `EnvFileBuilder` to manipulate the content of an env file. Useful

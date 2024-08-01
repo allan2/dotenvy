@@ -18,13 +18,12 @@
 //! - multiple `.env` files,
 //! - custom env file name/path.
 //!
-//! Use the `create_` helper functions, such as [`create_custom_env_file`], to
-//! generate the `.env` file contents. If you need more control of the
-//! env file's bytes, use the [`EnvFileBuilder`].
+//! Customize your env files using [`EnvFileBuilder`].
 //!
-//! In your tests, call the [`dotenvy`] API, then make use of the `assert_`
-//! helpers, such as [`assert_env_var`] and [`assert_env_var_unset`], to check
-//! the state of the environment.
+//! In your tests, call your environment altering functions such as the
+//! [`dotenvy`] API, then make use of the `assert_` helpers, such as
+//! [`assert_env_var`] and [`assert_env_var_unset`], to check the state of
+//! the environment.
 //!
 //! ## Example
 //!
@@ -47,7 +46,7 @@
 //!     // with an env file that overrides it
 //!     testenv.add_env_file(
 //!         ".env",
-//!         create_custom_env_file(&[(EXISTING_KEY, OVERRIDING_VAL)]),
+//!         format!("{EXISTING_KEY}={OVERRIDING_VAL}"),
 //!     );
 //!
 //!     // execute a closure in the testing environment
@@ -71,15 +70,3 @@ mod tests;
 pub use assertions::*;
 pub use env_file::*;
 pub use testenv::*;
-
-/// Default key used in env file
-pub const DEFAULT_TEST_KEY: &str = "DEFAULT_TEST_KEY";
-/// Default value used in env file
-pub const DEFAULT_TEST_VALUE: &str = "default_test_val";
-
-/// Default existing key set before test is run
-pub const DEFAULT_EXISTING_KEY: &str = "DEFAULT_EXISTING_KEY";
-/// Default existing value set before test is run
-pub const DEFAULT_EXISTING_VALUE: &str = "loaded_from_env";
-/// Default overriding value in env file
-pub const DEFAULT_OVERRIDING_VALUE: &str = "loaded_from_file";

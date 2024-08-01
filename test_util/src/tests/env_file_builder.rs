@@ -15,28 +15,25 @@ fn default_builds_empty() {
 #[test]
 fn add_key_empty_value() {
     let mut efb = EnvFileBuilder::new();
-    efb.add_key_value(DEFAULT_TEST_KEY, "");
-    let expected = format!("{DEFAULT_TEST_KEY}=\n");
+    efb.add_key_value(TEST_KEY, "");
+    let expected = format!("{TEST_KEY}=\n");
     assert_eq!(expected, efb);
 }
 
 #[test]
 fn add_key_value() {
     let mut efb = EnvFileBuilder::new();
-    efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
-    let expected = format!("{DEFAULT_TEST_KEY}={DEFAULT_TEST_VALUE}\n");
+    efb.add_key_value(TEST_KEY, TEST_VALUE);
+    let expected = format!("{TEST_KEY}={TEST_VALUE}\n");
     assert_eq!(expected, efb);
 }
 
 #[test]
 fn add_multiple_key_values() {
     let mut efb = EnvFileBuilder::new();
-    efb.add_key_value(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
-    efb.add_key_value(DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE);
-    let expected = expected_env_file(&[
-        (DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE),
-        (DEFAULT_EXISTING_KEY, DEFAULT_OVERRIDING_VALUE),
-    ]);
+    efb.add_key_value(TEST_KEY, TEST_VALUE);
+    efb.add_key_value(EXISTING_KEY, OVERRIDING_VALUE);
+    let expected = expected_env_file(&[(TEST_KEY, TEST_VALUE), (EXISTING_KEY, OVERRIDING_VALUE)]);
     assert_eq!(expected, efb);
 }
 
@@ -86,22 +83,22 @@ fn add_strln() {
 
 #[test]
 fn from_vec_u8() {
-    let vec: Vec<u8> = Vec::from(create_default_env_file());
+    let vec: Vec<u8> = Vec::from(create_test_env_file());
     let efb = EnvFileBuilder::from(vec);
-    assert_eq!(create_default_env_file(), efb);
+    assert_eq!(create_test_env_file(), efb);
 }
 
 #[test]
 fn to_vec_u8() {
     let mut efb = EnvFileBuilder::new();
-    efb.add_str(create_default_env_file().as_str());
+    efb.add_str(create_test_env_file().as_str());
     let vec = Vec::from(efb);
-    let expected = create_default_env_file().into_bytes();
+    let expected = create_test_env_file().into_bytes();
     assert_eq!(expected, vec);
 }
 
 #[test]
 fn from_string() {
-    let efb = EnvFileBuilder::from(create_default_env_file());
-    assert_eq!(create_default_env_file(), efb);
+    let efb = EnvFileBuilder::from(create_test_env_file());
+    assert_eq!(create_test_env_file(), efb);
 }

@@ -1,4 +1,3 @@
-use super::{create_default_env_file, DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE};
 use once_cell::sync::OnceCell;
 use std::{
     collections::HashMap,
@@ -24,8 +23,6 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 /// Creation methods:
 /// - [`TestEnv::init`]: blank environment (no env file)
 /// - [`TestEnv::init_with_env_file`]: blank environment with a custom `.env`
-/// - [`TestEnv::default`]: default testing environment (1 existing var and 2
-///       set in a `.env` file)
 #[derive(Debug)]
 pub struct TestEnv {
     // Temporary directory that will be deleted on drop
@@ -61,39 +58,6 @@ where
     test();
     reset_env(&original_env);
     // drop the lock
-}
-
-/// Run a test closure within the default test environment.
-///
-/// Resets the environment variables, creates the default [`TestEnv`], then runs
-/// the test closure. Ensures only one thread has access to the process
-/// environment.
-///
-/// The default testing environment sets an existing environment variable
-/// `DEFAULT_EXISTING_KEY`, which is set to `loaded_from_env`. It also creates a
-/// `.env` file with the two lines:
-///
-/// ```ini
-/// DEFAULT_TEST_KEY=default_test_val
-/// DEFAULT_EXISTING_KEY=loaded_from_file
-/// ```
-///
-/// Notice that file has the potential to override `DEFAULT_EXISTING_KEY` depending
-/// on the what's being tested.
-pub fn test_in_default_env<F>(test: F)
-where
-    F: FnOnce(),
-{
-    let testenv = TestEnv::default();
-    test_in_env(&testenv, test);
-}
-
-/// Create a [`TestEnv`] without an env file, but with the
-/// default existing environment variable.
-pub fn create_testenv_with_default_var() -> TestEnv {
-    let mut testenv = TestEnv::init();
-    testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
-    testenv
 }
 
 impl TestEnv {
@@ -278,10 +242,7 @@ impl TestEnv {
 
 impl Default for TestEnv {
     fn default() -> Self {
-        let mut testenv = Self::init();
-        testenv.add_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
-        testenv.add_env_file(".env", create_default_env_file());
-        testenv
+        Self::init()
     }
 }
 

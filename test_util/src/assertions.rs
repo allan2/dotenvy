@@ -1,4 +1,3 @@
-use super::*;
 use std::env::{self, VarError};
 
 /// Assert multiple environment variables are set and have the expected
@@ -13,8 +12,8 @@ use std::env::{self, VarError};
 /// ```no_run
 /// # use dotenvy_test_util::assert_env_vars;
 /// assert_env_vars(&[
-///     ("DEFAULT_TEST_KEY", "default_test_val"),
-///     ("DEFAULT_EXISTING_KEY", "loaded_from_env"),
+///     ("TEST_KEY", "test_val"),
+///     ("EXISTING_KEY", "loaded_from_env"),
 /// ]);
 /// ```
 pub fn assert_env_vars(vars: &[(&str, &str)]) {
@@ -48,22 +47,4 @@ pub fn assert_env_var_unset(key: &str) {
         ),
         _ => (),
     }
-}
-
-/// Assert default testing environment variables are not set.
-pub fn assert_default_keys_unset() {
-    assert_env_var_unset(DEFAULT_EXISTING_KEY);
-    assert_env_var_unset(DEFAULT_TEST_KEY);
-}
-
-/// Assert default testing environment variables are set.
-/// Assuming the default env file is loaded.
-pub fn assert_default_keys() {
-    assert_env_var(DEFAULT_TEST_KEY, DEFAULT_TEST_VALUE);
-    assert_default_existing_var();
-}
-
-/// Assert default existing environment variable is set.
-pub fn assert_default_existing_var() {
-    assert_env_var(DEFAULT_EXISTING_KEY, DEFAULT_EXISTING_VALUE);
 }
