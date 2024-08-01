@@ -23,8 +23,8 @@ static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
 /// the working directory to run the test from.
 ///
 /// Creation methods:
-/// - [`TestEnv::init`]: blank environment (no env file)
-/// - [`TestEnv::init_with_env_file`]: blank environment with a custom `.env`
+/// - [`TestEnv::new`]: blank environment (no env file)
+/// - [`TestEnv::new_with_env_file`]: blank environment with a custom `.env`
 #[derive(Debug)]
 pub struct TestEnv {
     // Temporary directory that will be deleted on drop
@@ -60,7 +60,7 @@ impl TestEnv {
     ///
     /// No env file or pre-existing variables set. The working directory is the
     /// created temporary directory.
-    pub fn init() -> Self {
+    pub fn new() -> Self {
         let tempdir = tempdir().expect("create tempdir");
         let dir_path = tempdir
             .path()
@@ -79,8 +79,8 @@ impl TestEnv {
     ///
     /// No pre-existing env vars set. The env file path is set to `.env`. The
     /// working directory is the created temporary directory.
-    pub fn init_with_env_file(contents: impl Into<Vec<u8>>) -> Self {
-        let mut testenv = Self::init();
+    pub fn new_with_env_file(contents: impl Into<Vec<u8>>) -> Self {
+        let mut testenv = Self::new();
         testenv.add_env_file(".env", contents);
         testenv
     }
@@ -237,7 +237,7 @@ impl TestEnv {
 
 impl Default for TestEnv {
     fn default() -> Self {
-        Self::init()
+        Self::new()
     }
 }
 

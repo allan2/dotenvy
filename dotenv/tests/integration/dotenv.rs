@@ -12,7 +12,7 @@ EXISTING_KEY=loaded_from_file
 
 #[test]
 fn dotenv_ok() {
-    let mut testenv = TestEnv::init();
+    let mut testenv = TestEnv::new();
     testenv.add_env_file(".env", TEST_ENV_FILE);
     testenv.add_env_var(EXISTING_KEY, EXISTING_VALUE);
     test_in_env(&testenv, || {

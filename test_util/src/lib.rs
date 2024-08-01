@@ -38,7 +38,7 @@
 //! #[test]
 //! fn dotenv_override_existing_key() {
 //!     // setup testing environment
-//!     let mut testenv = TestEnv::init();
+//!     let mut testenv = TestEnv::new();
 //!
 //!     // with an existing environment variable
 //!     testenv.add_env_var(EXISTING_KEY, EXISTING_VAL);
