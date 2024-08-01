@@ -50,12 +50,14 @@ where
     let locker = get_env_locker();
     // ignore a poisoned mutex
     // we expect some tests may panic to indicate a failure
-    let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
     // we reset the environment anyway upon acquiring the lock
-    reset_env(&original_env);
-    create_env(testenv)?;
+    let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
+    // Safety: we hold the lock so no other thread can access the environment
+    unsafe { reset_env(&original_env) };
+    setup_files(testenv)?;
+    unsafe { setup_env(testenv.env_vars()) };
     test();
-    reset_env(&original_env);
+    unsafe { reset_env(&original_env) };
     Ok(())
     // drop the lock
 }
@@ -252,7 +254,11 @@ fn get_env_locker() -> Arc<Mutex<EnvMap>> {
 }
 
 /// Reset the process' env vars back to what was in `original_env`.
-fn reset_env(original_env: &EnvMap) {
+///
+/// ## Safety
+///
+/// This function should only be called in a single-threaded context.
+unsafe fn reset_env(original_env: &EnvMap) {
     // remove keys if they weren't in the original environment
     env::vars()
         .filter(|(key, _)| !original_env.contains_key(key))
@@ -263,19 +269,24 @@ fn reset_env(original_env: &EnvMap) {
         .for_each(|(key, value)| env::set_var(key, value));
 }
 
+/// ## Safety
+///
+/// This function should only be called in a single-threaded context.
+unsafe fn setup_env(env_vars: &EnvMap) {
+    for (key, value) in env_vars {
+        env::set_var(key, value);
+    }
+}
+
 /// Create an environment to run tests in.
 ///
 /// Writes the env files, sets the working directory, and sets environment vars.
-fn create_env(testenv: &TestEnv) -> Result<(), Error> {
+fn setup_files(testenv: &TestEnv) -> Result<(), Error> {
     env::set_current_dir(&testenv.work_dir)
         .map_err(|err| Error::SettingCurrentDir(testenv.work_dir.clone(), err))?;
 
     for EnvFile { path, contents } in &testenv.env_files {
         create_env_file(path, contents)?;
-    }
-
-    for (key, value) in &testenv.env_vars {
-        env::set_var(key, value);
     }
 
     Ok(())
