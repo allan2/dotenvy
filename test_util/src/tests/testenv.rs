@@ -9,13 +9,15 @@ mod init {
     #[test]
     fn vars_state() {
         let testenv = TestEnv::init();
-        let existing_vars: HashMap<String, String> = std::env::vars().collect();
-        dbg!("existing vars: {:?}", &existing_vars);
+        let mut vars: HashMap<String, String> = HashMap::new();
         test_in_env(&testenv, || {
-            for (key, value) in &existing_vars {
-                assert_env_var(key, value);
+            for (k, v) in std::env::vars() {
+                vars.insert(k, v);
             }
         });
+        for (k, v) in &vars {
+            assert_env_var(k.as_str(), v.as_str());
+        }
     }
 
     #[test]
