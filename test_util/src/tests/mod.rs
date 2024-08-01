@@ -16,8 +16,6 @@ const CUSTOM_VARS: &[(&str, &str)] = &[
     ("CUSTOM_KEY_2", "CUSTOM_VALUE_2"),
 ];
 
-const DOTENV_EXPECT: &str = "TestEnv should have .env file";
-
 fn test_env_files(testenv: &TestEnv) -> Result<(), Error> {
     let files = testenv.env_files();
 

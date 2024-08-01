@@ -1,5 +1,4 @@
 use super::*;
-use dotenvy::dotenv;
 
 mod new {
     use std::collections::HashMap;
@@ -28,7 +27,6 @@ mod new {
 
         test_in_env(&testenv, || {
             assert!(!env_file_path.exists());
-            assert!(dotenv().is_err());
         })
     }
 
@@ -70,18 +68,6 @@ mod new_with_env_file {
     }
 
     #[test]
-    fn env_file_loaded_vars_state() -> Result<(), Error> {
-        let testenv = testenv_with_test_env_file()?;
-        test_in_env(&testenv, || {
-            dotenv().expect(DOTENV_EXPECT);
-            // dotenv() does not override existing var
-            // but existing key is not set in this testenv
-            assert_env_var(EXISTING_KEY, OVERRIDING_VALUE);
-            assert_env_var(TEST_KEY, TEST_VALUE);
-        })
-    }
-
-    #[test]
     fn custom_env_file_vars_state() -> Result<(), Error> {
         let testenv = testenv_with_custom_env_file()?;
         test_in_env(&testenv, || {
@@ -99,43 +85,15 @@ mod new_with_env_file {
     }
 
     #[test]
-    fn custom_env_file_loaded_vars_state() -> Result<(), Error> {
-        let testenv = testenv_with_custom_env_file()?;
-        test_in_env(&testenv, || {
-            dotenv().expect(DOTENV_EXPECT);
-            assert_test_keys_unset();
-            assert_env_vars(CUSTOM_VARS);
-        })
-    }
-
-    #[test]
     fn empty_env_file_exists() -> Result<(), Error> {
         let testenv = testenv_with_empty_env_file()?;
         test_env_files(&testenv)
     }
 
     #[test]
-    fn empty_env_file_loaded_vars_state() -> Result<(), Error> {
-        let testenv = testenv_with_empty_env_file()?;
-        test_in_env(&testenv, || {
-            dotenv().expect(DOTENV_EXPECT);
-            assert_test_keys_unset();
-        })
-    }
-
-    #[test]
     fn custom_bom_env_file_exists() -> Result<(), Error> {
         let testenv = testenv_with_custom_bom_env_file()?;
         test_env_files(&testenv)
-    }
-
-    #[test]
-    fn custom_bom_env_file_loaded_vars_state() -> Result<(), Error> {
-        let testenv = testenv_with_custom_bom_env_file()?;
-        test_in_env(&testenv, || {
-            dotenv().expect(DOTENV_EXPECT);
-            assert_env_var(TEST_KEY, TEST_VALUE);
-        })
     }
 
     fn testenv_with_test_env_file() -> Result<TestEnv, Error> {

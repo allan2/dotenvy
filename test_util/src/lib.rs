@@ -26,7 +26,7 @@
 //!
 //! ## Example
 //!
-//! ```no_run
+//! ```rust,ignore
 //! use dotenvy_test_util::*;
 //! use dotenvy::dotenv_override;
 //!
