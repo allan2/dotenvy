@@ -4,7 +4,7 @@ use std::path::Path;
 
 use super::*;
 
-mod env_file_builder;
+mod env_file;
 mod testenv;
 
 const TEST_KEY: &str = "TEST_KEY";

@@ -8,6 +8,8 @@ use std::{
 };
 use tempfile::{tempdir, TempDir};
 
+use crate::EnvFile;
+
 /// Env var convenience type.
 type EnvMap = HashMap<String, String>;
 
@@ -31,13 +33,6 @@ pub struct TestEnv {
     work_dir: PathBuf,
     env_vars: EnvMap,
     env_files: Vec<EnvFile>,
-}
-
-#[derive(Debug, Clone)]
-/// Simple path and byte contents representing a `.env` file
-pub struct EnvFile {
-    pub path: PathBuf,
-    pub contents: Vec<u8>,
 }
 
 /// Run a test closure within a test environment.

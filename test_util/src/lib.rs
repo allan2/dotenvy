@@ -18,7 +18,7 @@
 //! - multiple `.env` files,
 //! - custom env file name/path.
 //!
-//! Customize your env files using [`EnvFileBuilder`].
+//! Customize your env files using [`EnvFileContents`].
 //!
 //! In your tests, call your environment altering functions such as the
 //! [`dotenvy`] API, then make use of the `assert_` helpers, such as
