@@ -65,7 +65,7 @@ fn dotenv_override_existing_key() -> Result<(), Error> {
 
 ### Customised Envfile
 
-Use the `EnvFileBuilder` to manipulate the content of an env file. Useful
+Use the `EnvFileContents` to manipulate the content of an env file. Useful
 for byte-order-mark(BOM) testing, and other edge cases.
 
 ```rust
@@ -74,11 +74,11 @@ use dotenvy::dotenv;
 
 #[test]
 fn comments_ignored_in_utf8bom_env_file() -> Result<(), Error> {
-    let mut efb = EnvFileBuilder::new();
-    efb.insert_utf8_bom();
-    efb.add_strln("# TEST_KEY=TEST_VAL");
+    let mut efc = EnvFileContents::new();
+    efc.push_bytes(&[0xEF, 0xBB, 0xBF]);
+    efc.push_str("# TEST_KEY=TEST_VAL\n");
 
-    let testenv = TestEnv::init_with_env_file(efb)?;
+    let testenv = TestEnv::init_with_env_file(efc)?;
 
     test_in_env(&testenv, || {
         dotenv().expect(".env should be loaded");
