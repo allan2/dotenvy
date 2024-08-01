@@ -59,6 +59,7 @@ where
     reset_env(&original_env);
     create_env(testenv);
     test();
+    reset_env(&original_env);
     // drop the lock
 }
 
