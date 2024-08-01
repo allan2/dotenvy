@@ -60,53 +60,25 @@ impl EnvFileContents {
         self.contents.is_empty()
     }
 
-    /// Add a slice of key-value pairs, separated by newlines.
-    ///
-    /// Includes a trailing newline.
-    pub fn add_vars(&mut self, env_vars: &[(&str, &str)]) -> &mut Self {
-        let mut many = String::new();
-        for (key, value) in env_vars {
-            many.push_str(key);
-            many.push('=');
-            many.push_str(value);
-            many.push('\n');
-        }
-        self.add_str(&many);
-        self
+    /// Append a key-value pair and newline
+    pub fn add_var(&mut self, key: &str, value: &str) -> &mut Self {
+        self.push_str(&format!("{key}={value}\n"))
     }
 
-    /// Add a key-value pair and newline
-    pub fn add_key_value(&mut self, key: &str, value: &str) -> &mut Self {
-        self.add_strln(&format!("{key}={value}"))
+    /// Apeend a string
+    pub fn push_str(&mut self, s: &str) -> &mut Self {
+        self.push_bytes(s.as_bytes())
     }
 
-    /// Add a string without a newline
-    pub fn add_str(&mut self, s: &str) -> &mut Self {
-        self.add_bytes(s.as_bytes())
-    }
-
-    /// Add a string with a newline
-    pub fn add_strln(&mut self, line: &str) -> &mut Self {
-        self.add_str(line).add_byte(b'\n')
-    }
-
-    /// Add a byte slice
-    pub fn add_bytes(&mut self, bytes: &[u8]) -> &mut Self {
+    /// Append a byte slice
+    pub fn push_bytes(&mut self, bytes: &[u8]) -> &mut Self {
         self.contents.extend_from_slice(bytes);
         self
     }
 
-    /// Add a single byte
-    pub fn add_byte(&mut self, byte: u8) -> &mut Self {
+    /// Append a single byte
+    pub fn push(&mut self, byte: u8) -> &mut Self {
         self.contents.push(byte);
-        self
-    }
-
-    /// Insert the UTF-8 Byte Order Mark at the beginning of the file
-    pub fn insert_utf8_bom(&mut self) -> &mut Self {
-        // https://www.compart.com/en/unicode/U+FEFF
-        let bom = b"\xEF\xBB\xBF";
-        self.contents.splice(0..0, bom.iter().copied());
         self
     }
 }

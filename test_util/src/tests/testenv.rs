@@ -149,10 +149,11 @@ mod init_with_env_file {
     }
 
     fn init_custom_bom_env_file_testenv() -> TestEnv {
-        let mut efb = EnvFileContents::new();
-        efb.add_key_value(TEST_KEY, TEST_VALUE);
-        efb.insert_utf8_bom();
-        let env_file = efb.into_owned_string();
+        let mut efc = EnvFileContents::new();
+        let bom = b"\xEF\xBB\xBF";
+        efc.push_bytes(bom);
+        efc.add_var(TEST_KEY, TEST_VALUE);
+        let env_file = efc.into_owned_string();
         TestEnv::init_with_env_file(env_file)
     }
 }
