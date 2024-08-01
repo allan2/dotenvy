@@ -55,19 +55,19 @@ mod new_with_env_file {
 
     #[test]
     fn env_file_vars_state() {
-        let testenv = new_test_env_file_testenv();
+        let testenv = testenv_with_test_env_file();
         test_keys_not_set(&testenv);
     }
 
     #[test]
     fn env_file_exists() {
-        let testenv = new_test_env_file_testenv();
+        let testenv = testenv_with_test_env_file();
         test_env_files(&testenv);
     }
 
     #[test]
     fn env_file_loaded_vars_state() {
-        let testenv = new_test_env_file_testenv();
+        let testenv = testenv_with_test_env_file();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             // dotenv() does not override existing var
@@ -79,7 +79,7 @@ mod new_with_env_file {
 
     #[test]
     fn custom_env_file_vars_state() {
-        let testenv = new_custom_env_file_testenv();
+        let testenv = testenv_with_custom_env_file();
         test_in_env(&testenv, || {
             assert_test_keys_unset();
             for (key, _) in CUSTOM_VARS {
@@ -90,13 +90,13 @@ mod new_with_env_file {
 
     #[test]
     fn custom_env_file_exists() {
-        let testenv = new_custom_env_file_testenv();
+        let testenv = testenv_with_custom_env_file();
         test_env_files(&testenv);
     }
 
     #[test]
     fn custom_env_file_loaded_vars_state() {
-        let testenv = new_custom_env_file_testenv();
+        let testenv = testenv_with_custom_env_file();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_test_keys_unset();
@@ -106,13 +106,13 @@ mod new_with_env_file {
 
     #[test]
     fn empty_env_file_exists() {
-        let testenv = new_empty_env_file_testenv();
+        let testenv = testenv_with_empty_env_file();
         test_env_files(&testenv);
     }
 
     #[test]
     fn empty_env_file_loaded_vars_state() {
-        let testenv = new_empty_env_file_testenv();
+        let testenv = testenv_with_empty_env_file();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_test_keys_unset();
@@ -121,34 +121,34 @@ mod new_with_env_file {
 
     #[test]
     fn custom_bom_env_file_exists() {
-        let testenv = new_custom_bom_env_file_testenv();
+        let testenv = testenv_with_custom_bom_env_file();
         test_env_files(&testenv);
     }
 
     #[test]
     fn custom_bom_env_file_loaded_vars_state() {
-        let testenv = new_custom_bom_env_file_testenv();
+        let testenv = testenv_with_custom_bom_env_file();
         test_in_env(&testenv, || {
             dotenv().expect(DOTENV_EXPECT);
             assert_env_var(TEST_KEY, TEST_VALUE);
         });
     }
 
-    fn new_test_env_file_testenv() -> TestEnv {
+    fn testenv_with_test_env_file() -> TestEnv {
         let env_file = create_test_env_file();
         TestEnv::new_with_env_file(env_file)
     }
 
-    fn new_custom_env_file_testenv() -> TestEnv {
+    fn testenv_with_custom_env_file() -> TestEnv {
         let env_file = create_custom_env_file();
         TestEnv::new_with_env_file(env_file)
     }
 
-    fn new_empty_env_file_testenv() -> TestEnv {
+    fn testenv_with_empty_env_file() -> TestEnv {
         TestEnv::new_with_env_file([])
     }
 
-    fn new_custom_bom_env_file_testenv() -> TestEnv {
+    fn testenv_with_custom_bom_env_file() -> TestEnv {
         let mut efc = EnvFileContents::new();
         let bom = b"\xEF\xBB\xBF";
         efc.push_bytes(bom);
