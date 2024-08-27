@@ -8,7 +8,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Changed
-
+- **breaking**: dotenvy CLI uses `from_path` instead of `from_filename`
+- **breaking**: dotenvy CLI defaults to *./.env*, no longer traversing parent directories.
+- **breaking**: dotenvy CLI exits with code 2 instead of code 1 if the external command is omitted
 - Fix doctests on windows not compiling ([PR #79](https://github.com/allan2/dotenvy/pull/79) by [vallentin](https://github.com/vallentin).
 - MSRV updated to 1.68.0
 

@@ -1,5 +1,17 @@
-use clap::Arg;
-use std::{os::unix::process::CommandExt, process};
+//! A CLI tool that loads a *.env* file before running a command.
+//!
+//! # Example
+//!
+//! Given a file *env.txt* with body `FOO=bar`, running
+//!
+//! ```sh
+//! dotenvy -f env.txt printenv FOO
+//! ```
+//!
+//! will output `bar`.
+use clap::{Parser, Subcommand};
+use core::error;
+use std::{os::unix::process::CommandExt, path::PathBuf, process};
 
 macro_rules! die {
     ($fmt:expr) => ({
@@ -12,55 +24,54 @@ macro_rules! die {
     });
 }
 
-fn make_command(name: &str, args: Vec<&str>) -> process::Command {
-    let mut command = process::Command::new(name);
-
+fn mk_cmd(program: &str, args: &[String]) -> process::Command {
+    let mut cmd = process::Command::new(program);
     for arg in args {
-        command.arg(arg);
+        cmd.arg(arg);
     }
-
-    command
+    cmd
 }
 
-fn main() {
-    let matches = clap::Command::new("dotenvy")
-        .about("Run a command using the environment in a .env file")
-        .override_usage("dotenvy <COMMAND> [ARGS]...")
-        .allow_external_subcommands(true)
-        .arg_required_else_help(true)
-        .arg(
-            Arg::new("FILE")
-                .short('f')
-                .long("file")
-                .help("Use a specific .env file (defaults to .env)"),
-        )
-        .get_matches();
+#[derive(Parser)]
+#[command(
+    name = "dotenvy",
+    about = "Run a command using an environment loaded from a .env file",
+    arg_required_else_help = true,
+    allow_external_subcommands = true
+)]
+struct Cli {
+    #[arg(short, long, default_value = "./.env")]
+    file: PathBuf,
+    #[clap(subcommand)]
+    subcmd: Subcmd,
+}
 
-    match matches.get_one::<String>("FILE") {
-        None => dotenvy::dotenv(),
-        Some(file) => dotenvy::from_filename(file),
+#[derive(Subcommand)]
+enum Subcmd {
+    #[clap(external_subcommand)]
+    External(Vec<String>),
+}
+
+fn main() -> Result<(), Box<dyn error::Error>> {
+    let cli = Cli::parse();
+
+    // load the file
+    if let Err(e) = dotenvy::from_path(&cli.file) {
+        die!("Failed to load {path}: {e}", path = cli.file.display());
     }
-    .unwrap_or_else(|e| die!("error: failed to load environment: {}", e));
 
-    let mut command = match matches.subcommand() {
-        Some((name, matches)) => {
-            let args = matches
-                .get_many("")
-                .map(|v| v.copied().collect())
-                .unwrap_or(Vec::new());
+    // prepare the command
+    let Subcmd::External(args) = cli.subcmd;
+    let (program, args) = args.split_first().unwrap();
+    let mut cmd = mk_cmd(program, args);
 
-            make_command(name, args)
-        }
-        None => die!("error: missing required argument <COMMAND>"),
-    };
-
+    // run the command
     if cfg!(target_os = "windows") {
-        match command.spawn().and_then(|mut child| child.wait()) {
+        match cmd.spawn().and_then(|mut child| child.wait()) {
             Ok(status) => process::exit(status.code().unwrap_or(1)),
-            Err(error) => die!("fatal: {}", error),
+            Err(e) => die!("fatal: {e}"),
         };
     } else {
-        let error = command.exec();
-        die!("fatal: {}", error);
+        die!("fatal: {}", cmd.exec());
     };
 }
