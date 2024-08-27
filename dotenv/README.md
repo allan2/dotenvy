@@ -36,22 +36,6 @@ fn main() {
 }
 ```
 
-Async:
-```rs
-use dotenvy::dotenv;
-use std::env;
-
-fn main() {
-    // load environment variables from .env file
-    dotenv().expect(".env file not found");
-
-    for (key, value) in env::vars() {
-        println!("{key}: {value}");
-    }
-}
-```
-
-
 ### Loading at compile time
 
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.

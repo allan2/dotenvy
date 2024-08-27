@@ -10,8 +10,7 @@
 //!
 //! will output `bar`.
 use clap::{Parser, Subcommand};
-use core::error;
-use std::{os::unix::process::CommandExt, path::PathBuf, process};
+use std::{error, os::unix::process::CommandExt, path::PathBuf, process};
 
 macro_rules! die {
     ($fmt:expr) => ({
