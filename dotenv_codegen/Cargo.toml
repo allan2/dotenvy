@@ -19,8 +19,8 @@ license = "MIT"
 homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"
 description = "A macro for compile time dotenv inspection"
-edition = "2018"
-rust-version = "1.68.0"
+edition = "2021"
+rust-version = "1.72.0"
 
 [dependencies]
 proc-macro2 = "1"

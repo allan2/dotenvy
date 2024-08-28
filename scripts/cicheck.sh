@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-MSRV="1.68.0"
+MSRV="1.72.0"
 
 echo "fmt check"
 cargo fmt --all --check
