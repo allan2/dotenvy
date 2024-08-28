@@ -1,11 +1,10 @@
 use super::{create_default_envfile, TEST_EXISTING_KEY, TEST_EXISTING_VALUE};
-use once_cell::sync::OnceCell;
 use std::{
     collections::HashMap,
     env, fs,
     io::{self, Write},
     path::{Path, PathBuf},
-    sync::{Arc, Mutex, PoisonError},
+    sync::{Arc, Mutex, OnceLock, PoisonError},
 };
 use tempfile::{tempdir, TempDir};
 
@@ -13,7 +12,7 @@ use tempfile::{tempdir, TempDir};
 type EnvMap = HashMap<String, String>;
 
 /// Initialized in [`get_env_locker`]
-static ENV_LOCKER: OnceCell<Arc<Mutex<EnvMap>>> = OnceCell::new();
+static ENV_LOCKER: OnceLock<Arc<Mutex<EnvMap>>> = OnceLock::new();
 
 /// A test environment.
 ///
