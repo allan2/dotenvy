@@ -5,8 +5,7 @@ use common::tempdir_with_dotenv;
 
 #[test]
 fn test_issue_12() {
-    let _f = tempdir_with_dotenv(
-        r#"
+    let txt = r#"
 # Start of .env file
 # Comment line with single ' quote
 # Comment line with double " quote
@@ -22,11 +21,11 @@ TESTKEY5="Line 4
 Line 6
 " # 5 Multiline "' comment
 # End of .env file
-"#,
-    )
-    .expect("should write test env");
+"#;
 
-    dotenvy::dotenv().expect("should succeed");
+    let _f = unsafe { tempdir_with_dotenv(txt) }.expect("should write test env");
+
+    unsafe { dotenvy::dotenv() }.expect("should succeed");
     assert_eq!(
         env::var("TESTKEY1").expect("testkey1 env key not set"),
         "test_val"

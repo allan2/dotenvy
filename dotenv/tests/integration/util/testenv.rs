@@ -45,7 +45,7 @@ pub struct KeyVal {
 ///
 /// Resets the environment variables, loads the [`TestEnv`], then runs the test
 /// closure. Ensures only one thread has access to the process environment.
-pub fn test_in_env<F>(test_env: TestEnv, test: F)
+pub unsafe fn test_in_env<F>(test_env: TestEnv, test: F)
 where
     F: FnOnce(),
 {
@@ -55,7 +55,7 @@ where
     let original_env = locker.lock().unwrap_or_else(PoisonError::into_inner);
     // we reset the environment anyway upon acquiring the lock
     reset_env(&original_env);
-    create_env(&test_env);
+    unsafe { create_env(&test_env) };
     test();
     // drop the lock and the `TestEnv` - should delete the tempdir
 }
@@ -77,12 +77,12 @@ where
 ///
 /// Notice that file has the potential to override `TEST_EXISTING_KEY` depending
 /// on the what's being tested.
-pub fn test_in_default_env<F>(test: F)
+pub unsafe fn test_in_default_env<F>(test: F)
 where
     F: FnOnce(),
 {
     let test_env = TestEnv::default();
-    test_in_env(test_env, test);
+    unsafe { test_in_env(test_env, test) };
 }
 
 impl TestEnv {
@@ -294,17 +294,17 @@ fn reset_env(original_env: &EnvMap) {
     // remove keys if they weren't in the original environment
     env::vars()
         .filter(|(key, _)| !original_env.contains_key(key))
-        .for_each(|(key, _)| env::remove_var(key));
+        .for_each(|(key, _)| unsafe { env::remove_var(key) });
     // ensure original keys have their original values
     original_env
         .iter()
-        .for_each(|(key, value)| env::set_var(key, value));
+        .for_each(|(key, value)| unsafe { env::set_var(key, value) });
 }
 
 /// Create an environment to run tests in.
 ///
 /// Writes the envfile, sets the working directory, and sets environment vars.
-fn create_env(test_env: &TestEnv) {
+unsafe fn create_env(test_env: &TestEnv) {
     // only create the envfile if its contents has been set
     if let Some(contents) = test_env.envfile_contents() {
         create_envfile(&test_env.envfile_path, contents);
@@ -313,7 +313,7 @@ fn create_env(test_env: &TestEnv) {
     env::set_current_dir(&test_env.work_dir).expect("setting working directory");
 
     for KeyVal { key, value } in &test_env.env_vars {
-        env::set_var(key, value)
+        unsafe { env::set_var(key, value) }
     }
 }
 

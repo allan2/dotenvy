@@ -512,14 +512,14 @@ mod variable_substitution_tests {
 
     #[test]
     fn substitute_variable_from_env_variable() {
-        env::set_var("KEY11", "test_user_env");
+        unsafe { env::set_var("KEY11", "test_user_env") };
 
         assert_parsed_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")]);
     }
 
     #[test]
     fn substitute_variable_env_variable_overrides_dotenv_in_substitution() {
-        env::set_var("KEY11", "test_user_env");
+        unsafe { env::set_var("KEY11", "test_user_env") };
 
         assert_parsed_string(
             r#"

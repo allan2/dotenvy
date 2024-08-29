@@ -6,7 +6,7 @@ use std::{env, error};
 
 #[test]
 fn test_from_path_iter() -> Result<(), Box<dyn error::Error>> {
-    let dir = make_test_dotenv()?;
+    let dir = unsafe { make_test_dotenv() }?;
 
     let mut path = env::current_dir()?;
     path.push(".env");
@@ -15,7 +15,7 @@ fn test_from_path_iter() -> Result<(), Box<dyn error::Error>> {
 
     assert!(env::var("TESTKEY").is_err());
 
-    iter.load()?;
+    unsafe { iter.load() }?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
 

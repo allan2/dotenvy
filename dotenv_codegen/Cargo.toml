@@ -1,3 +1,5 @@
+cargo-features = ["edition2024"]
+
 [lib]
 proc-macro = true
 
@@ -19,11 +21,11 @@ license = "MIT"
 homepage = "https://github.com/allan2/dotenvy"
 repository = "https://github.com/allan2/dotenvy"
 description = "A macro for compile time dotenv inspection"
-edition = "2021"
-rust-version = "1.72.0"
+edition = "2024"
+#rust-version = "1.72.0"
 
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
 syn = "1"
-dotenvy = { version = "0.15", path = "../dotenv" }
+dotenvy = { path = "../dotenv" }

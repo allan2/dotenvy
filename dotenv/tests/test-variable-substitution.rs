@@ -1,3 +1,5 @@
+#![deny(clippy::uninlined_format_args)]
+
 mod common;
 
 use crate::common::tempdir_with_dotenv;
@@ -5,27 +7,29 @@ use std::{env, error};
 
 #[test]
 fn test_variable_substitutions() -> Result<(), Box<dyn error::Error>> {
-    std::env::set_var("KEY", "value");
-    std::env::set_var("KEY1", "value1");
+    unsafe {
+        env::set_var("KEY", "value");
+        env::set_var("KEY1", "value1");
+    }
 
     let substitutions_to_test = [
         "$ZZZ", "$KEY", "$KEY1", "${KEY}1", "$KEY_U", "${KEY_U}", "\\$KEY",
     ];
 
     let common_string = substitutions_to_test.join(">>");
-    let dir = tempdir_with_dotenv(&format!(
+    let txt = format!(
         r#"
 KEY1=new_value1
 KEY_U=$KEY+valueU
 
-SUBSTITUTION_FOR_STRONG_QUOTES='{}'
-SUBSTITUTION_FOR_WEAK_QUOTES="{}"
-SUBSTITUTION_WITHOUT_QUOTES={}
+SUBSTITUTION_FOR_STRONG_QUOTES='{common_string}'
+SUBSTITUTION_FOR_WEAK_QUOTES="{common_string}"
+SUBSTITUTION_WITHOUT_QUOTES={common_string}
 "#,
-        common_string, common_string, common_string
-    ))?;
+    );
+    let dir = unsafe { tempdir_with_dotenv(&txt) }?;
 
-    dotenvy::dotenv()?;
+    unsafe { dotenvy::dotenv() }?;
 
     assert_eq!(env::var("KEY")?, "value");
     assert_eq!(env::var("KEY1")?, "value1");

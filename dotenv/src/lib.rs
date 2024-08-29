@@ -1,5 +1,10 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
-#![allow(clippy::missing_errors_doc, clippy::too_many_lines)]
+#![allow(
+    clippy::missing_errors_doc,
+    clippy::too_many_lines,
+    clippy::missing_safety_doc
+)]
+#![deny(clippy::uninlined_format_args)]
 
 //! [`dotenv`]: https://crates.io/crates/dotenv
 //! A well-maintained fork of the [`dotenv`] crate
@@ -35,14 +40,14 @@ static START: Once = Once::new();
 ///
 /// ```no_run
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let value = dotenvy::var("HOME")?;
+/// let value = unsafe { dotenvy::var("HOME") }?;
 /// println!("{}", value);  // prints `/home/foo`
 /// #     Ok(())
 /// # }
 /// ```
-pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
+pub unsafe fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
     START.call_once(|| {
-        dotenv().ok();
+        unsafe { dotenv() }.ok();
     });
     env::var(key).map_err(Error::EnvVar)
 }
@@ -55,11 +60,11 @@ pub fn var<K: AsRef<OsStr>>(key: K) -> Result<String> {
 /// ```no_run
 /// use std::io;
 ///
-/// let result: Vec<(String, String)> = dotenvy::vars().collect();
+/// let result: Vec<(String, String)> = unsafe { dotenvy::vars() }.collect();
 /// ```
-pub fn vars() -> Vars {
+pub unsafe fn vars() -> Vars {
     START.call_once(|| {
-        dotenv().ok();
+        unsafe { dotenv() }.ok();
     });
     env::vars()
 }
@@ -81,13 +86,14 @@ pub fn vars() -> Vars {
 /// use std::path::Path;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_path(Path::new("path/to/.env"))?;
+///       let path = Path::new("path/to/.env");
+///       unsafe { dotenvy::from_path(path) }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
+pub unsafe fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
-    iter.load()
+    unsafe { iter.load() }
 }
 
 /// Loads environment variables from the specified path,
@@ -106,13 +112,14 @@ pub fn from_path<P: AsRef<Path>>(path: P) -> Result<()> {
 /// use std::path::Path;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_path_override(Path::new("path/to/.env"))?;
+/// let path = Path::new("path/to/.env");
+/// unsafe { dotenvy::from_path_override(path) }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
+pub unsafe fn from_path_override<P: AsRef<Path>>(path: P) -> Result<()> {
     let iter = Iter::new(File::open(path).map_err(Error::Io)?);
-    iter.load_override()
+    unsafe { iter.load_override() }
 }
 
 /// Returns an iterator over environment variables from the specified path.
@@ -148,7 +155,7 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 /// # Examples
 /// ```no_run
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_filename("custom.env")?;
+/// unsafe { dotenvy::from_filename("custom.env") }?;
 /// #     Ok(())
 /// # }
 /// ```
@@ -157,13 +164,13 @@ pub fn from_path_iter<P: AsRef<Path>>(path: P) -> Result<Iter<File>> {
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_filename(".env")?;
+///       unsafe { dotenvy::from_filename(".env") }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
+pub unsafe fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
-    iter.load()?;
+    unsafe { iter.load() }?;
     Ok(path)
 }
 
@@ -180,7 +187,7 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 /// # Examples
 /// ```no_run
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_filename_override("custom.env")?;
+/// unsafe { dotenvy::from_filename_override("custom.env") }?;
 /// #     Ok(())
 /// # }
 /// ```
@@ -189,13 +196,13 @@ pub fn from_filename<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::from_filename_override(".env")?;
+/// unsafe { dotenvy::from_filename_override(".env")}?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
+pub unsafe fn from_filename_override<P: AsRef<Path>>(filename: P) -> Result<PathBuf> {
     let (path, iter) = Finder::new().filename(filename.as_ref()).find()?;
-    iter.load_override()?;
+    unsafe { iter.load_override() }?;
     Ok(path)
 }
 
@@ -243,13 +250,13 @@ pub fn from_filename_iter<P: AsRef<Path>>(filename: P) -> Result<Iter<File>> {
 /// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
 /// # #[cfg(unix)]
-/// dotenvy::from_read(stream)?;
+/// unsafe { dotenvy::from_read(stream) }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
+pub unsafe fn from_read<R: io::Read>(reader: R) -> Result<()> {
     let iter = Iter::new(reader);
-    iter.load()?;
+    unsafe { iter.load() }?;
     Ok(())
 }
 
@@ -277,13 +284,13 @@ pub fn from_read<R: io::Read>(reader: R) -> Result<()> {
 /// # #[cfg(unix)]
 /// let mut stream = UnixStream::connect("/some/socket")?;
 /// # #[cfg(unix)]
-/// dotenvy::from_read_override(stream)?;
+/// unsafe { dotenvy::from_read_override(stream) }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
+pub unsafe fn from_read_override<R: io::Read>(reader: R) -> Result<()> {
     let iter = Iter::new(reader);
-    iter.load_override()?;
+    unsafe { iter.load_override() }?;
     Ok(())
 }
 
@@ -329,13 +336,13 @@ pub fn from_read_iter<R: io::Read>(reader: R) -> Iter<R> {
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::dotenv()?;
+///       unsafe { dotenvy::dotenv() }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn dotenv() -> Result<PathBuf> {
+pub unsafe fn dotenv() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
-    iter.load()?;
+    unsafe { iter.load() }?;
     Ok(path)
 }
 
@@ -352,13 +359,13 @@ pub fn dotenv() -> Result<PathBuf> {
 /// # Examples
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// dotenvy::dotenv_override()?;
+///       unsafe { dotenvy::dotenv_override() }?;
 /// #     Ok(())
 /// # }
 /// ```
-pub fn dotenv_override() -> Result<PathBuf> {
+pub unsafe fn dotenv_override() -> Result<PathBuf> {
     let (path, iter) = Finder::new().find()?;
-    iter.load_override()?;
+    unsafe { iter.load_override() }?;
     Ok(path)
 }
 

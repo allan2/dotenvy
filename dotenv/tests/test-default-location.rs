@@ -5,9 +5,9 @@ use std::{env, error};
 
 #[test]
 fn test_default_location() -> Result<(), Box<dyn error::Error>> {
-    let dir = make_test_dotenv()?;
+    let dir = unsafe { make_test_dotenv() }?;
 
-    dotenvy::dotenv()?;
+    unsafe { dotenvy::dotenv() }?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
     assert_eq!(env::var("EXISTING")?, "from_env");

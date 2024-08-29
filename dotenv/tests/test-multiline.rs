@@ -7,7 +7,8 @@ use std::{env, error};
 fn test_multiline() -> Result<(), Box<dyn error::Error>> {
     let value = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\\n\\\"QUOTED\\\"";
     let weak = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n\"QUOTED\"";
-    let dir = tempdir_with_dotenv(&format!(
+
+    let txt = format!(
         r#"
 KEY=my\ cool\ value
 KEY3="awesome \"stuff\"
@@ -20,9 +21,10 @@ WEAK="{}"
 STRONG='{}'
 "#,
         value, value
-    ))?;
+    );
 
-    dotenvy::dotenv()?;
+    let dir = unsafe { tempdir_with_dotenv(&txt) }?;
+    unsafe { dotenvy::dotenv() }?;
     assert_eq!(env::var("KEY")?, r#"my cool value"#);
     assert_eq!(
         env::var("KEY3")?,

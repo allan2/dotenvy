@@ -28,13 +28,13 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the first occurrence is applied.
-    pub fn load(mut self) -> Result<()> {
+    pub unsafe fn load(mut self) -> Result<()> {
         self.remove_bom()?;
 
         for item in self {
             let (key, value) = item?;
             if env::var(&key).is_err() {
-                env::set_var(&key, value);
+                unsafe { env::set_var(&key, value) };
             }
         }
 
@@ -46,12 +46,12 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the last occurrence is applied.
-    pub fn load_override(mut self) -> Result<()> {
+    pub unsafe fn load_override(mut self) -> Result<()> {
         self.remove_bom()?;
 
         for item in self {
             let (key, value) = item?;
-            env::set_var(key, value);
+            unsafe { env::set_var(key, value) };
         }
 
         Ok(())

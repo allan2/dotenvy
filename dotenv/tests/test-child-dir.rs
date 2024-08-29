@@ -5,13 +5,13 @@ use std::{env, error, fs};
 
 #[test]
 fn test_child_dir() -> Result<(), Box<dyn error::Error>> {
-    let dir = make_test_dotenv()?;
+    let dir = unsafe { make_test_dotenv() }?;
 
     fs::create_dir("child")?;
 
     env::set_current_dir("child")?;
 
-    dotenvy::dotenv()?;
+    unsafe { dotenvy::dotenv() }?;
     assert_eq!(env::var("TESTKEY")?, "test_val");
 
     env::set_current_dir(dir.path().parent().unwrap())?;

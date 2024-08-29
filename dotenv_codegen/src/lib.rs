@@ -1,16 +1,16 @@
-#![forbid(unsafe_code)]
-
 use quote::quote;
 use std::env::{self, VarError};
 use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, Token};
 
 #[proc_macro]
+/// TODO: add safety warning
 pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    dotenv_inner(input.into()).into()
+    let input = input.into();
+    unsafe { dotenv_inner(input) }.into()
 }
 
-fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    if let Err(err) = dotenvy::dotenv() {
+unsafe fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    if let Err(err) = unsafe { dotenvy::dotenv() } {
         let msg = format!("Error loading .env file: {}", err);
         return quote! {
             compile_error!(#msg);
