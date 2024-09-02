@@ -1,0 +1,14 @@
+[package]
+name = "modify-tokio-macro-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+dotenvy = { path = "../../dotenvy", features = ["macros"] }
+tokio = { version = "1", features = [
+	"process",
+	"rt-multi-thread",
+	"rt",
+	"macros",
+] }

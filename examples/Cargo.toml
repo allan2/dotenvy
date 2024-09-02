@@ -1,4 +1,0 @@
-[workspace]
-members = ["*"]
-exclude = ["target"]
-resolver = "2"

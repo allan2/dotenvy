@@ -1,0 +1,40 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "dotenvy"
+version = "0.15.7"
+authors = [
+  "Noemi Lapresta <noemi.lapresta@gmail.com>",
+  "Craig Hills <chills@gmail.com>",
+  "Mike Piccolo <mfpiccolo@gmail.com>",
+  "Alice Maz <alice@alicemaz.com>",
+  "Sean Griffin <sean@seantheprogrammer.com>",
+  "Adam Sharp <adam@sharplet.me>",
+  "Arpad Borsos <arpad.borsos@googlemail.com>",
+  "Allan Zhang <allanzhang7@gmail.com>",
+]
+description = "A well-maintained fork of the dotenv crate"
+homepage = "https://github.com/allan2/dotenvy"
+readme = "README.md"
+keywords = ["dotenv", "env", "environment", "settings", "config"]
+categories = ["configuration"]
+license = "MIT"
+repository = "https://github.com/allan2/dotenvy"
+edition = "2024"
+#rust-version = "1.72.0"
+
+[[bin]]
+name = "dotenvy"
+required-features = ["cli"]
+
+[dependencies]
+clap = { version = "4.5.16", features = ["derive"], optional = true }
+dotenvy-macros = { path = "../dotenvy-macros", optional = true }
+
+[dev-dependencies]
+tempfile = "3.12.0"
+
+[features]
+default = ["cli", "macros"]
+cli = ["dep:clap"]
+macros = ["dep:dotenvy-macros"]

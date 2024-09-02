@@ -1,17 +1,20 @@
+use dotenvy::EnvLoader;
+use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::env::{self, VarError};
 use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, Token};
 
 #[proc_macro]
 /// TODO: add safety warning
-pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn dotenv(input: TokenStream) -> TokenStream {
     let input = input.into();
     unsafe { dotenv_inner(input) }.into()
 }
 
-unsafe fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    if let Err(err) = unsafe { dotenvy::dotenv() } {
-        let msg = format!("Error loading .env file: {}", err);
+unsafe fn dotenv_inner(input: TokenStream2) -> TokenStream2 {
+    if let Err(e) = unsafe { EnvLoader::new().load_and_modify() } {
+        let msg = format!("Error loading .env file: {}", e);
         return quote! {
             compile_error!(#msg);
         };
@@ -23,7 +26,7 @@ unsafe fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStr
     }
 }
 
-fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::TokenStream> {
+fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
     let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated
         .parse(input_raw.into())
         .expect("expected macro to be called with a comma-separated list of string literals");

@@ -1,8 +1,5 @@
 cargo-features = ["edition2024"]
 
-[lib]
-proc-macro = true
-
 [package]
 name = "dotenvy_macro"
 version = "0.15.7"
@@ -24,8 +21,11 @@ description = "A macro for compile time dotenv inspection"
 edition = "2024"
 #rust-version = "1.72.0"
 
+[lib]
+proc-macro = true
+
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = "1"
-dotenvy = { path = "../dotenv" }
+syn = "2"
+dotenvy = { path = "../dotenvy" }

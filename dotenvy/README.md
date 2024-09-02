@@ -22,17 +22,37 @@ This library loads environment variables from a _.env_ file. This is convenient 
 
 ##
 
+Safe API:
+
 ```rs
 use dotenvy::EnvLoader;
 use std::env;
 
 fn main() {
-    let env_map = EnvLoader::from_path(".env").load()?;
-    for (key, value) in env_map {
+    let env_map = EnvLoader::from_path("env-file").load()?;
+
+    for (key, value) in env {
         println!("{key}: {value}");
     }
 }
 ```
+
+Modify API:
+
+```rs
+
+use std::{error, env};
+
+fn main() -> Result<(), Box<dyn error::Error>> {
+    let is_dev_mode = env::var("APP_ENV")? == "dev";
+    // loads the.env file from the currenty directory
+    let env = dotenvy::modify::Config().required(is_dev_mode).load()?;
+
+    for (key, value) in env {
+        println!("{key}: {value}");
+    }
+}
+
 
 ### Loading at compile time
 
