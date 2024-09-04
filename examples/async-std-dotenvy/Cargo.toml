@@ -1,0 +1,8 @@
+[package]
+name = "async-std-dotenvy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-std = { version = "1.12.0", features = ["attributes"] }
+dotenvy = { path = "../../dotenvy" }
