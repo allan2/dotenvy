@@ -13,7 +13,7 @@
 use crate::iter::Iter;
 use std::{
     collections::HashMap,
-    env,
+    env::{self, VarError},
     fs::File,
     io::{BufReader, Read},
     path::{Path, PathBuf},
@@ -32,6 +32,37 @@ pub use crate::err::{Error, Result};
 
 #[cfg(feature = "macros")]
 pub use dotenvy_macros::*;
+
+/// Fetches the environment variable `key` from the current process.
+///
+/// This is `std_env_var` but with an error type of `dotenvy::Error`.
+/// `dotenvy::Error` uses `NotPresent(String)` instead of `NotPresent`, reporting the name of the missing key.
+///
+/// # Errors
+///
+/// This function will return an error if the environment variable isn't set.
+///
+/// This function may return an error if the environment variable's name contains
+/// the equal sign character (`=`) or the NUL character.
+///
+/// This function will return an error if the environment variable's value is
+/// not valid Unicode.
+///
+/// # Examples
+///
+/// ```
+/// let key = "HOME";
+/// match dotenvy::var(key) {
+///     Ok(val) => println!("{key}: {val:?}"),
+///     Err(e) => println!("couldn't interpret {key}: {e}"),
+/// }
+/// ```
+pub fn var(key: &str) -> Result<String> {
+    env::var(key).map_err(|e| match e {
+        VarError::NotPresent => Error::NotPresent(key.to_owned()),
+        VarError::NotUnicode(s) => Error::NotUnicode(s),
+    })
+}
 
 /// The sequence in which to load environment variables.
 ///

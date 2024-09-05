@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - update MSRV to 1.72.0
 
 
+- **breaking**: `dotenvy::var` no longer calls `load` internally
 - **breaking**: `dotenvy::Result` is now private
 - **breaking**: deprecate `dotenvy::var`, `dotenvy::from_filename*` 
 - `Error` is now `From<std::io::Error`
