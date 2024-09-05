@@ -16,6 +16,7 @@ use std::{
     env::{self, VarError},
     fs::File,
     io::{BufReader, Read},
+    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 
@@ -23,10 +24,52 @@ mod err;
 mod iter;
 mod parse;
 
-/// The map that stores the environment.
+/// A map of environment variables.
 ///
-/// For internal use only.
-pub type EnvMap = HashMap<String, String>;
+/// This is a newtype around `HashMap<String, String>` with one additional function, `var`.
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
+pub struct EnvMap(HashMap<String, String>);
+
+impl Deref for EnvMap {
+    type Target = HashMap<String, String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for EnvMap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl FromIterator<(String, String)> for EnvMap {
+    fn from_iter<I: IntoIterator<Item = (String, String)>>(iter: I) -> Self {
+        Self(HashMap::from_iter(iter))
+    }
+}
+
+impl IntoIterator for EnvMap {
+    type Item = (String, String);
+    type IntoIter = std::collections::hash_map::IntoIter<String, String>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl EnvMap {
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    pub fn var(&self, key: &str) -> Result<String> {
+        self.get(key)
+            .cloned()
+            .ok_or_else(|| Error::NotPresent(key.to_owned()))
+    }
+}
 
 pub use crate::err::{Error, Result};
 
