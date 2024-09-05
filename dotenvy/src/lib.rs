@@ -60,23 +60,23 @@ impl<'a> EnvLoader<'a> {
     #[must_use]
     /// Creates a new `EnvLoader` with the path set to `env` in the current directory.
     pub fn new() -> Self {
-        Self::from_path(".env")
+        Self::with_path(".env")
     }
 
-    /// Creates a new `EnvLoader` from a path.
-    /// 
+    /// Creates a new `EnvLoader` with the specified path.
+    ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
+    pub fn with_path<P: AsRef<Path>>(path: P) -> Self {
         Self {
             path: Some(path.as_ref().to_owned()),
             ..Default::default()
         }
     }
 
-    /// Creates a new `EnvLoader` from a reader.
-    /// 
+    /// Creates a new `EnvLoader` with the specified reader.
+    ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
-    pub fn from_reader<R: Read + 'a>(rdr: R) -> Self {
+    pub fn with_reader<R: Read + 'a>(rdr: R) -> Self {
         Self {
             reader: Some(Box::new(rdr)),
             ..Default::default()
@@ -118,7 +118,7 @@ impl<'a> EnvLoader<'a> {
     }
 
     /// Loads environment variables into a hash map.
-    /// 
+    ///
     /// This is the primary method for loading environment variables.
     pub fn load(self) -> Result<EnvMap> {
         match self.sequence {
@@ -138,9 +138,8 @@ impl<'a> EnvLoader<'a> {
         }
     }
 
-
     /// Loads environment variables into a hash map, modifying the existing environment.
-    /// 
+    ///
     /// This calls `std::env::set_var` internally and is not thread-safe.
     pub unsafe fn load_and_modify(self) -> Result<EnvMap> {
         match self.sequence {

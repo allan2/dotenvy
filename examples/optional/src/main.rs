@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         EnvSequence::EnvOnly
     };
 
-    let env_map = EnvLoader::from_path(path).sequence(seq).load()?;
+    let env_map = EnvLoader::with_path(path).sequence(seq).load()?;
 
     if let Some(v) = env_map.get("HOST") {
         println!("Host: {v}");

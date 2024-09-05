@@ -2,10 +2,10 @@ use dotenvy::{EnvLoader, EnvSequence};
 use std::error;
 
 fn main() -> Result<(), Box<dyn error::Error>> {
-    let map_a = EnvLoader::from_path("../env-example")
+    let map_a = EnvLoader::with_path("../env-example")
         .sequence(EnvSequence::EnvThenInput)
         .load()?;
-    let map_b = EnvLoader::from_path("../env-example-2")
+    let map_b = EnvLoader::with_path("../env-example-2")
         .sequence(EnvSequence::InputOnly) // we already loaded from the environment in map_a
         .load()?;
 

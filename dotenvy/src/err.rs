@@ -9,6 +9,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[non_exhaustive]
 pub enum Error {
     LineParse(String, usize),
+    /// An IO error may be encountered when reading from a file or reader.
     Io(io::Error),
     EnvVar(env::VarError),
     /// When `load_and_modify` is called with `EnvSequence::EnvOnly`
@@ -20,6 +21,7 @@ pub enum Error {
     /// Only `EnvLoader::default` would have no path or reader.
     NoInput,
 }
+
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {

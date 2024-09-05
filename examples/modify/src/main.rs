@@ -6,7 +6,7 @@ use std::{env, error, fs, io, process::Command};
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     // to override, set sequence to `EnvThenInput` or `InputOnly`
-    let loader = EnvLoader::from_path("../env-example").sequence(EnvSequence::InputThenEnv);
+    let loader = EnvLoader::with_path("../env-example").sequence(EnvSequence::InputThenEnv);
     unsafe { loader.load_and_modify() }?;
 
     println!("HOST={}", env::var("HOST")?);

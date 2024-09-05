@@ -13,7 +13,7 @@ fn test_ignore_bom() -> Result<(), Box<dyn error::Error>> {
     let mut path = env::current_dir()?;
     path.push(".env");
 
-    let config = EnvLoader::from_path(path);
+    let config = EnvLoader::with_path(path);
     unsafe { config.load_and_modify() }?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
