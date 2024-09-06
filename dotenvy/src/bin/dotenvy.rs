@@ -1,4 +1,4 @@
-//! A CLI tool that loads a *.env* file before running a command.
+//! A CLI tool that loads an env file before running a command.
 //!
 //! # Example
 //!
@@ -10,8 +10,8 @@
 //!
 //! will output `bar`.
 use clap::{Parser, Subcommand};
-use dotenvy::EnvLoader;
-use std::{error, os::unix::process::CommandExt, path::PathBuf, process};
+use dotenvy::{EnvLoader, EnvSequence};
+use std::{error, fs::File, io::ErrorKind, os::unix::process::CommandExt, path::PathBuf, process};
 
 macro_rules! die {
     ($fmt:expr) => ({
@@ -45,6 +45,10 @@ struct Cli {
     file: PathBuf,
     #[clap(subcommand)]
     subcmd: Subcmd,
+    #[arg(long, default_value_t = true)]
+    required: bool,
+    #[arg(long, default_value_t = false)]
+    r#override: bool,
 }
 
 #[derive(Subcommand)]
@@ -56,11 +60,26 @@ enum Subcmd {
 fn main() -> Result<(), Box<dyn error::Error>> {
     let cli = Cli::parse();
 
-    // load the file
-    let loader = EnvLoader::with_path(&cli.file);
-    if let Err(e) = unsafe { loader.load_and_modify() } {
-        die!("Failed to load {path}: {e}", path = cli.file.display());
-    }
+    match File::open(&cli.file) {
+        Ok(file) => {
+            let seq = if cli.r#override {
+                EnvSequence::EnvThenInput
+            } else {
+                EnvSequence::InputThenEnv
+            };
+
+            // load the file
+            let loader = EnvLoader::with_reader(file).sequence(seq);
+            if let Err(e) = unsafe { loader.load_and_modify() } {
+                die!("Failed to load {path}: {e}", path = cli.file.display());
+            }
+        }
+        Err(e) => {
+            if cli.required && e.kind() == ErrorKind::NotFound {
+                die!("Failed to load {path}: {e}", path = cli.file.display());
+            }
+        }
+    };
 
     // prepare the command
     let Subcmd::External(args) = cli.subcmd;
