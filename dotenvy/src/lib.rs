@@ -103,7 +103,7 @@ pub use dotenvy_macros::*;
 pub fn var(key: &str) -> Result<String> {
     env::var(key).map_err(|e| match e {
         VarError::NotPresent => Error::NotPresent(key.to_owned()),
-        VarError::NotUnicode(s) => Error::NotUnicode(s),
+        VarError::NotUnicode(os_str) => Error::NotUnicode(os_str, key.to_owned()),
     })
 }
 
