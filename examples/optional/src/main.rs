@@ -1,5 +1,5 @@
 //! This example loads an env file only if the file exists.
-//! 
+//!
 //! `HOST=abc cargo run`
 use dotenvy::{EnvLoader, EnvSequence};
 use std::{error, fs::File, path::Path};
