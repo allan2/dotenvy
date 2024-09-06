@@ -35,6 +35,7 @@ fn mk_cmd(program: &str, args: &[String]) -> process::Command {
 #[derive(Parser)]
 #[command(
     name = "dotenvy",
+    version,
     about = "Run a command using an environment loaded from a .env file",
     arg_required_else_help = true,
     allow_external_subcommands = true
