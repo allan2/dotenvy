@@ -7,8 +7,10 @@ pub enum Error {
     LineParse(String, usize),
     /// An IO error may be encountered when reading from a file or reader.
     Io(io::Error),
+    /// The variable was not found in the environment. The `String` is the name of the variable.
     NotPresent(String),
-    NotUnicode(OsString),
+    /// The variable was not valid unicode. The `String` is the name of the variable.
+    NotUnicode(OsString, String),
     /// When `load_and_modify` is called with `EnvSequence::EnvOnly`
     ///
     /// There is nothing to modify, so we consider this an invalid operation because of the unnecessary unsafe call.
@@ -41,7 +43,7 @@ impl error::Error for Error {
             Self::Io(e) => Some(e),
             Self::LineParse(_, _)
             | Self::NotPresent(_)
-            | Self::NotUnicode(_)
+            | Self::NotUnicode(_, _)
             | Self::InvalidOp
             | Self::NoInput => None,
         }
@@ -54,14 +56,14 @@ impl fmt::Display for Error {
             Self::Io(e) => e.fmt(f),
             Self::LineParse(line, index) => write!(
                 f,
-                "Error parsing line: '{line}', error at line index: {index}",
+                "error parsing line: '{line}', error at line index: {index}",
             ),
-            Self::NotPresent(s) => write!(f, "environment variable not found: {s}"),
-            Self::NotUnicode(s) => {
-                write!(f, "environment variable was not valid unicode: {s:?}",)
+            Self::NotPresent(s) => write!(f, "{s} is not set"),
+            Self::NotUnicode(os_str, s) => {
+                write!(f, "{s} is not valid Unicode: {os_str:?}",)
             }
-            Self::InvalidOp => write!(f, "Modify is not permitted with `EnvSequence::EnvOnly`"),
-            Self::NoInput => write!(f, "No input provided"),
+            Self::InvalidOp => write!(f, "modify is not permitted with `EnvSequence::EnvOnly`"),
+            Self::NoInput => write!(f, "no input provided"),
         }
     }
 }
