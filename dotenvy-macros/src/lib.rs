@@ -47,7 +47,7 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
         } else {
             EnvSequence::InputThenEnv
         };
-        let mut loader = EnvLoader::from_path(#path).sequence(seq);
+        let mut loader = EnvLoader::with_path(#path).sequence(seq);
         if let Err(e) = unsafe { loader.load_and_modify() } {
             if let Some(io_err) = e.source().and_then(|src| src.downcast_ref::<io::Error>()) {
                 if io_err.kind() == io::ErrorKind::NotFound && !#required {

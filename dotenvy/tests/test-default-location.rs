@@ -9,7 +9,7 @@ use std::{env, error};
 fn test_default_location() -> Result<(), Box<dyn error::Error>> {
     let dir = unsafe { make_test_dotenv() }?;
 
-    unsafe { EnvLoader::from_path("./.env").load_and_modify() }?;
+    unsafe { EnvLoader::with_path("./.env").load_and_modify() }?;
 
     assert_eq!(env::var("TESTKEY")?, "test_val");
     assert_eq!(env::var("EXISTING")?, "from_env");

@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .and_then(|v| v.parse().ok())
         .unwrap_or(AppEnv::Dev);
 
-    let env_map = EnvLoader::from_path("../env-example")
+    let env_map = EnvLoader::with_path("../env-example")
         .sequence(app_env.into())
         .load()?;
 

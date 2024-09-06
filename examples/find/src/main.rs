@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let path = find(env::current_dir()?.as_path(), filename)?;
     println!("Env file found at `{}`", path.display());
 
-    let env_map = EnvLoader::from_path(path).load()?;
+    let env_map = EnvLoader::with_path(path).load()?;
     if let Some(v) = env_map.get("HOST") {
         println!("HOST={v}");
     }

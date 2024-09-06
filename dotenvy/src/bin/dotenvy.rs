@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let cli = Cli::parse();
 
     // load the file
-    let loader = EnvLoader::from_path(&cli.file);
+    let loader = EnvLoader::with_path(&cli.file);
     if let Err(e) = unsafe { loader.load_and_modify() } {
         die!("Failed to load {path}: {e}", path = cli.file.display());
     }

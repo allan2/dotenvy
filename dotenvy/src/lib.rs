@@ -13,9 +13,10 @@
 use crate::iter::Iter;
 use std::{
     collections::HashMap,
-    env,
+    env::{self, VarError},
     fs::File,
     io::{BufReader, Read},
+    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 
@@ -23,15 +24,88 @@ mod err;
 mod iter;
 mod parse;
 
-/// The map that stores the environment.
+/// A map of environment variables.
 ///
-/// For internal use only.
-pub type EnvMap = HashMap<String, String>;
+/// This is a newtype around `HashMap<String, String>` with one additional function, `var`.
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
+pub struct EnvMap(HashMap<String, String>);
+
+impl Deref for EnvMap {
+    type Target = HashMap<String, String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for EnvMap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl FromIterator<(String, String)> for EnvMap {
+    fn from_iter<I: IntoIterator<Item = (String, String)>>(iter: I) -> Self {
+        Self(HashMap::from_iter(iter))
+    }
+}
+
+impl IntoIterator for EnvMap {
+    type Item = (String, String);
+    type IntoIter = std::collections::hash_map::IntoIter<String, String>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl EnvMap {
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+
+    pub fn var(&self, key: &str) -> Result<String> {
+        self.get(key)
+            .cloned()
+            .ok_or_else(|| Error::NotPresent(key.to_owned()))
+    }
+}
 
 pub use crate::err::{Error, Result};
 
 #[cfg(feature = "macros")]
 pub use dotenvy_macros::*;
+
+/// Fetches the environment variable `key` from the current process.
+///
+/// This is `std_env_var` but with an error type of `dotenvy::Error`.
+/// `dotenvy::Error` uses `NotPresent(String)` instead of `NotPresent`, reporting the name of the missing key.
+///
+/// # Errors
+///
+/// This function will return an error if the environment variable isn't set.
+///
+/// This function may return an error if the environment variable's name contains
+/// the equal sign character (`=`) or the NUL character.
+///
+/// This function will return an error if the environment variable's value is
+/// not valid Unicode.
+///
+/// # Examples
+///
+/// ```
+/// let key = "HOME";
+/// match dotenvy::var(key) {
+///     Ok(val) => println!("{key}: {val:?}"),
+///     Err(e) => println!("couldn't interpret {key}: {e}"),
+/// }
+/// ```
+pub fn var(key: &str) -> Result<String> {
+    env::var(key).map_err(|e| match e {
+        VarError::NotPresent => Error::NotPresent(key.to_owned()),
+        VarError::NotUnicode(s) => Error::NotUnicode(s),
+    })
+}
 
 /// The sequence in which to load environment variables.
 ///
@@ -60,23 +134,23 @@ impl<'a> EnvLoader<'a> {
     #[must_use]
     /// Creates a new `EnvLoader` with the path set to `env` in the current directory.
     pub fn new() -> Self {
-        Self::from_path(".env")
+        Self::with_path(".env")
     }
 
-    /// Creates a new `EnvLoader` from a path.
-    /// 
+    /// Creates a new `EnvLoader` with the specified path.
+    ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
+    pub fn with_path<P: AsRef<Path>>(path: P) -> Self {
         Self {
             path: Some(path.as_ref().to_owned()),
             ..Default::default()
         }
     }
 
-    /// Creates a new `EnvLoader` from a reader.
-    /// 
+    /// Creates a new `EnvLoader` with the specified reader.
+    ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
-    pub fn from_reader<R: Read + 'a>(rdr: R) -> Self {
+    pub fn with_reader<R: Read + 'a>(rdr: R) -> Self {
         Self {
             reader: Some(Box::new(rdr)),
             ..Default::default()
@@ -118,7 +192,7 @@ impl<'a> EnvLoader<'a> {
     }
 
     /// Loads environment variables into a hash map.
-    /// 
+    ///
     /// This is the primary method for loading environment variables.
     pub fn load(self) -> Result<EnvMap> {
         match self.sequence {
@@ -138,9 +212,8 @@ impl<'a> EnvLoader<'a> {
         }
     }
 
-
     /// Loads environment variables into a hash map, modifying the existing environment.
-    /// 
+    ///
     /// This calls `std::env::set_var` internally and is not thread-safe.
     pub unsafe fn load_and_modify(self) -> Result<EnvMap> {
         match self.sequence {

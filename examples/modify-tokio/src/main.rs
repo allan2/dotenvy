@@ -8,7 +8,7 @@ use std::{
 // As such, loading must be done before the async runtime is spawned.
 // This is why we don't use `#[tokio::main]` here.
 fn main() -> Result<(), Box<dyn error::Error>> {
-    let loader = EnvLoader::from_path("../env-example");
+    let loader = EnvLoader::with_path("../env-example");
     unsafe { loader.load_and_modify() }?;
 
     // this is the expansion of `#[tokio::main]`

@@ -27,7 +27,7 @@ impl<B: BufRead> Iter<B> {
         F: FnMut(String, String, &mut EnvMap),
     {
         self.remove_bom()?;
-        let mut map = HashMap::new();
+        let mut map = EnvMap::new();
         for item in self {
             let (k, v) = item?;
             load_fn(k, v, &mut map);

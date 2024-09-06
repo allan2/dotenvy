@@ -27,7 +27,7 @@ use dotenvy::EnvLoader;
 use std::env;
 
 fn main() {
-    let env_map = EnvLoader::from_path(".env").load()?;
+    let env_map = EnvLoader::with_path(".env").load()?;
     for (key, value) in env_map {
         println!("{key}: {value}");
     }

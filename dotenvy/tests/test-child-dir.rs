@@ -11,7 +11,7 @@ fn test_child_dir() -> Result<(), Box<dyn error::Error>> {
     fs::create_dir("child")?;
     env::set_current_dir("child")?;
 
-    unsafe { EnvLoader::from_path("../.env").load_and_modify() }?;
+    unsafe { EnvLoader::with_path("../.env").load_and_modify() }?;
     assert_eq!(env::var("TESTKEY")?, "test_val");
 
     env::set_current_dir(dir.path().parent().unwrap())?;
