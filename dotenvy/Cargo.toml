@@ -19,7 +19,7 @@ categories = ["configuration"]
 license = "MIT"
 repository = "https://github.com/allan2/dotenvy"
 edition = "2021"
-rust-version = "1.72.0"
+rust-version = "1.74.0"
 
 [[bin]]
 name = "dotenvy"

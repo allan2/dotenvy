@@ -9,7 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 - update to 2021 edition
-- update MSRV to 1.72.0
+- update MSRV to 1.74.0
 
 - **breaking**: `dotenvy::Error` now includes IO file path info and variable name info
 - **breaking**: `dotenvy::var` no longer calls `load` internally
