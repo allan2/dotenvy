@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             };
 
             // load the file
-            let loader = EnvLoader::with_reader(file).sequence(seq);
+            let loader = EnvLoader::with_reader(file).path(&cli.file).sequence(seq);
             if let Err(e) = unsafe { loader.load_and_modify() } {
                 die!("Failed to load {path}: {e}", path = cli.file.display());
             }

@@ -133,12 +133,12 @@ pub struct EnvLoader<'a> {
 
 impl<'a> EnvLoader<'a> {
     #[must_use]
-    /// Creates a new `EnvLoader` with the path set to `env` in the current directory.
+    /// Creates a new `EnvLoader` with the path set to `./env`
     pub fn new() -> Self {
         Self::with_path(".env")
     }
 
-    /// Creates a new `EnvLoader` with the specified path.
+    /// Creates a new `EnvLoader` with the path as input.
     ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
     pub fn with_path<P: AsRef<Path>>(path: P) -> Self {
@@ -148,7 +148,7 @@ impl<'a> EnvLoader<'a> {
         }
     }
 
-    /// Creates a new `EnvLoader` with the specified reader.
+    /// Creates a new `EnvLoader` with the reader as input.
     ///
     /// This operation is infallible. IO is deferred until `load` or `load_and_modify` is called.
     pub fn with_reader<R: Read + 'a>(rdr: R) -> Self {
@@ -156,6 +156,16 @@ impl<'a> EnvLoader<'a> {
             reader: Some(Box::new(rdr)),
             ..Default::default()
         }
+    }
+
+    /// Sets the path to the specified path.
+    ///
+    /// This is useful when constructing with a reader, but still desiring a path to be used in the error message context.
+    ///
+    /// If a reader exists and a path is specified, loading will be done using the reader.
+    pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
+        self.path = Some(path.as_ref().to_owned());
+        self
     }
 
     /// Sets the sequence in which to load environment variables.
@@ -166,13 +176,13 @@ impl<'a> EnvLoader<'a> {
     }
 
     fn buf(self) -> Result<BufReader<Box<dyn Read + 'a>>, crate::Error> {
-        let rdr = if let Some(path) = self.path {
+        let rdr = if let Some(rdr) = self.reader {
+            rdr
+        } else if let Some(path) = self.path {
             let file = File::open(&path).map_err(|io_err| crate::Error::from((io_err, path)))?;
             Box::new(file)
-        } else if let Some(rdr) = self.reader {
-            rdr
         } else {
-            // only `EnvLoader::default` would have no path or reader
+            // only `EnvLoader::default` would have no reader or path
             return Err(Error::NoInput);
         };
         Ok(BufReader::new(rdr))
