@@ -11,18 +11,8 @@
 //! will output `bar`.
 use clap::{Parser, Subcommand};
 use dotenvy::{EnvLoader, EnvSequence};
+#[cfg(unix)]
 use std::{error, fs::File, io::ErrorKind, path::PathBuf, process};
-
-macro_rules! die {
-    ($fmt:expr) => ({
-        eprintln!($fmt);
-        process::exit(1);
-    });
-    ($fmt:expr, $($arg:tt)*) => ({
-        eprintln!($fmt, $($arg)*);
-        process::exit(1);
-    });
-}
 
 fn mk_cmd(program: &str, args: &[String]) -> process::Command {
     let mut cmd = process::Command::new(program);
@@ -70,14 +60,13 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 
             // load the file
             let loader = EnvLoader::with_reader(file).path(&cli.file).sequence(seq);
-            if let Err(e) = unsafe { loader.load_and_modify() } {
-                die!("Failed to load {path}: {e}", path = cli.file.display());
-            }
+            unsafe { loader.load_and_modify() }?;
         }
         Err(e) => {
             if cli.required && e.kind() == ErrorKind::NotFound {
-                die!("Failed to load {path}: {e}", path = cli.file.display());
+                eprintln!("Failed to load {path}: {e}", path = cli.file.display());
             }
+            process::exit(1);
         }
     };
 
@@ -87,13 +76,19 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let mut cmd = mk_cmd(program, args);
 
     // run the command
-    if cfg!(target_os = "windows") {
+    if cfg!(windows) {
         match cmd.spawn().and_then(|mut child| child.wait()) {
             Ok(status) => process::exit(status.code().unwrap_or(1)),
-            Err(e) => die!("fatal: {e}"),
+            Err(e) => {
+                eprintln!("fatal: {e}");
+                process::exit(1);
+            }
         };
-    } else {
+    }
+    if cfg!(unix) {
         use std::os::unix::process::CommandExt;
-        die!("fatal: {}", cmd.exec());
+        eprintln!("fatal: {}", cmd.exec());
+        process::exit(1);
     };
+    Ok(())
 }
