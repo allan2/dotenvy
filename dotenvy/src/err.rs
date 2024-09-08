@@ -124,7 +124,7 @@ mod test {
     fn test_lineparse_error_display() {
         let err = Error::LineParse("test line".to_owned(), 2);
         assert_eq!(
-            "Error parsing line: 'test line', error at line index: 2",
+            "error parsing line: 'test line', error at line index: 2",
             err.to_string()
         );
     }
