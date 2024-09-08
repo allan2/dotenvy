@@ -11,7 +11,7 @@
 //! will output `bar`.
 use clap::{Parser, Subcommand};
 use dotenvy::{EnvLoader, EnvSequence};
-use std::{error, fs::File, io::ErrorKind, os::unix::process::CommandExt, path::PathBuf, process};
+use std::{error, fs::File, io::ErrorKind, path::PathBuf, process};
 
 macro_rules! die {
     ($fmt:expr) => ({
@@ -93,6 +93,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
             Err(e) => die!("fatal: {e}"),
         };
     } else {
+        use std::os::unix::process::CommandExt;
         die!("fatal: {}", cmd.exec());
     };
 }
