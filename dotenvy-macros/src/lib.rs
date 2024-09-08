@@ -1,6 +1,10 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![deny(clippy::uninlined_format_args, clippy::wildcard_imports)]
 
+extern crate proc_macro;
+extern crate quote;
+extern crate syn;
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, AttributeArgs, ItemFn, Lit, Meta, NestedMeta};

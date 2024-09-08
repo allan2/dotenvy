@@ -1,5 +1,3 @@
-cargo-features = ["edition2024"]
-
 [package]
 name = "dotenvy"
 version = "0.15.7"
@@ -20,8 +18,8 @@ keywords = ["dotenv", "env", "environment", "settings", "config"]
 categories = ["configuration"]
 license = "MIT"
 repository = "https://github.com/allan2/dotenvy"
-edition = "2024"
-#rust-version = "1.72.0"
+edition = "2021"
+rust-version = "1.72.0"
 
 [[bin]]
 name = "dotenvy"
@@ -35,6 +33,6 @@ dotenvy-macros = { path = "../dotenvy-macros", optional = true }
 temp-env = "0.3.6"
 
 [features]
-default = ["cli", "macros"]
+default = ["cli"]
 cli = ["dep:clap"]
 macros = ["dep:dotenvy-macros"]
