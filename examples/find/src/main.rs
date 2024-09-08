@@ -20,7 +20,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
 }
 
 /// Searches for the filename in the directory and parent directories until the file is found or the filesystem root is reached.
-pub fn find(mut dir: &Path, filename: &str) -> Result<PathBuf, io::Error> {
+pub fn find(mut dir: &Path, filename: &str) -> io::Result<PathBuf> {
     loop {
         let candidate = dir.join(filename);
 

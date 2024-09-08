@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     Ok(())
 }
 
-fn print_host_py() -> Result<(), io::Error> {
+fn print_host_py() -> io::Result<()> {
     let script = fs::read_to_string("print_host.py")?;
     let output = Command::new("python3").arg("-c").arg(script).output()?;
     print!("{}", String::from_utf8_lossy(&output.stdout));
