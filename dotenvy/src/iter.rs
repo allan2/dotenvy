@@ -56,7 +56,7 @@ impl<B: BufRead> Iter<B> {
     /// Removes the BOM if it exists.
     ///
     /// For more info, see the [Unicode BOM character](https://www.compart.com/en/unicode/U+FEFF).
-    fn remove_bom(&mut self) -> Result<(), io::Error> {
+    fn remove_bom(&mut self) -> io::Result<()> {
         let buf = self.lines.0.fill_buf()?;
 
         if buf.starts_with(&[0xEF, 0xBB, 0xBF]) {
@@ -130,7 +130,7 @@ impl<B: BufRead> Iterator for Lines<B> {
         let mut cur_state = ParseState::Complete;
         let mut buf_pos;
         let mut cur_pos;
-        loop {  
+        loop {
             buf_pos = buf.len();
             match self.0.read_line(&mut buf) {
                 Ok(0) => {
@@ -210,5 +210,34 @@ pub enum ParseBufError {
 impl From<io::Error> for ParseBufError {
     fn from(e: io::Error) -> Self {
         Self::Io(e)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::BufReader;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_remove_bom() {
+        // BOM present
+        let b = b"\xEF\xBB\xBFkey=value\n";
+        let rdr = BufReader::new(Cursor::new(b));
+        let mut iter = Iter::new(rdr);
+        iter.remove_bom().unwrap();
+        let first_line = iter.lines.next().unwrap().unwrap();
+        assert_eq!(first_line, "key=value");
+    }
+
+    #[test]
+    fn test_remove_bom_no_bom() {
+        // no BOM
+        let b = b"key=value\n";
+        let reader = BufReader::new(Cursor::new(b));
+        let mut iter = Iter::new(reader);
+        iter.remove_bom().unwrap();
+        let first_line = iter.lines.next().unwrap().unwrap();
+        assert_eq!(first_line, "key=value");
     }
 }
