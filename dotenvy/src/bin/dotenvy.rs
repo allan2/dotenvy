@@ -86,7 +86,9 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     };
 
     #[cfg(unix)]
-    use std::os::unix::process::CommandExt;
-    eprintln!("fatal: {}", cmd.exec());
-    process::exit(1);
+    {
+        use std::os::unix::process::CommandExt;
+        eprintln!("fatal: {}", cmd.exec());
+        process::exit(1);
+    }
 }
