@@ -11,7 +11,6 @@
 //! will output `bar`.
 use clap::{Parser, Subcommand};
 use dotenvy::{EnvLoader, EnvSequence};
-#[cfg(unix)]
 use std::{error, fs::File, io::ErrorKind, path::PathBuf, process};
 
 fn mk_cmd(program: &str, args: &[String]) -> process::Command {
@@ -31,7 +30,8 @@ fn mk_cmd(program: &str, args: &[String]) -> process::Command {
     allow_external_subcommands = true
 )]
 struct Cli {
-    #[arg(short, long, default_value = ".env")]
+    #[arg(short, long, default_value = "./.env")]
+    /// Path to the env file
     file: PathBuf,
     #[clap(subcommand)]
     subcmd: Subcmd,
@@ -76,19 +76,17 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let mut cmd = mk_cmd(program, args);
 
     // run the command
-    if cfg!(windows) {
-        match cmd.spawn().and_then(|mut child| child.wait()) {
-            Ok(status) => process::exit(status.code().unwrap_or(1)),
-            Err(e) => {
-                eprintln!("fatal: {e}");
-                process::exit(1);
-            }
-        };
-    }
-    if cfg!(unix) {
-        use std::os::unix::process::CommandExt;
-        eprintln!("fatal: {}", cmd.exec());
-        process::exit(1);
+    #[cfg(windows)]
+    match cmd.spawn().and_then(|mut child| child.wait()) {
+        Ok(status) => process::exit(status.code().unwrap_or(1)),
+        Err(e) => {
+            eprintln!("fatal: {e}");
+            process::exit(1);
+        }
     };
-    Ok(())
+
+    #[cfg(unix)]
+    use std::os::unix::process::CommandExt;
+    eprintln!("fatal: {}", cmd.exec());
+    process::exit(1);
 }
