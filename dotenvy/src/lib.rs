@@ -265,7 +265,7 @@ impl<'a> EnvLoader<'a> {
 mod tests {
     use std::{env, io::Cursor};
 
-    use crate::EnvLoader;
+    use crate::{EnvLoader, EnvSequence};
 
     #[test]
     fn test_substitution() -> Result<(), crate::Error> {
@@ -290,7 +290,9 @@ mod tests {
     "#,
         );
         let cursor = Cursor::new(s);
-        let env_map = EnvLoader::with_reader(cursor).load()?;
+        let env_map = EnvLoader::with_reader(cursor)
+            .sequence(EnvSequence::InputOnly)
+            .load()?;
 
         assert_eq!(env_map.var("KEY")?, "value");
         assert_eq!(env_map.var("KEY1")?, "value1");
@@ -321,6 +323,90 @@ mod tests {
                 "$KEY"
             ]
             .join(">>")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_multiline() -> Result<(), crate::Error> {
+        let value = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\\n\\\"QUOTED\\\"";
+        let weak = "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n\"QUOTED\"";
+
+        let s = format!(
+            r#"
+    KEY=my\ cool\ value
+    KEY3="awesome \"stuff\"
+    more
+    on other
+    lines"
+    KEY4='hello '\''world'"
+    good ' \'morning"
+    WEAK="{value}"
+    STRONG='{value}'
+    "#
+        );
+
+        let cursor = Cursor::new(s);
+        let env_map = EnvLoader::with_reader(cursor)
+            .sequence(EnvSequence::InputOnly)
+            .load()?;
+        assert_eq!(env_map.var("KEY")?, r#"my cool value"#);
+        assert_eq!(
+            env_map.var("KEY3")?,
+            r#"awesome "stuff"
+    more
+    on other
+    lines"#
+        );
+        assert_eq!(
+            env_map.var("KEY4")?,
+            r#"hello 'world
+    good ' 'morning"#
+        );
+        assert_eq!(env_map.var("WEAK")?, weak);
+        assert_eq!(env_map.var("STRONG")?, value);
+        Ok(())
+    }
+
+    #[test]
+    fn test_multiline_comment() -> Result<(), crate::Error> {
+        let s = r#"
+# Start of .env file
+# Comment line with single ' quote
+# Comment line with double " quote
+ # Comment line with double " quote and starts with a space
+TESTKEY1=test_val # 1 '" comment
+TESTKEY2=test_val_with_#_hash # 2 '" comment
+TESTKEY3="test_val quoted with # hash" # 3 '" comment
+TESTKEY4="Line 1
+# Line 2
+Line 3" # 4 Multiline "' comment
+TESTKEY5="Line 4
+# Line 5
+Line 6
+" # 5 Multiline "' comment
+# End of .env file
+"#;
+
+        let cursor = Cursor::new(s);
+        let env_map = EnvLoader::with_reader(cursor)
+            .sequence(EnvSequence::InputOnly)
+            .load()?;
+        assert_eq!(env_map.var("TESTKEY1")?, "test_val");
+        assert_eq!(env_map.var("TESTKEY2")?, "test_val_with_#_hash");
+        assert_eq!(env_map.var("TESTKEY3")?, "test_val quoted with # hash");
+        assert_eq!(
+            env_map.var("TESTKEY4")?,
+            r#"Line 1
+# Line 2
+Line 3"#
+        );
+        assert_eq!(
+            env_map.var("TESTKEY5")?,
+            r#"Line 4
+# Line 5
+Line 6
+"#
         );
         Ok(())
     }
