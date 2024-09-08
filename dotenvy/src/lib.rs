@@ -163,6 +163,7 @@ impl<'a> EnvLoader<'a> {
     /// This is useful when constructing with a reader, but still desiring a path to be used in the error message context.
     ///
     /// If a reader exists and a path is specified, loading will be done using the reader.
+    #[must_use]
     pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.path = Some(path.as_ref().to_owned());
         self
@@ -263,9 +264,8 @@ impl<'a> EnvLoader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::{env, io::Cursor};
-
     use crate::{EnvLoader, EnvSequence};
+    use std::{env, io::Cursor};
 
     #[test]
     fn test_substitution() -> Result<(), crate::Error> {
@@ -291,7 +291,7 @@ mod tests {
         );
         let cursor = Cursor::new(s);
         let env_map = EnvLoader::with_reader(cursor)
-            .sequence(EnvSequence::InputOnly)
+            .sequence(EnvSequence::InputThenEnv)
             .load()?;
 
         assert_eq!(env_map.var("KEY")?, "value");
