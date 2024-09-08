@@ -133,7 +133,7 @@ pub struct EnvLoader<'a> {
 
 impl<'a> EnvLoader<'a> {
     #[must_use]
-    /// Creates a new `EnvLoader` with the path set to `./env`
+    /// Creates a new `EnvLoader` with the path set to `./env` in the current directory.
     pub fn new() -> Self {
         Self::with_path(".env")
     }
@@ -258,5 +258,70 @@ impl<'a> EnvLoader<'a> {
                 Ok(input)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{env, io::Cursor};
+
+    use crate::EnvLoader;
+
+    #[test]
+    fn test_substitution() -> Result<(), crate::Error> {
+        unsafe {
+            env::set_var("KEY", "value");
+            env::set_var("KEY1", "value1");
+        }
+
+        let subs = [
+            "$ZZZ", "$KEY", "$KEY1", "${KEY}1", "$KEY_U", "${KEY_U}", "\\$KEY",
+        ];
+
+        let common_string = subs.join(">>");
+        let s = format!(
+            r#"
+    KEY1=new_value1
+    KEY_U=$KEY+valueU
+    
+    STRONG_QUOTES='{common_string}'
+    WEAK_QUOTES="{common_string}"
+    NO_QUOTES={common_string}
+    "#,
+        );
+        let cursor = Cursor::new(s);
+        let env_map = EnvLoader::with_reader(cursor).load()?;
+
+        assert_eq!(env_map.var("KEY")?, "value");
+        assert_eq!(env_map.var("KEY1")?, "value1");
+        assert_eq!(env_map.var("KEY_U")?, "value+valueU");
+        assert_eq!(env_map.var("STRONG_QUOTES")?, common_string);
+        assert_eq!(
+            env_map.var("WEAK_QUOTES")?,
+            [
+                "",
+                "value",
+                "value1",
+                "value1",
+                "value_U",
+                "value+valueU",
+                "$KEY"
+            ]
+            .join(">>")
+        );
+        assert_eq!(
+            env_map.var("NO_QUOTES")?,
+            [
+                "",
+                "value",
+                "value1",
+                "value1",
+                "value_U",
+                "value+valueU",
+                "$KEY"
+            ]
+            .join(">>")
+        );
+        Ok(())
     }
 }
