@@ -272,7 +272,7 @@ mod test {
     use crate::iter::{Iter, ParseBufError};
 
     #[test]
-    fn test_parse_line_env() {
+    fn test_parse_line_env() -> Result<(), ParseBufError> {
         // Note 5 spaces after 'KEY8=' below
         let actual_iter = Iter::new(
             r#"
@@ -309,16 +309,15 @@ export   SHELL_LOVER=1
             ("SHELL_LOVER", "1"),
         ]
         .into_iter()
-        .map(|(key, value)| (key.to_string(), value.to_string()));
+        .map(|(key, value)| (key.to_owned(), value.to_owned()));
 
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
-            assert!(actual.is_ok());
-            assert_eq!(expected, actual.unwrap());
+            assert_eq!(expected, actual?);
             count += 1;
         }
-
         assert_eq!(count, 13);
+        Ok(())
     }
 
     #[test]
@@ -350,7 +349,7 @@ very bacon = yes indeed
     }
 
     #[test]
-    fn test_parse_value_escapes() {
+    fn test_parse_value_escapes() -> Result<(), ParseBufError> {
         let actual_iter = Iter::new(
             r#"
 KEY=my\ cool\ value
@@ -378,9 +377,9 @@ KEY7="line 1\nline 2"
             .map(|(key, value)| (key.to_string(), value.to_string()));
 
         for (expected, actual) in expected_iter.zip(actual_iter) {
-            assert!(actual.is_ok());
-            assert_eq!(expected, actual.unwrap());
+            assert_eq!(expected, actual?);
         }
+        Ok(())
     }
 
     #[test]
@@ -402,100 +401,100 @@ KEY4=h\8u
 }
 
 #[cfg(test)]
-mod variable_substitution_tests {
-    use crate::iter::Iter;
+mod substitution_tests {
+    use crate::iter::{Iter, ParseBufError};
     use std::env;
 
-    fn assert_parsed_string(input_string: &str, expected_parse_result: Vec<(&str, &str)>) {
-        let actual_iter = Iter::new(input_string.as_bytes());
-        let expected_count = &expected_parse_result.len();
+    /// Asserts the parsed string is equal to the expected string.
+    fn assert_string(input: &str, expected: Vec<(&str, &str)>) -> Result<(), ParseBufError> {
+        let actual_iter = Iter::new(input.as_bytes());
+        let expected_count = expected.len();
 
-        let expected_iter = expected_parse_result
+        let expected_iter = expected
             .into_iter()
-            .map(|(key, value)| (key.to_string(), value.to_string()));
+            .map(|(k, v)| (k.to_owned(), v.to_owned()));
 
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
-            assert!(actual.is_ok());
-            assert_eq!(expected, actual.unwrap());
+            assert_eq!(expected, actual?);
             count += 1;
         }
-
-        assert_eq!(count, *expected_count);
+        assert_eq!(count, expected_count);
+        Ok(())
     }
 
     #[test]
-    fn variable_in_parenthesis_surrounded_by_quotes() {
-        assert_parsed_string(
+    fn variable_in_parenthesis_surrounded_by_quotes() -> Result<(), ParseBufError> {
+        assert_string(
             r#"
             KEY=test
             KEY1="${KEY}"
             "#,
             vec![("KEY", "test"), ("KEY1", "test")],
-        );
+        )
     }
 
     #[test]
-    fn substitute_undefined_variables_to_empty_string() {
-        assert_parsed_string(r#"KEY=">$KEY1<>${KEY2}<""#, vec![("KEY", "><><")]);
+    fn sub_undefined_variables_to_empty_string() -> Result<(), ParseBufError> {
+        assert_string(r#"KEY=">$KEY1<>${KEY2}<""#, vec![("KEY", "><><")])
     }
 
     #[test]
-    fn do_not_substitute_variables_with_dollar_escaped() {
-        assert_parsed_string(
+    fn do_not_sub_with_dollar_escaped() -> Result<(), ParseBufError> {
+        assert_string(
             "KEY=>\\$KEY1<>\\${KEY2}<",
             vec![("KEY", ">$KEY1<>${KEY2}<")],
-        );
+        )
     }
 
     #[test]
-    fn do_not_substitute_variables_in_weak_quotes_with_dollar_escaped() {
-        assert_parsed_string(
+    fn do_not_sub_in_weak_quotes_with_dollar_escaped() -> Result<(), ParseBufError> {
+        assert_string(
             r#"KEY=">\$KEY1<>\${KEY2}<""#,
             vec![("KEY", ">$KEY1<>${KEY2}<")],
-        );
+        )
     }
 
     #[test]
-    fn do_not_substitute_variables_in_strong_quotes() {
-        assert_parsed_string("KEY='>${KEY1}<>$KEY2<'", vec![("KEY", ">${KEY1}<>$KEY2<")]);
+    fn do_not_sub_in_strong_quotes() -> Result<(), ParseBufError> {
+        assert_string("KEY='>${KEY1}<>$KEY2<'", vec![("KEY", ">${KEY1}<>$KEY2<")])
     }
 
     #[test]
-    fn same_variable_reused() {
-        assert_parsed_string(
+    fn same_variable_reused() -> Result<(), ParseBufError> {
+        assert_string(
             r"
     KEY=VALUE
     KEY1=$KEY$KEY
     ",
             vec![("KEY", "VALUE"), ("KEY1", "VALUEVALUE")],
-        );
+        )
     }
 
     #[test]
-    fn with_dot() {
-        assert_parsed_string(
+    fn with_dot() -> Result<(), ParseBufError> {
+        assert_string(
             r"
     KEY.Value=VALUE
     ",
             vec![("KEY.Value", "VALUE")],
-        );
+        )
     }
 
     #[test]
-    fn recursive_substitution() {
-        assert_parsed_string(
+    fn recursive_substitution() -> Result<(), ParseBufError> {
+        assert_string(
             r"
             KEY=${KEY1}+KEY_VALUE
             KEY1=${KEY}+KEY1_VALUE
             ",
             vec![("KEY", "+KEY_VALUE"), ("KEY1", "+KEY_VALUE+KEY1_VALUE")],
-        );
+        )
     }
 
     #[test]
-    fn variable_without_parenthesis_is_substituted_before_separators() {
-        assert_parsed_string(
+    fn var_without_paranthesis_subbed_before_separators() -> Result<(), ParseBufError> {
+        assert_string(
             r#"
             KEY1=test_user
             KEY1_1=test_user_with_separator
@@ -506,32 +505,33 @@ mod variable_substitution_tests {
                 ("KEY1_1", "test_user_with_separator"),
                 ("KEY", ">test_user_1<>test_user}<>test_user{<"),
             ],
-        );
+        )
     }
 
     #[test]
-    fn substitute_variable_from_env_variable() {
+    fn sub_var_from_env_var() -> Result<(), ParseBufError> {
         unsafe { env::set_var("KEY11", "test_user_env") };
 
-        assert_parsed_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")]);
+        assert_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
     }
 
     #[test]
-    fn substitute_variable_env_variable_overrides_dotenv_in_substitution() {
+    fn substitute_variable_env_variable_overrides_dotenv_in_substitution(
+    ) -> Result<(), ParseBufError> {
         unsafe { env::set_var("KEY11", "test_user_env") };
 
-        assert_parsed_string(
+        assert_string(
             r#"
     KEY11=test_user
     KEY=">${KEY11}<"
     "#,
             vec![("KEY11", "test_user"), ("KEY", ">test_user_env<")],
-        );
+        )
     }
 
     #[test]
-    fn consequent_substitutions() {
-        assert_parsed_string(
+    fn consequent_substitutions() -> Result<(), ParseBufError> {
+        assert_string(
             r"
     KEY1=test_user
     KEY2=$KEY1_2
@@ -542,18 +542,18 @@ mod variable_substitution_tests {
                 ("KEY2", "test_user_2"),
                 ("KEY", ">test_user<>test_user_2<"),
             ],
-        );
+        )
     }
 
     #[test]
-    fn consequent_substitutions_with_one_missing() {
-        assert_parsed_string(
+    fn consequent_substitutions_with_one_missing() -> Result<(), ParseBufError> {
+        assert_string(
             r"
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
     ",
             vec![("KEY2", "_2"), ("KEY", "><>_2<")],
-        );
+        )
     }
 }
 
@@ -562,79 +562,63 @@ mod error_tests {
     use crate::iter::{Iter, ParseBufError};
 
     #[test]
-    fn should_not_parse_unfinished_substitutions() {
-        let wrong_value = ">${KEY{<";
+    fn should_not_parse_unfinished_subs() {
+        let invalid_value = ">${baz{<";
 
-        let parsed_values: Vec<_> = Iter::new(
+        let iter = Iter::new(
             format!(
                 r#"
-    KEY=VALUE
-    KEY1={wrong_value}
+    FOO=bar
+    BAR={invalid_value}
     "#
             )
             .as_bytes(),
         )
-        .collect();
+        .collect::<Vec<_>>();
 
-        assert_eq!(parsed_values.len(), 2);
-
-        if let Ok(first_line) = &parsed_values[0] {
-            assert_eq!(first_line, &(String::from("KEY"), String::from("VALUE")));
-        } else {
-            panic!("Expected the first value to be parsed");
-        }
-
-        if let Err(ParseBufError::LineParse(second_value, index)) = &parsed_values[1] {
-            assert_eq!(second_value, wrong_value);
-            assert_eq!(*index, wrong_value.len() - 1);
-        } else {
-            panic!("Expected the second value not to be parsed")
-        }
+        // first line works
+        assert_eq!(
+            iter[0].as_ref().unwrap(),
+            &("FOO".to_owned(), "bar".to_owned())
+        );
+        // second line error
+        assert!(matches!(
+            iter[1],
+            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_value && idx == invalid_value.len() - 1
+        ));
     }
 
     #[test]
-    fn should_not_allow_dot_as_first_character_of_key() {
-        let wrong_key_value = ".Key=VALUE";
+    fn should_not_allow_dot_as_first_char_of_key() {
+        let invalid_key = ".KEY=value";
 
-        let parsed_values: Vec<_> = Iter::new(wrong_key_value.as_bytes()).collect();
+        let iter = Iter::new(invalid_key.as_bytes()).collect::<Vec<_>>();
 
-        assert_eq!(parsed_values.len(), 1);
-
-        if let Err(ParseBufError::LineParse(second_value, index)) = &parsed_values[0] {
-            assert_eq!(second_value, wrong_key_value);
-            assert_eq!(*index, 0);
-        } else {
-            panic!("Expected the second value not to be parsed")
-        }
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_key && idx == 0
+        ));
     }
 
     #[test]
-    fn should_not_parse_illegal_format() {
-        let wrong_format = r"<><><>";
-        let parsed_values: Vec<_> = Iter::new(wrong_format.as_bytes()).collect();
+    fn should_not_parse_invalid_format() {
+        let invalid_fmt = r"<><><>";
+        let iter = Iter::new(invalid_fmt.as_bytes()).collect::<Vec<_>>();
 
-        assert_eq!(parsed_values.len(), 1);
-
-        if let Err(ParseBufError::LineParse(wrong_value, index)) = &parsed_values[0] {
-            assert_eq!(wrong_value, wrong_format);
-            assert_eq!(*index, 0);
-        } else {
-            panic!("Expected the second value not to be parsed")
-        }
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_fmt && idx == 0
+        ));
     }
 
     #[test]
-    fn should_not_parse_illegal_escape() {
-        let wrong_escape = r">\f<";
-        let parsed_values: Vec<_> = Iter::new(format!("VALUE={wrong_escape}").as_bytes()).collect();
+    fn should_not_parse_invalid_escape() {
+        let invalid_esc = r">\f<";
+        let iter = Iter::new(format!("VALUE={invalid_esc}").as_bytes()).collect::<Vec<_>>();
 
-        assert_eq!(parsed_values.len(), 1);
-
-        if let Err(ParseBufError::LineParse(wrong_value, index)) = &parsed_values[0] {
-            assert_eq!(wrong_value, wrong_escape);
-            assert_eq!(*index, wrong_escape.find('\\').unwrap() + 1);
-        } else {
-            panic!("Expected the second value not to be parsed")
-        }
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_esc && idx == invalid_esc.find('\\').unwrap() + 1
+        ));
     }
 }
