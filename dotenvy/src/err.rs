@@ -1,12 +1,12 @@
-use std::{error, ffi::OsString, fmt, io, result};
+use std::{error, ffi::OsString, fmt, io, path::PathBuf};
 
-pub type Result<T> = result::Result<T, Error>;
+use crate::iter::ParseBufError;
 
 #[derive(Debug)]
 pub enum Error {
     LineParse(String, usize),
     /// An IO error may be encountered when reading from a file or reader.
-    Io(io::Error),
+    Io(io::Error, Option<PathBuf>),
     /// The variable was not found in the environment. The `String` is the name of the variable.
     NotPresent(String),
     /// The variable was not valid unicode. The `String` is the name of the variable.
@@ -21,15 +21,10 @@ pub enum Error {
     NoInput,
 }
 
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Self::Io(e)
-    }
-}
 impl Error {
     #[must_use]
     pub fn not_found(&self) -> bool {
-        if let Self::Io(e) = self {
+        if let Self::Io(e, _) = self {
             e.kind() == io::ErrorKind::NotFound
         } else {
             false
@@ -40,7 +35,7 @@ impl Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::Io(e) => Some(e),
+            Self::Io(e, _) => Some(e),
             Self::LineParse(_, _)
             | Self::NotPresent(_)
             | Self::NotUnicode(_, _)
@@ -53,7 +48,13 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Io(e) => e.fmt(f),
+            Self::Io(e, path) => {
+                if let Some(path) = path {
+                    write!(f, "error reading '{}':, {e}", path.to_string_lossy())
+                } else {
+                    e.fmt(f)
+                }
+            }
             Self::LineParse(line, index) => write!(
                 f,
                 "error parsing line: '{line}', error at line index: {index}",
@@ -68,6 +69,20 @@ impl fmt::Display for Error {
     }
 }
 
+impl From<(io::Error, PathBuf)> for Error {
+    fn from((e, path): (io::Error, PathBuf)) -> Self {
+        Self::Io(e, Some(path))
+    }
+}
+impl From<(ParseBufError, Option<PathBuf>)> for Error {
+    fn from((e, path): (ParseBufError, Option<PathBuf>)) -> Self {
+        match e {
+            ParseBufError::LineParse(line, index) => Self::LineParse(line, index),
+            ParseBufError::Io(e) => Self::Io(e, path),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Error;
@@ -75,7 +90,7 @@ mod test {
 
     #[test]
     fn test_io_error_source() {
-        let err = Error::Io(io::ErrorKind::PermissionDenied.into());
+        let err = Error::Io(io::ErrorKind::PermissionDenied.into(), None);
         let io_err = err.source().unwrap().downcast_ref::<io::Error>().unwrap();
         assert_eq!(io::ErrorKind::PermissionDenied, io_err.kind());
     }
@@ -88,19 +103,19 @@ mod test {
 
     #[test]
     fn test_error_not_found_true() {
-        let e = Error::Io(io::ErrorKind::NotFound.into());
+        let e = Error::Io(io::ErrorKind::NotFound.into(), None);
         assert!(e.not_found());
     }
 
     #[test]
     fn test_error_not_found_false() {
-        let e = Error::Io(io::ErrorKind::PermissionDenied.into());
+        let e = Error::Io(io::ErrorKind::PermissionDenied.into(), None);
         assert!(!e.not_found());
     }
 
     #[test]
     fn test_io_error_display() {
-        let err = Error::Io(io::ErrorKind::PermissionDenied.into());
+        let err = Error::Io(io::ErrorKind::PermissionDenied.into(), None);
         let io_err: io::Error = io::ErrorKind::PermissionDenied.into();
         assert_eq!(err.to_string(), io_err.to_string());
     }

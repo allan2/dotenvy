@@ -60,18 +60,19 @@ impl IntoIterator for EnvMap {
 }
 
 impl EnvMap {
+    #[must_use]
     pub fn new() -> Self {
         Self(HashMap::new())
     }
 
-    pub fn var(&self, key: &str) -> Result<String> {
+    pub fn var(&self, key: &str) -> Result<String, crate::Error> {
         self.get(key)
             .cloned()
             .ok_or_else(|| Error::NotPresent(key.to_owned()))
     }
 }
 
-pub use crate::err::{Error, Result};
+pub use crate::err::Error;
 
 #[cfg(feature = "macros")]
 pub use dotenvy_macros::*;
@@ -100,7 +101,7 @@ pub use dotenvy_macros::*;
 ///     Err(e) => println!("couldn't interpret {key}: {e}"),
 /// }
 /// ```
-pub fn var(key: &str) -> Result<String> {
+pub fn var(key: &str) -> Result<String, crate::Error> {
     env::var(key).map_err(|e| match e {
         VarError::NotPresent => Error::NotPresent(key.to_owned()),
         VarError::NotUnicode(os_str) => Error::NotUnicode(os_str, key.to_owned()),
@@ -164,9 +165,10 @@ impl<'a> EnvLoader<'a> {
         self
     }
 
-    fn buf(self) -> Result<BufReader<Box<dyn Read + 'a>>> {
+    fn buf(self) -> Result<BufReader<Box<dyn Read + 'a>>, crate::Error> {
         let rdr = if let Some(path) = self.path {
-            Box::new(File::open(path)?)
+            let file = File::open(&path).map_err(|io_err| crate::Error::from((io_err, path)))?;
+            Box::new(file)
         } else if let Some(rdr) = self.reader {
             rdr
         } else {
@@ -176,25 +178,28 @@ impl<'a> EnvLoader<'a> {
         Ok(BufReader::new(rdr))
     }
 
-    fn load_input(self) -> Result<EnvMap> {
+    fn load_input(self) -> Result<EnvMap, crate::Error> {
+        let path = self.path.clone();
         let iter = Iter::new(self.buf()?);
-        iter.load()
+        iter.load().map_err(|e| ((e, path).into()))
     }
 
-    unsafe fn load_input_and_modify(self) -> Result<EnvMap> {
+    unsafe fn load_input_and_modify(self) -> Result<EnvMap, crate::Error> {
+        let path = self.path.clone();
         let iter = Iter::new(self.buf()?);
-        unsafe { iter.load_and_modify() }
+        unsafe { iter.load_and_modify() }.map_err(|e| ((e, path).into()))
     }
 
-    unsafe fn load_input_and_modify_override(self) -> Result<EnvMap> {
+    unsafe fn load_input_and_modify_override(self) -> Result<EnvMap, crate::Error> {
+        let path = self.path.clone();
         let iter = Iter::new(self.buf()?);
-        unsafe { iter.load_and_modify_override() }
+        unsafe { iter.load_and_modify_override() }.map_err(|e| ((e, path).into()))
     }
 
     /// Loads environment variables into a hash map.
     ///
     /// This is the primary method for loading environment variables.
-    pub fn load(self) -> Result<EnvMap> {
+    pub fn load(self) -> Result<EnvMap, crate::Error> {
         match self.sequence {
             EnvSequence::EnvOnly => Ok(env::vars().collect()),
             EnvSequence::EnvThenInput => {
@@ -215,7 +220,7 @@ impl<'a> EnvLoader<'a> {
     /// Loads environment variables into a hash map, modifying the existing environment.
     ///
     /// This calls `std::env::set_var` internally and is not thread-safe.
-    pub unsafe fn load_and_modify(self) -> Result<EnvMap> {
+    pub unsafe fn load_and_modify(self) -> Result<EnvMap, crate::Error> {
         match self.sequence {
             // nothing to modify
             EnvSequence::EnvOnly => Err(Error::InvalidOp),

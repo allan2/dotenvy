@@ -1,12 +1,13 @@
 #![allow(clippy::module_name_repetitions)]
 
-use crate::{Error, Result};
 use std::{collections::HashMap, env};
+
+use crate::iter::ParseBufError;
 
 pub fn parse_line(
     line: &str,
     substitution_data: &mut HashMap<String, Option<String>>,
-) -> Result<Option<(String, String)>> {
+) -> Result<Option<(String, String)>, ParseBufError> {
     let mut parser = LineParser::new(line, substitution_data);
     parser.parse_line()
 }
@@ -28,11 +29,11 @@ impl<'a> LineParser<'a> {
         }
     }
 
-    fn err(&self) -> Error {
-        Error::LineParse(self.original_line.into(), self.pos)
+    fn err(&self) -> ParseBufError {
+        ParseBufError::LineParse(self.original_line.into(), self.pos)
     }
 
-    fn parse_line(&mut self) -> Result<Option<(String, String)>> {
+    fn parse_line(&mut self) -> Result<Option<(String, String)>, ParseBufError> {
         self.skip_whitespace();
         // if its an empty line or a comment, skip it
         if self.line.is_empty() || self.line.starts_with('#') {
@@ -67,7 +68,7 @@ impl<'a> LineParser<'a> {
         Ok(Some((key, parsed_value)))
     }
 
-    fn parse_key(&mut self) -> Result<String> {
+    fn parse_key(&mut self) -> Result<String, ParseBufError> {
         if !self
             .line
             .starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
@@ -87,7 +88,7 @@ impl<'a> LineParser<'a> {
         Ok(key)
     }
 
-    fn expect_equal(&mut self) -> Result<()> {
+    fn expect_equal(&mut self) -> Result<(), ParseBufError> {
         if !self.line.starts_with('=') {
             return Err(self.err());
         }
@@ -114,7 +115,10 @@ enum SubstitutionMode {
     EscapedBlock,
 }
 
-fn parse_value(input: &str, substitution_data: &HashMap<String, Option<String>>) -> Result<String> {
+fn parse_value(
+    input: &str,
+    substitution_data: &HashMap<String, Option<String>>,
+) -> Result<String, ParseBufError> {
     let mut strong_quote = false; // '
     let mut weak_quote = false; // "
     let mut escaped = false;
@@ -137,7 +141,7 @@ fn parse_value(input: &str, substitution_data: &HashMap<String, Option<String>>)
             } else if c == '#' {
                 break;
             }
-            return Err(Error::LineParse(input.to_owned(), index));
+            return Err(ParseBufError::LineParse(input.to_owned(), index));
         } else if escaped {
             //TODO I tried handling literal \r but various issues
             //imo not worth worrying about until there's a use case
@@ -147,7 +151,7 @@ fn parse_value(input: &str, substitution_data: &HashMap<String, Option<String>>)
                 '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
                 'n' => output.push('\n'), // handle \n case
                 _ => {
-                    return Err(Error::LineParse(input.to_owned(), index));
+                    return Err(ParseBufError::LineParse(input.to_owned(), index));
                 }
             }
 
@@ -229,7 +233,7 @@ fn parse_value(input: &str, substitution_data: &HashMap<String, Option<String>>)
     //XXX also fail if escaped? or...
     if substitution_mode == SubstitutionMode::EscapedBlock || strong_quote || weak_quote {
         let value_length = input.len();
-        Err(Error::LineParse(
+        Err(ParseBufError::LineParse(
             input.to_owned(),
             if value_length == 0 {
                 0
@@ -265,7 +269,7 @@ fn apply_substitution(
 
 #[cfg(test)]
 mod test {
-    use crate::{iter::Iter, Result};
+    use crate::iter::{Iter, ParseBufError};
 
     #[test]
     fn test_parse_line_env() {
@@ -322,7 +326,7 @@ export   SHELL_LOVER=1
         let input = br"
 # foo=bar
 #    ";
-        let result: Result<Vec<(String, String)>> = Iter::new(&input[..]).collect();
+        let result: Result<Vec<(String, String)>, ParseBufError> = Iter::new(&input[..]).collect();
         assert!(result.unwrap().is_empty());
     }
 
@@ -555,8 +559,7 @@ mod variable_substitution_tests {
 
 #[cfg(test)]
 mod error_tests {
-    use crate::err::Error::LineParse;
-    use crate::iter::Iter;
+    use crate::iter::{Iter, ParseBufError};
 
     #[test]
     fn should_not_parse_unfinished_substitutions() {
@@ -581,7 +584,7 @@ mod error_tests {
             panic!("Expected the first value to be parsed");
         }
 
-        if let Err(LineParse(second_value, index)) = &parsed_values[1] {
+        if let Err(ParseBufError::LineParse(second_value, index)) = &parsed_values[1] {
             assert_eq!(second_value, wrong_value);
             assert_eq!(*index, wrong_value.len() - 1);
         } else {
@@ -597,7 +600,7 @@ mod error_tests {
 
         assert_eq!(parsed_values.len(), 1);
 
-        if let Err(LineParse(second_value, index)) = &parsed_values[0] {
+        if let Err(ParseBufError::LineParse(second_value, index)) = &parsed_values[0] {
             assert_eq!(second_value, wrong_key_value);
             assert_eq!(*index, 0);
         } else {
@@ -612,7 +615,7 @@ mod error_tests {
 
         assert_eq!(parsed_values.len(), 1);
 
-        if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
+        if let Err(ParseBufError::LineParse(wrong_value, index)) = &parsed_values[0] {
             assert_eq!(wrong_value, wrong_format);
             assert_eq!(*index, 0);
         } else {
@@ -627,7 +630,7 @@ mod error_tests {
 
         assert_eq!(parsed_values.len(), 1);
 
-        if let Err(LineParse(wrong_value, index)) = &parsed_values[0] {
+        if let Err(ParseBufError::LineParse(wrong_value, index)) = &parsed_values[0] {
             assert_eq!(wrong_value, wrong_escape);
             assert_eq!(*index, wrong_escape.find('\\').unwrap() + 1);
         } else {

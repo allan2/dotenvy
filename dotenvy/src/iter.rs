@@ -1,12 +1,8 @@
-use crate::{
-    err::{Error, Result},
-    parse, EnvMap,
-};
+use crate::{parse, EnvMap};
 use std::{
     collections::HashMap,
     env::{self},
     io::{self, BufRead},
-    result::Result as StdResult,
 };
 
 pub struct Iter<B> {
@@ -22,7 +18,7 @@ impl<B: BufRead> Iter<B> {
         }
     }
 
-    fn internal_load<F>(mut self, mut load_fn: F) -> Result<EnvMap>
+    fn internal_load<F>(mut self, mut load_fn: F) -> Result<EnvMap, ParseBufError>
     where
         F: FnMut(String, String, &mut EnvMap),
     {
@@ -35,13 +31,13 @@ impl<B: BufRead> Iter<B> {
         Ok(map)
     }
 
-    pub fn load(self) -> Result<EnvMap> {
-        self.internal_load(|k, v, map| {
+    pub fn load(self) -> Result<EnvMap, ParseBufError> {
+        self.internal_load(|k, v: String, map| {
             map.insert(k, v);
         })
     }
 
-    pub unsafe fn load_and_modify(self) -> Result<EnvMap> {
+    pub unsafe fn load_and_modify(self) -> Result<EnvMap, ParseBufError> {
         self.internal_load(|k, v, map| {
             if env::var(&k).is_err() {
                 unsafe { env::set_var(&k, &v) };
@@ -50,17 +46,17 @@ impl<B: BufRead> Iter<B> {
         })
     }
 
-    pub unsafe fn load_and_modify_override(self) -> Result<EnvMap> {
+    pub unsafe fn load_and_modify_override(self) -> Result<EnvMap, ParseBufError> {
         self.internal_load(|k, v, map| {
             unsafe { env::set_var(&k, &v) };
             map.insert(k, v);
         })
     }
 
-    /// Removes the BOM from the reader if it exists.
+    /// Removes the BOM if it exists.
     ///
-    /// For more details, see the [Unicode BOM character](https://www.compart.com/en/unicode/U+FEFF).
-    fn remove_bom(&mut self) -> StdResult<(), io::Error> {
+    /// For more info, see the [Unicode BOM character](https://www.compart.com/en/unicode/U+FEFF).
+    fn remove_bom(&mut self) -> Result<(), io::Error> {
         let buf = self.lines.0.fill_buf()?;
 
         if buf.starts_with(&[0xEF, 0xBB, 0xBF]) {
@@ -127,14 +123,14 @@ impl ParseState {
 }
 
 impl<B: BufRead> Iterator for Lines<B> {
-    type Item = Result<String>;
+    type Item = Result<String, ParseBufError>;
 
-    fn next(&mut self) -> Option<Result<String>> {
+    fn next(&mut self) -> Option<Self::Item> {
         let mut buf = String::new();
         let mut cur_state = ParseState::Complete;
         let mut buf_pos;
         let mut cur_pos;
-        loop {
+        loop {  
             buf_pos = buf.len();
             match self.0.read_line(&mut buf) {
                 Ok(0) => {
@@ -142,7 +138,7 @@ impl<B: BufRead> Iterator for Lines<B> {
                         return None;
                     }
                     let len = buf.len();
-                    return Some(Err(Error::LineParse(buf, len)));
+                    return Some(Err(ParseBufError::LineParse(buf, len)));
                 }
                 Ok(_n) => {
                     // Skip lines which start with a `#` before iteration
@@ -176,14 +172,14 @@ impl<B: BufRead> Iterator for Lines<B> {
                         }
                     }
                 }
-                Err(e) => return Some(Err(Error::Io(e))),
+                Err(e) => return Some(Err(ParseBufError::Io(e))),
             }
         }
     }
 }
 
 impl<B: BufRead> Iterator for Iter<B> {
-    type Item = Result<(String, String)>;
+    type Item = Result<(String, String), ParseBufError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -199,5 +195,20 @@ impl<B: BufRead> Iterator for Iter<B> {
                 Err(e) => return Some(Err(e)),
             }
         }
+    }
+}
+
+/// An internal error type
+///
+/// This is necessary so we can handle IO errors without knowing the path.
+#[derive(Debug)]
+pub enum ParseBufError {
+    LineParse(String, usize),
+    Io(io::Error),
+}
+
+impl From<io::Error> for ParseBufError {
+    fn from(e: io::Error) -> Self {
+        Self::Io(e)
     }
 }
