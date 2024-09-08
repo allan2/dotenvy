@@ -265,7 +265,7 @@ impl<'a> EnvLoader<'a> {
 #[cfg(test)]
 mod tests {
     use crate::{EnvLoader, EnvSequence};
-    use std::{env, io::Cursor};
+    use std::{env, error, io::Cursor};
 
     #[test]
     fn test_substitution() -> Result<(), crate::Error> {
@@ -289,8 +289,7 @@ mod tests {
     NO_QUOTES={common_string}
     "#,
         );
-        let cursor = Cursor::new(s);
-        let env_map = EnvLoader::with_reader(cursor)
+        let env_map = EnvLoader::with_reader(Cursor::new(s))
             .sequence(EnvSequence::InputThenEnv)
             .load()?;
 
@@ -346,8 +345,7 @@ mod tests {
     "#
         );
 
-        let cursor = Cursor::new(s);
-        let env_map = EnvLoader::with_reader(cursor)
+        let env_map = EnvLoader::with_reader(Cursor::new(s))
             .sequence(EnvSequence::InputOnly)
             .load()?;
         assert_eq!(env_map.var("KEY")?, r#"my cool value"#);
@@ -388,8 +386,7 @@ Line 6
 # End of .env file
 "#;
 
-        let cursor = Cursor::new(s);
-        let env_map = EnvLoader::with_reader(cursor)
+        let env_map = EnvLoader::with_reader(Cursor::new(s))
             .sequence(EnvSequence::InputOnly)
             .load()?;
         assert_eq!(env_map.var("TESTKEY1")?, "test_val");
@@ -409,5 +406,46 @@ Line 6
 "#
         );
         Ok(())
+    }
+
+    #[test]
+    fn test_non_modify() -> Result<(), crate::Error> {
+        temp_env::with_var("SRC", Some("env"), || {
+            let s = "SRC=envfile\nFOO=bar";
+            let env_map = EnvLoader::with_reader(Cursor::new(s))
+                .sequence(EnvSequence::EnvThenInput)
+                .load()?;
+            assert_eq!("envfile", env_map.var("SRC")?);
+            assert_eq!("bar", env_map.var("FOO")?);
+
+            let env_map = EnvLoader::with_reader(Cursor::new(s))
+                .sequence(EnvSequence::InputThenEnv)
+                .load()?;
+            assert_eq!("env", env_map.var("SRC")?);
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn test_modify() -> Result<(), Box<dyn error::Error>> {
+        let s = "SRC=envfile\nFOO=bar";
+        let cursor = Cursor::new(s);
+
+        temp_env::with_var("SRC", Some("env"), || {
+            let loader = EnvLoader::with_reader(cursor.clone()).sequence(EnvSequence::InputThenEnv);
+            unsafe { loader.load_and_modify() }?;
+            assert_eq!("env", env::var("SRC")?);
+            assert_eq!("bar", env::var("FOO")?);
+            Ok::<_, Box<dyn error::Error>>(())
+        })?;
+
+        // override
+        temp_env::with_var("SRC", Some("env"), || {
+            let loader = EnvLoader::with_reader(cursor).sequence(EnvSequence::EnvThenInput);
+            unsafe { loader.load_and_modify() }?;
+            assert_eq!("envfile", env::var("SRC")?);
+            assert_eq!("bar", env::var("FOO")?);
+            Ok(())
+        })
     }
 }

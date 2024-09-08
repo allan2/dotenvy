@@ -403,7 +403,6 @@ KEY4=h\8u
 #[cfg(test)]
 mod substitution_tests {
     use crate::iter::{Iter, ParseBufError};
-    use std::env;
 
     /// Asserts the parsed string is equal to the expected string.
     fn assert_string(input: &str, expected: Vec<(&str, &str)>) -> Result<(), ParseBufError> {
@@ -510,23 +509,23 @@ mod substitution_tests {
 
     #[test]
     fn sub_var_from_env_var() -> Result<(), ParseBufError> {
-        unsafe { env::set_var("KEY11", "test_user_env") };
-
-        assert_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
+        temp_env::with_var("KEY11", Some("test_user_env"), || {
+            assert_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
+        })
     }
 
     #[test]
     fn substitute_variable_env_variable_overrides_dotenv_in_substitution(
     ) -> Result<(), ParseBufError> {
-        unsafe { env::set_var("KEY11", "test_user_env") };
-
-        assert_string(
-            r#"
+        temp_env::with_var("KEY11", Some("test_user_env"), || {
+            assert_string(
+                r#"
     KEY11=test_user
     KEY=">${KEY11}<"
     "#,
-            vec![("KEY11", "test_user"), ("KEY", ">test_user_env<")],
-        )
+                vec![("KEY11", "test_user"), ("KEY", ">test_user_env<")],
+            )
+        })
     }
 
     #[test]
