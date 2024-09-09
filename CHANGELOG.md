@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **breaking**: `dotenvy::Error` now includes IO file path info and variable name info
 - **breaking**: `dotenvy::var` no longer calls `load` internally
 - **breaking**: `dotenvy::Result` is now private
-- **breaking**: deprecate `dotenvy::var`, `dotenvy::from_filename*` 
+- **breaking**: `dotenvy::var`, `dotenvy::from_filename*` are deprecated
 - `Error` is now `From<std::io::Error`
 
 - **breaking**: dotenvy CLI uses `with_path` instead of `from_filename`
