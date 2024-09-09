@@ -13,7 +13,7 @@ authors = [
 ]
 description = "A well-maintained fork of the dotenv crate"
 homepage = "https://github.com/allan2/dotenvy"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["dotenv", "env", "environment", "settings", "config"]
 categories = ["configuration"]
 license = "MIT"
