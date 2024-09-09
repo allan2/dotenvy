@@ -3,7 +3,10 @@
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, AttributeArgs, ItemFn, Lit, Meta, NestedMeta};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, ItemFn, LitBool, LitStr,
+};
 
 /// Loads environment variables from a file and modifies the environment.
 ///
@@ -13,30 +16,12 @@ use syn::{parse_macro_input, AttributeArgs, ItemFn, Lit, Meta, NestedMeta};
 /// The default path is ".env". The default sequence is `EnvSequence::InputThenEnv`.
 #[proc_macro_attribute]
 pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let args = parse_macro_input!(attr as AttributeArgs);
-    let input = parse_macro_input!(item as ItemFn);
+    let attrs = parse_macro_input!(attr as LoadInput);
+    let item = parse_macro_input!(item as ItemFn);
 
-    let mut path = ".env".to_owned();
-    let mut required = true;
-    let mut override_ = false;
-
-    for arg in args {
-        if let NestedMeta::Meta(Meta::NameValue(v)) = arg {
-            if v.path.is_ident("path") {
-                if let Lit::Str(lit_str) = v.lit {
-                    path = lit_str.value();
-                }
-            } else if v.path.is_ident("required") {
-                if let Lit::Bool(lit_bool) = v.lit {
-                    required = lit_bool.value();
-                }
-            } else if v.path.is_ident("override") {
-                if let Lit::Bool(lit_bool) = v.lit {
-                    override_ = lit_bool.value();
-                }
-            }
-        }
-    }
+    let path = attrs.path;
+    let required = attrs.required;
+    let override_ = attrs.override_;
 
     let load_env = quote! {
         use dotenvy::{EnvLoader, EnvSequence};
@@ -59,12 +44,12 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let attrs = &input.attrs;
-    let block = &input.block;
-    let sig = &input.sig;
-    let vis = &input.vis;
-    let fn_name = &input.sig.ident;
-    let output = &input.sig.output;
+    let attrs = &item.attrs;
+    let block = &item.block;
+    let sig = &item.sig;
+    let vis = &item.vis;
+    let fn_name = &item.sig.ident;
+    let output = &item.sig.output;
     let new_fn_name = format_ident!("{fn_name}_inner");
 
     let expanded = if sig.asyncness.is_some() {
@@ -94,4 +79,44 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
+}
+
+struct LoadInput {
+    path: String,
+    required: bool,
+    override_: bool,
+}
+
+impl Parse for LoadInput {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut path = "./.env".to_owned();
+        let mut required = true;
+        let mut override_ = false;
+
+        while !input.is_empty() {
+            let ident: syn::Ident = input.parse()?;
+            input.parse::<syn::Token![=]>()?;
+            match ident.to_string().as_str() {
+                "path" => {
+                    path = input.parse::<LitStr>()?.value();
+                }
+                "required" => {
+                    required = input.parse::<LitBool>()?.value();
+                }
+                "override_" => {
+                    override_ = input.parse::<LitBool>()?.value();
+                }
+                _ => return Err(syn::Error::new(ident.span(), "unknown attribute")),
+            }
+            if !input.is_empty() {
+                input.parse::<syn::Token![,]>()?;
+            }
+        }
+
+        Ok(Self {
+            path,
+            required,
+            override_,
+        })
+    }
 }
