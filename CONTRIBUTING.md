@@ -70,7 +70,7 @@ Please ensure that your PR passes the CI checks:
 - [Rustdoc](https://doc.rust-lang.org/rustdoc/write-documentation/linking-to-items-by-name.html)
   links work
 
-If you are on a *nix system, you can use the [`scripts/cicheck.sh`](scripts/cicheck.sh) script to quickly check if you pass the CI checks.
+If you are on a *nix system, you can use the [`scripts/ci-check.sh`](scripts/ci-check.sh) script to quickly check if you pass the CI checks.
 
 #### Add an entry to the changelog
 
