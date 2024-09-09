@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![deny(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
     clippy::missing_errors_doc,
     clippy::too_many_lines,
@@ -133,9 +133,9 @@ pub struct EnvLoader<'a> {
 
 impl<'a> EnvLoader<'a> {
     #[must_use]
-    /// Creates a new `EnvLoader` with the path set to `./.env` in the current directory.
+    /// Creates a new `EnvLoader` with the path set to `./env` in the current directory.
     pub fn new() -> Self {
-        Self::with_path("./.env")
+        Self::with_path("./env")
     }
 
     /// Creates a new `EnvLoader` with the path as input.
@@ -348,7 +348,7 @@ mod tests {
         let env_map = EnvLoader::with_reader(Cursor::new(s))
             .sequence(EnvSequence::InputOnly)
             .load()?;
-        assert_eq!(env_map.var("KEY")?, r#"my cool value"#);
+        assert_eq!(env_map.var("KEY")?, "my cool value");
         assert_eq!(
             env_map.var("KEY3")?,
             r#"awesome "stuff"
@@ -358,8 +358,8 @@ mod tests {
         );
         assert_eq!(
             env_map.var("KEY4")?,
-            r#"hello 'world
-    good ' 'morning"#
+            "hello 'world
+    good ' 'morning"
         );
         assert_eq!(env_map.var("WEAK")?, weak);
         assert_eq!(env_map.var("STRONG")?, value);
@@ -394,16 +394,16 @@ Line 6
         assert_eq!(env_map.var("TESTKEY3")?, "test_val quoted with # hash");
         assert_eq!(
             env_map.var("TESTKEY4")?,
-            r#"Line 1
+            "Line 1
 # Line 2
-Line 3"#
+Line 3"
         );
         assert_eq!(
             env_map.var("TESTKEY5")?,
-            r#"Line 4
+            "Line 4
 # Line 5
 Line 6
-"#
+"
         );
         Ok(())
     }
