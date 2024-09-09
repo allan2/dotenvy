@@ -113,7 +113,7 @@ A non-macro example is [here](examples/modify-tokio/src/main.rs).
 
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
-## Minimum supported Rust version
+## Minimum Supported Rust version
 
 We aim to support the latest 8 rustc versions - approximately 1 year. Increasing
 MSRV is _not_ considered a semver-breaking change.

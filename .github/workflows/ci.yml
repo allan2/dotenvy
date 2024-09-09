@@ -14,8 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # minimum supported rust version
-        rust: [stable, beta, nightly, 1.74.0]
+        # Minimum Supported Rust Version
+        rust: [stable, nightly, 1.74.0]
         on:
           - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
           - { os: macos-latest, target: x86_64-apple-darwin }
