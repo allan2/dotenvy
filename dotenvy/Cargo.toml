@@ -33,6 +33,6 @@ dotenvy-macros = { path = "../dotenvy-macros", optional = true }
 temp-env = "0.3.6"
 
 [features]
-default = ["cli"]
+default = []
 cli = ["dep:clap"]
 macros = ["dep:dotenvy-macros"]
