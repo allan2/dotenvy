@@ -13,7 +13,7 @@ use syn::{
 /// Three optional arguments are supported: `path`, `required`, and `override_`.
 /// Usage is like `#[dotenvy::load(path = ".env", required = true, override_ = true)]`.
 ///
-/// The default path is "./env". The default sequence is `EnvSequence::InputThenEnv`.
+/// The default path is "./.env". The default sequence is `EnvSequence::InputThenEnv`.
 #[proc_macro_attribute]
 pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attrs = parse_macro_input!(attr as LoadInput);

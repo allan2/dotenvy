@@ -2,7 +2,8 @@
 #![allow(
     clippy::missing_errors_doc,
     clippy::too_many_lines,
-    clippy::missing_safety_doc
+    clippy::missing_safety_doc,
+    unused_unsafe, // until Rust 2024
 )]
 #![deny(clippy::uninlined_format_args, clippy::wildcard_imports)]
 
@@ -133,9 +134,9 @@ pub struct EnvLoader<'a> {
 
 impl<'a> EnvLoader<'a> {
     #[must_use]
-    /// Creates a new `EnvLoader` with the path set to `./env` in the current directory.
+    /// Creates a new `EnvLoader` with the path set to `./.env` in the current directory.
     pub fn new() -> Self {
-        Self::with_path("./env")
+        Self::with_path("./.env")
     }
 
     /// Creates a new `EnvLoader` with the path as input.
