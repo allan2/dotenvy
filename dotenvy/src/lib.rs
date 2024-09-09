@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn test_multiline_comment() -> Result<(), crate::Error> {
         let s = r#"
-# Start of .env file
+# Start of env file
 # Comment line with single ' quote
 # Comment line with double " quote
  # Comment line with double " quote and starts with a space
@@ -383,7 +383,7 @@ TESTKEY5="Line 4
 # Line 5
 Line 6
 " # 5 Multiline "' comment
-# End of .env file
+# End of env file
 "#;
 
         let env_map = EnvLoader::with_reader(Cursor::new(s))

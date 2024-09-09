@@ -25,7 +25,7 @@ fn mk_cmd(program: &str, args: &[String]) -> process::Command {
 #[command(
     name = "dotenvy",
     version,
-    about = "Run a command using an environment loaded from a .env file",
+    about = "Run a command using an environment loaded from an env file",
     arg_required_else_help = true,
     allow_external_subcommands = true
 )]
