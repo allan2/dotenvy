@@ -137,11 +137,6 @@ This repo adds:
 - multiline support
 - more examples and docs
 
-This repo fixes:
-
-- home directory works correctly (no longer using the deprecated `std::env::home_dir`)
-- more helpful errors for `dotenv!` ([dotenv-rs/dotenv #57](https://github.com/dotenv-rs/dotenv/pull/57))
-
 For a full list of changes, refer to the [changelog](./CHANGELOG.md).
 
 ## Contributing
