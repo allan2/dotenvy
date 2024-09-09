@@ -1,8 +1,9 @@
 [package]
-name = "dev-prod-example"
+name = "modify-tokio-example"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
 dotenvy = { path = "../../dotenvy" }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"]}

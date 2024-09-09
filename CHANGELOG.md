@@ -9,8 +9,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 - update to 2021 edition
-- update MSRV to 1.72.0
-- **breaking**: dotenvy CLI uses `from_path` instead of `from_filename`
+- update MSRV to 1.74.0
+
+- **breaking**: `dotenvy::Error` now includes IO file path info and variable name info
+- **breaking**: `dotenvy::var` no longer calls `load` internally
+- **breaking**: `dotenvy::Result` is now private
+- **breaking**: deprecate `dotenvy::var`, `dotenvy::from_filename*` 
+- `Error` is now `From<std::io::Error`
+
+- **breaking**: dotenvy CLI uses `with_path` instead of `from_filename`
 - **breaking**: dotenvy CLI defaults to *./.env*, no longer traversing parent directories.
 - **breaking**: dotenvy CLI exits with code 2 instead of code 1 if the external command is omitted
 - Fix doctests on windows not compiling ([PR #79](https://github.com/allan2/dotenvy/pull/79) by [vallentin](https://github.com/vallentin).

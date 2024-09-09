@@ -1,43 +1,52 @@
-use std::{env, fmt};
+//! This example loads from an env file in development but from the environment only in production.
+//!
+/// Commands to try:
+/// 1) `cargo run`
+/// 2) `APP_ENV=prod cargo run`
+/// 3) `APP_ENV=prod HOST=prod.com cargo run`
+use dotenvy::{EnvLoader, EnvSequence};
+use std::{env, error, str::FromStr};
 
-#[derive(PartialEq)]
+fn main() -> Result<(), Box<dyn error::Error>> {
+    let app_env = env::var("APP_ENV")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(AppEnv::Dev);
+
+    let env_map = EnvLoader::with_path("../env-example")
+        .sequence(app_env.into())
+        .load()?;
+
+    if let Some(v) = env_map.get("HOST") {
+        println!("Host: {v}");
+    } else {
+        println!("HOST not set");
+    }
+    Ok(())
+}
+
 enum AppEnv {
     Dev,
     Prod,
 }
 
-/// A common setup that:
-///  - loads from a .env file in dev mode
-///  - loads from the environment in prod mode
-///
-/// A few commands to try:
-/// 1) `cargo run`
-/// 2) `APP_ENV=prod cargo run`
-/// 3) `APP_ENV=prod HOST=prod.com cargo run`
-fn main() {
-    let app_env = match env::var("APP_ENV") {
-        Ok(v) if v == "prod" => AppEnv::Prod,
-        _ => AppEnv::Dev,
-    };
+impl FromStr for AppEnv {
+    type Err = String;
 
-    println!("Running in {app_env} mode");
-
-    if app_env == AppEnv::Dev {
-        match dotenvy::dotenv() {
-            Ok(path) => println!(".env read successfully from {}", path.display()),
-            Err(e) => println!("Could not load .env file: {e}"),
-        };
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "dev" => Ok(Self::Dev),
+            "prod" => Ok(Self::Prod),
+            s => Err(format!("Invalid AppEnv: {s}")),
+        }
     }
-
-    let host = env::var("HOST").expect("HOST not set");
-    println!("Host: {host}");
 }
 
-impl fmt::Display for AppEnv {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AppEnv::Dev => write!(f, "dev"),
-            AppEnv::Prod => write!(f, "prod"),
+impl From<AppEnv> for EnvSequence {
+    fn from(v: AppEnv) -> Self {
+        match v {
+            AppEnv::Dev => Self::InputThenEnv,
+            AppEnv::Prod => Self::EnvOnly,
         }
     }
 }

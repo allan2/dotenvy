@@ -1,0 +1,24 @@
+[package]
+name = "dotenvy-macros"
+version = "0.1.0"
+authors = ["Allan"]
+readme = "README.md"
+keywords = ["dotenv", "env", "environment", "settings", "config"]
+categories = ["configuration"]
+license = "MIT"
+homepage = "https://github.com/allan2/dotenvy"
+repository = "https://github.com/allan2/dotenvy"
+description = "Runtime macros for dotenvy"
+edition = "2021"
+rust-version = "1.74.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["parsing"] }
+
+[dev-dependencies]
+dotenvy = { path = "../dotenvy" }

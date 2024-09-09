@@ -1,17 +1,21 @@
-#![forbid(unsafe_code)]
-
+use dotenvy::EnvLoader;
+use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::env::{self, VarError};
 use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, Token};
 
 #[proc_macro]
-pub fn dotenv(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    dotenv_inner(input.into()).into()
+/// TODO: add safety warning
+pub fn dotenv(input: TokenStream) -> TokenStream {
+    let input = input.into();
+    unsafe { dotenv_inner(input) }.into()
 }
 
-fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    if let Err(err) = dotenvy::dotenv() {
-        let msg = format!("Error loading .env file: {}", err);
+unsafe fn dotenv_inner(input: TokenStream2) -> TokenStream2 {
+    let loader = EnvLoader::new();
+    if let Err(e) = unsafe { loader.load_and_modify() } {
+        let msg = e.to_string();
         return quote! {
             compile_error!(#msg);
         };
@@ -23,7 +27,7 @@ fn dotenv_inner(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     }
 }
 
-fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::TokenStream> {
+fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
     let args = <Punctuated<syn::LitStr, Token![,]>>::parse_terminated
         .parse(input_raw.into())
         .expect("expected macro to be called with a comma-separated list of string literals");
@@ -50,13 +54,12 @@ fn expand_env(input_raw: proc_macro2::TokenStream) -> syn::Result<proc_macro2::T
             err_msg.map_or_else(
                 || match e {
                     VarError::NotPresent => {
-                        format!("environment variable `{}` not defined", var_name)
+                        format!("environment variable `{var_name}` not defined")
                     }
 
-                    VarError::NotUnicode(s) => format!(
-                        "environment variable `{}` was not valid unicode: {:?}",
-                        var_name, s
-                    ),
+                    VarError::NotUnicode(s) => {
+                        format!("environment variable `{var_name}` was not valid Unicode: {s:?}",)
+                    }
                 },
                 |lit| lit.value(),
             ),

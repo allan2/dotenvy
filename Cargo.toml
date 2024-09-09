@@ -1,3 +1,3 @@
 [workspace]
-members = ["dotenv", "dotenv_codegen"]
+members = ["dotenvy", "dotenvy-macros", "dotenv_codegen", "examples/*"]
 resolver = "2"
