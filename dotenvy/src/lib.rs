@@ -133,9 +133,9 @@ pub struct EnvLoader<'a> {
 
 impl<'a> EnvLoader<'a> {
     #[must_use]
-    /// Creates a new `EnvLoader` with the path set to `./env` in the current directory.
+    /// Creates a new `EnvLoader` with the path set to `./.env` in the current directory.
     pub fn new() -> Self {
-        Self::with_path(".env")
+        Self::with_path("./.env")
     }
 
     /// Creates a new `EnvLoader` with the path as input.
