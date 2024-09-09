@@ -56,9 +56,9 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
         // this works with `tokio::main`` but not `async_std::main``
         quote! {
             // non-async wrapper function
-            #vis fn #fn_name() #output {
+            #vis async fn #fn_name() #output {
                 #load_env
-                #new_fn_name()
+                #new_fn_name().await
             }
 
             // orig async function, but renamed

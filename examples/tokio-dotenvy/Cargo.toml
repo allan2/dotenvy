@@ -1,0 +1,8 @@
+[package]
+name = "tokio-dotenvy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dotenvy = { path = "../../dotenvy" }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"]}
