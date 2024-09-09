@@ -13,8 +13,9 @@ pub fn dotenv(input: TokenStream) -> TokenStream {
 }
 
 unsafe fn dotenv_inner(input: TokenStream2) -> TokenStream2 {
-    if let Err(e) = unsafe { EnvLoader::new().load_and_modify() } {
-        let msg = format!("Error loading .env file: {}", e);
+    let loader = EnvLoader::new();
+    if let Err(e) = unsafe { loader.load_and_modify() } {
+        let msg = e.to_string();
         return quote! {
             compile_error!(#msg);
         };
@@ -53,13 +54,12 @@ fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
             err_msg.map_or_else(
                 || match e {
                     VarError::NotPresent => {
-                        format!("environment variable `{}` not defined", var_name)
+                        format!("environment variable `{var_name}` not defined")
                     }
 
-                    VarError::NotUnicode(s) => format!(
-                        "environment variable `{}` was not valid unicode: {:?}",
-                        var_name, s
-                    ),
+                    VarError::NotUnicode(s) => {
+                        format!("environment variable `{var_name}` was not valid Unicode: {s:?}",)
+                    }
                 },
                 |lit| lit.value(),
             ),
