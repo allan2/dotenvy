@@ -28,11 +28,13 @@ required-features = ["cli"]
 [dependencies]
 clap = { version = "4.5.16", features = ["derive"], optional = true }
 dotenvy-macros = { path = "../dotenvy-macros", optional = true }
+serde_json = { version = "1.0.80", optional = true }
 
 [dev-dependencies]
 temp-env = "0.3.6"
 
 [features]
 default = []
+json = ["dep:serde_json"]
 cli = ["dep:clap"]
 macros = ["dep:dotenvy-macros"]

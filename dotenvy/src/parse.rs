@@ -124,6 +124,14 @@ fn parse_value(
     let mut escaped = false;
     let mut expecting_end = false;
 
+    #[cfg(feature = "json")]
+    {
+        if input.starts_with('{') && input.ends_with('}')
+            && serde_json::from_str::<serde_json::Value>(input).is_ok() {
+            return Ok(input.to_string());
+        }
+    }
+
     //FIXME can this be done without yet another allocation per line?
     let mut output = String::new();
 
@@ -317,6 +325,56 @@ export   SHELL_LOVER=1
             count += 1;
         }
         assert_eq!(count, 13);
+        Ok(())
+    }
+
+    #[cfg(feature = "json")]
+    #[test]
+    fn test_parse_json_line_env() -> Result<(), ParseBufError> {
+        // Note 5 spaces after 'KEY8=' below
+        let actual_iter = Iter::new(
+            r#"
+KEY=1
+KEY2="2"
+KEY3='3'
+KEY4='fo ur'
+KEY5="fi ve"
+KEY6=s\ ix
+ACCOUNT={ "r": "1", "a": "2" }
+KEY7=
+KEY8=
+KEY9=   # foo
+KEY10  ="whitespace before ="
+KEY11=    "whitespace after ="
+export="export as key"
+export   SHELL_LOVER=1
+            "#
+                .as_bytes(),
+        );
+
+        let expected_iter = vec![
+            ("KEY", "1"),
+            ("KEY2", "2"),
+            ("KEY3", "3"),
+            ("KEY4", "fo ur"),
+            ("KEY5", "fi ve"),
+            ("KEY6", "s ix"),
+            ("ACCOUNT", "{ \"r\": \"1\", \"a\": \"2\" }"),
+            ("KEY7", ""),
+            ("KEY8", ""),
+            ("KEY9", ""),
+            ("KEY10", "whitespace before ="),
+            ("KEY11", "whitespace after ="),
+            ("export", "export as key"),
+            ("SHELL_LOVER", "1"),
+        ]
+            .into_iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()));
+
+        expected_iter.zip(actual_iter).for_each(|(expected, actual)| {
+            assert_eq!(expected, actual.unwrap());
+        });
+
         Ok(())
     }
 
