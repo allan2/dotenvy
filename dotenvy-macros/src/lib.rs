@@ -35,12 +35,15 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
         let mut loader = EnvLoader::with_path(#path).sequence(seq);
         if let Err(e) = unsafe { loader.load_and_modify() } {
             if let Some(io_err) = e.source().and_then(|src| src.downcast_ref::<io::Error>()) {
-                if io_err.kind() == io::ErrorKind::NotFound && !#required {
-                    // `required` is false and file not found, so continue
+                match (io_err.kind(), #required) {
+                    (io::ErrorKind::NotFound, false) => (),
+                    _ => {
+                        eprintln!("Failed to load env file from path '{}': {e}", #path);
+                        process::exit(1);
+                    }
                 }
             }
-            eprintln!("Failed to load env file from path '{}': {e}", #path);
-            process::exit(1);
+
         }
     };
 
