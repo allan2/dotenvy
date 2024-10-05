@@ -10,7 +10,7 @@ A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crat
 
 This crate is the suggested alternative for `dotenv` in security advisory [RUSTSEC-2021-0141](https://rustsec.org/advisories/RUSTSEC-2021-0141.html).
 
-This library loads environment variables from an env file.
+This library enables loading environment variables from an env file.
 
 ## Components
 
@@ -58,7 +58,7 @@ let str_loader = EnvLoader::with_reader(Cursor::new(s));
 let overriding_loader = EnvLoader::new().sequence(EnvSequence::EnvThenInput);
 ```
 
-Load constuction is infallible. I/O is derred until `load` or `load_and_modify` is called.
+Loader constuction is infallible. I/O is derred until `load` or `load_and_modify` is called.
 This is to allow support configurations such as [dev/prod](examples/dev-prod/src/main.rs) and
 [optional loading](examples/optional/src/main.rs).
 
@@ -100,14 +100,11 @@ The `load` attribute macro can be used to do this. To use it, enable the `macros
 ```rs
 #[dotenvy::load]  // will call `load_and_modify` before the async runtime is started
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn error::Error>> {
-    println!("HOST={}", env::var("HOST")?);
+async fn main() {
+    println!("HOST={}", env::var("HOST").unwrap());
     Ok(())
 }
 ```
-`dotenvy::load` must be placed before `tokio::main`.
-
-A non-macro example is [here](examples/modify-tokio/src/main.rs).
 
 ### Loading at compile time
 
