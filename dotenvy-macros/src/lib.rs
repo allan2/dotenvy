@@ -38,7 +38,7 @@ pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
                 match (io_err.kind(), #required) {
                     (io::ErrorKind::NotFound, false) => (),
                     _ => {
-                        eprintln!("Failed to load env file from path '{}': {e}", #path);
+                        eprintln!("{e}");
                         process::exit(1);
                     }
                 }
