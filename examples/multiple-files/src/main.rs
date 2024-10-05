@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .sequence(EnvSequence::EnvThenInput)
         .load()?;
 
-    // the sequence is `InputOnly` as we aleady loaded the program environment in the previous step. 
+    // the sequence is `InputOnly` as we aleady loaded the program environment in the previous step.
     let map_b = EnvLoader::with_path("../env-example-2")
         .sequence(EnvSequence::InputOnly)
         .load()?;

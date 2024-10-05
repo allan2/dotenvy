@@ -1,5 +1,5 @@
 //! The `load` attribute loads and modifies the environment.
-//! 
+//!
 //! This is more ergonomic than the *modify* example.
 
 use std::env;

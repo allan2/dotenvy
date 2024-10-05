@@ -1,7 +1,7 @@
 //! This example modifies the existing environment.
 //!
 //! This makes environment varaibles from available to subprocesses, e.g., a Python script.
-//! 
+//!
 //! The *modify-macro* example contains a more ergonomic way to do this.
 
 use dotenvy::{EnvLoader, EnvSequence};
