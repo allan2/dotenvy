@@ -18,7 +18,7 @@ proc-macro = true
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "2", features = ["parsing"] }
+syn = { version = "2", features = ["full"] }
 
 [dev-dependencies]
 dotenvy = { path = "../dotenvy" }
