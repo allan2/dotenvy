@@ -1,10 +1,12 @@
-//! `#[dotenvy::load]` must go before `#[tokio::main]`.
+//! This is more ergonomic than the *modify-tokio* example.
+//! 
+//! The attribute macro executes `load_and_modify` before the tokio runtime is spawned.
+//! When using this method, `#[dotenvy::load]` be put above `#[tokio::main]`.
 
-use std::{env, error};
+use std::env;
 
 #[dotenvy::load(path = "../env-example")]
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn error::Error>> {
-    println!("HOST={}", env::var("HOST")?);
-    Ok(())
+async fn main() {
+    println!("HOST={}", env::var("HOST").unwrap());
 }

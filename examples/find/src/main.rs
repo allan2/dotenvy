@@ -1,4 +1,5 @@
 //! This example shows finding an env file by filename.
+
 use dotenvy::EnvLoader;
 use std::{
     env, error, fs, io,

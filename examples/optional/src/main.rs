@@ -7,8 +7,9 @@ use std::{error, fs::File, io, path::Path};
 fn main() -> Result<(), Box<dyn error::Error>> {
     let path = Path::new("non-existent-env");
 
-    // Rather than checking with `Path::exists` and then opening the file handle, we call `File::open` directly to avoid a race condition where the file is inaccessible between the exist check and open
-    // Even though we pass the file handle as input, we specify the path so it can be used as context in the error message
+    // Rather than checking with `Path::exists` and then opening the file handle, we call `File::open` directly to avoid a race condition where the file is inaccessible between the exist check and the open call.
+
+    // The loader is unaware of the file path because we construct it using a reader. We can still inform the reader of the file path using the `path` setter, which allows us to have a more informative error message.
     let loader = match File::open(path) {
         Ok(file) => EnvLoader::with_reader(file)
             .path(path)

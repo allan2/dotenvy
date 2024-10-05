@@ -1,12 +1,16 @@
+//! `load_and_modify` uses `std::env::set_var` internally, which is not thread-safe.
+//! 
+//! When modifying the environment, loading must be executed before the async runtime is spawned.
+//! 
+//! The *modify-tokio-macro* example contains a more ergonomic way to do this.
+
 use dotenvy::EnvLoader;
 use std::{
     env::{self, VarError},
     error,
 };
 
-// `load_and_modify` uses `std::env::set_var` internally, which is not thread-safe.
-// As such, loading must be done before the async runtime is spawned.
-// This is why we don't use `#[tokio::main]` here.
+
 fn main() -> Result<(), Box<dyn error::Error>> {
     let loader = EnvLoader::with_path("../env-example");
     unsafe { loader.load_and_modify() }?;
@@ -16,7 +20,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         .enable_all()
         .build()?
         .block_on(async {
-            println!("HOST={}", env::var("HOST")?);
+            println!("HOST={}", env::var("HOST").unwrap());
             Ok::<_, VarError>(())
         })?;
 
