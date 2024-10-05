@@ -13,6 +13,8 @@ use syn::{
 /// Three optional arguments are supported: `path`, `required`, and `override_`.
 /// Usage is like `#[dotenvy::load(path = ".env", required = true, override_ = true)]`.
 ///
+/// When using in an async runtime, `load` must be placed above async runtime spawning macros such as `tokio::main`.
+///
 /// The default path is "./.env". The default sequence is `EnvSequence::InputThenEnv`.
 #[proc_macro_attribute]
 pub fn load(attr: TokenStream, item: TokenStream) -> TokenStream {
