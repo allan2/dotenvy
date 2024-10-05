@@ -1,0 +1,9 @@
+[package]
+name = "non-utf8-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+dotenvy = { path = "../../dotenvy" }
+encoding_rs_io = "0.1"
