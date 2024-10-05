@@ -32,7 +32,7 @@ PORT=3000
 
 They are commonly named _.env_, _.env.dev_, _.env.prod_, etc., but any name can be used.
 
-Variables can span multiple lines and also be substituted. For an explanation on substituion rules, please refer to
+Variables can span multiple lines and also be substituted. For an explanation on substitution rules, please refer to
 the [_.env-substitution_](.env-substitution) example file.
 
 ## Usage
