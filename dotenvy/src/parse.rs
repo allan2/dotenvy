@@ -405,8 +405,8 @@ mod substitution_tests {
     use crate::iter::{Iter, ParseBufError};
 
     /// Asserts the parsed string is equal to the expected string.
-    fn assert_string(input: &str, expected: Vec<(&str, &str)>) -> Result<(), ParseBufError> {
-        let actual_iter = Iter::new(input.as_bytes());
+    fn assert_str(actual: &str, expected: Vec<(&str, &str)>) -> Result<(), ParseBufError> {
+        let actual_iter = Iter::new(actual.as_bytes());
         let expected_count = expected.len();
 
         let expected_iter = expected
@@ -415,7 +415,7 @@ mod substitution_tests {
 
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
-            assert_eq!(expected, actual?);
+            assert_eq!(actual?, expected);
             count += 1;
         }
         assert_eq!(count, expected_count);
@@ -424,7 +424,7 @@ mod substitution_tests {
 
     #[test]
     fn variable_in_parenthesis_surrounded_by_quotes() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r#"
             KEY=test
             KEY1="${KEY}"
@@ -435,12 +435,12 @@ mod substitution_tests {
 
     #[test]
     fn sub_undefined_variables_to_empty_string() -> Result<(), ParseBufError> {
-        assert_string(r#"KEY=">$KEY1<>${KEY2}<""#, vec![("KEY", "><><")])
+        assert_str(r#"KEY=">$KEY1<>${KEY2}<""#, vec![("KEY", "><><")])
     }
 
     #[test]
     fn do_not_sub_with_dollar_escaped() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             "KEY=>\\$KEY1<>\\${KEY2}<",
             vec![("KEY", ">$KEY1<>${KEY2}<")],
         )
@@ -448,7 +448,7 @@ mod substitution_tests {
 
     #[test]
     fn do_not_sub_in_weak_quotes_with_dollar_escaped() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r#"KEY=">\$KEY1<>\${KEY2}<""#,
             vec![("KEY", ">$KEY1<>${KEY2}<")],
         )
@@ -456,12 +456,12 @@ mod substitution_tests {
 
     #[test]
     fn do_not_sub_in_strong_quotes() -> Result<(), ParseBufError> {
-        assert_string("KEY='>${KEY1}<>$KEY2<'", vec![("KEY", ">${KEY1}<>$KEY2<")])
+        assert_str("KEY='>${KEY1}<>$KEY2<'", vec![("KEY", ">${KEY1}<>$KEY2<")])
     }
 
     #[test]
     fn same_variable_reused() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r"
     KEY=VALUE
     KEY1=$KEY$KEY
@@ -472,7 +472,7 @@ mod substitution_tests {
 
     #[test]
     fn with_dot() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r"
     KEY.Value=VALUE
     ",
@@ -482,7 +482,7 @@ mod substitution_tests {
 
     #[test]
     fn recursive_substitution() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r"
             KEY=${KEY1}+KEY_VALUE
             KEY1=${KEY}+KEY1_VALUE
@@ -493,7 +493,7 @@ mod substitution_tests {
 
     #[test]
     fn var_without_paranthesis_subbed_before_separators() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r#"
             KEY1=test_user
             KEY1_1=test_user_with_separator
@@ -510,7 +510,7 @@ mod substitution_tests {
     #[test]
     fn sub_var_from_env_var() -> Result<(), ParseBufError> {
         temp_env::with_var("KEY11", Some("test_user_env"), || {
-            assert_string(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
+            assert_str(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
         })
     }
 
@@ -518,7 +518,7 @@ mod substitution_tests {
     fn substitute_variable_env_variable_overrides_dotenv_in_substitution(
     ) -> Result<(), ParseBufError> {
         temp_env::with_var("KEY11", Some("test_user_env"), || {
-            assert_string(
+            assert_str(
                 r#"
     KEY11=test_user
     KEY=">${KEY11}<"
@@ -530,7 +530,7 @@ mod substitution_tests {
 
     #[test]
     fn consequent_substitutions() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r"
     KEY1=test_user
     KEY2=$KEY1_2
@@ -546,7 +546,7 @@ mod substitution_tests {
 
     #[test]
     fn consequent_substitutions_with_one_missing() -> Result<(), ParseBufError> {
-        assert_string(
+        assert_str(
             r"
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
