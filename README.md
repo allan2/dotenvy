@@ -10,18 +10,16 @@ A well-maintained fork of the [dotenv](https://github.com/dotenv-rs/dotenv) crat
 
 This crate is the suggested alternative for `dotenv` in security advisory [RUSTSEC-2021-0141](https://rustsec.org/advisories/RUSTSEC-2021-0141.html).
 
-This library enables loading environment variables from an env file.
-
 ## Components
 
-1. [`dotenvy`](https://crates.io/crates/dotenvy) crate - A well-maintained fork of the `dotenv` crate.
-2. [`dotenvy_macro`](https://crates.io/crates/dotenvy_macro) crate - A macro for compile-time _.env_ inspection. This is a fork of `dotenv_codegen`.
-3. [`dotenvy-macros`](https://crates.io/crates/dotenvy-macros) crate - A runtime macro library containg the `load` attribute macro.
+1. [`dotenvy`](https://crates.io/crates/dotenvy) - A well-maintained fork of the `dotenv` crate.
+2. [`dotenvy_macro`](https://crates.io/crates/dotenvy_macro) - A macro for compile-time _.env_ inspection. This is a fork of `dotenv_codegen`.
+3. [`dotenvy-macros`](https://crates.io/crates/dotenvy-macros) - A runtime macro library containing the `load` attribute macro.
 4. `dotenvy` binary that loads an env file before executing a specified command.
 
-## Environment file
+## What is an environment file?
 
-An env file consists of keypairs like so:
+An _environment file_, or _env file_, is a plain text file consisting of key-value pairs.
 
 _.env_
 
@@ -30,27 +28,39 @@ HOST=foo
 PORT=3000
 ```
 
-They are commonly named _.env_, _.env.dev_, _.env.prod_, etc., but any name can be used.
+Common names for env files are _.env_, _.env.dev_, _.env.prod_, but any name can be used. The default path for this crate is _.env_.
 
-Variables can span multiple lines and also be substituted. For an explanation on substitution rules, please refer to
+Variables can span multiple lines and can also be substituted. For an explanation of substituion rules, refer to
 the [_.env-substitution_](.env-substitution) example file.
 
 ## Usage
 
-This crate contains two APIs, a non-environment-modifying API and an environment-modifying API.
+This library contains two APIs, a non-environment-modifying API and an environment-modifying API.
 
-Modifying calls [`std::env::set_var`](`https://doc.rust-lang.org/std/env/fn.set_var.html`) internally,
-which is marked unsafe in the Rust 2024 edition. For this reason, we recommend using the non-modifying API unless
-necesary.
+## Runtime loading
 
-### Configuration
+The non-modifying API is recommended for most use cases.
+
+### Non-modifying API
+
+```rs
+use dotenvy::{EnvLoader};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let env_map = EnvLoader::new().load()?;
+    println!("HOST={}", env_map.var("HOST")?);
+    Ok(())
+}
+```
+
+#### Configuration
 
 ```rs
 // from a file
 let loader1 = EnvLoader::with_path("./.env").sequence(EnvSequence::InputThenEnv);
-let loader2 = EnvLoader::new();  // same as loader1
+let loader2 = EnvLoader::new();  // shorthand for loader1
 
-// from a reader
+// from a string
 let s = "HOST=foo\nPORT=3000";
 let str_loader = EnvLoader::with_reader(Cursor::new(s));
 
@@ -58,59 +68,43 @@ let str_loader = EnvLoader::with_reader(Cursor::new(s));
 let overriding_loader = EnvLoader::new().sequence(EnvSequence::EnvThenInput);
 ```
 
-Loader constuction is infallible. I/O is derred until `load` or `load_and_modify` is called.
-This is to allow support configurations such as [dev/prod](examples/dev-prod/src/main.rs) and
+Loader constuction is infallible. When reading from a path, I/O is deferred until the `load` call.
+This is to support configurations such as [dev/prod](examples/dev-prod/src/main.rs) and
 [optional loading](examples/optional/src/main.rs).
-
-### Non-modifying API
-
-```rs
-use dotenvy::{EnvLoader};
-use std::{error, env};
-
-fn main() -> Result<(), Box<dyn error::Error>> {
-    let env_map = EnvLoader::new().load()?;
-    println!("HOST={}", env_map.var("HOST")?);
-    Ok(())
-}
-```
 
 ### Modifying API
 
-Sometimes, you have to modify the environment. You might [spawn a child process](examples/modify/src/main.rs) or rely
-on `std::env::var` to read variables.
+There are situations where modifying the environment is necessary.
+For example, you may be [spawning a child process](examples/modify/src/main.rs) that reads the environment.
+
+dotenvy provides the `load` attribute macro for this purpose. To use it, enable the `macros` feature.
 
 ```rs
-use dotenvy::{EnvLoader};
-use std::{error, env};
-
-fn main() -> Result<(), Box<dyn error::Error>> {
-    let loader = EnvLoader::new();
-    let env_map = unsafe { loader.load_and_modify() }?;
-    println!("HOST={}", env_map.var("HOST")?);
-    println!("HOST={}", std::env::var("HOST")?);
-    Ok(())
-}
-```
-
-If using async, you must modify the environment before starting the async runtime.
-
-The `load` attribute macro can be used to do this. To use it, enable the `macros` feature for the `dotenvy` crate.
-
-```rs
-#[dotenvy::load]  // will call `load_and_modify` before the async runtime is started
+#[dotenvy::load]
 #[tokio::main]
 async fn main() {
-    println!("HOST={}", env::var("HOST").unwrap());
-    Ok(())
+    println!("HOST={}", std::env::var("HOST").unwrap());
 }
 ```
 
-### Loading at compile time
+Because [`set_var`](https://doc.rust-lang.org/stable/std/env/fn.set_var.html) is not thread-safe, the `load` attribute macro modifies the environment before the async runtime is started.
+The expansion of this macro is [here](https://github.com/allan2/dotenvy/blob/master/examples/modify-tokio/src/main.rs).
+
+#### Configuration
+
+`load` is configurable. The default configuration expands to:
+
+```rs
+#[dotenvy::load(path = "./env", required = true, override_ = false)]
+```
+
+For more advanced usage, `EnvLoader::load_and_modify` can be used.
+
+## Compile-time loading
 
 The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
 
-## Minimum Supported Rust version
+## Minimum Supported Rust Version
 
 We aim to support the latest 8 rustc versions - approximately 1 year. Increasing
 MSRV is _not_ considered a semver-breaking change.
@@ -138,10 +132,7 @@ For a full list of changes, refer to the [changelog](./CHANGELOG.md).
 
 ## Contributing
 
-Thank you very much for considering to contribute to this project! See
-[CONTRIBUTING.md](./CONTRIBUTING.md) for details.
-
-**Note**: Before you take the time to open a pull request, please open an issue first.
+Contributions are welcome! If you are thinking of contributing, please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## The legend
 
