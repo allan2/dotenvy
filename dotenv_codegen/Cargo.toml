@@ -17,7 +17,7 @@ authors = [
   "Allan Zhang <allanzhang7@gmail.com>",
 ]
 description = "A macro for compile time dotenv inspection"
-readme = "README.md"
+readme = true
 
 [lib]
 proc-macro = true
