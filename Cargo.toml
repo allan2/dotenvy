@@ -2,6 +2,16 @@
 members = ["dotenvy", "dotenvy-macros", "dotenv_codegen", "examples/*"]
 resolver = "2"
 
+[workspace.package]
+version = "0.15.7"
+edition = "2021"
+rust-version = "1.74.0"
+license = "MIT"
+categories = ["configuration"]
+homepage = "https://github.com/allan2/dotenvy"
+keywords = ["dotenv", "env", "environment", "settings", "config"]
+repository = "https://github.com/allan2/dotenvy"
+
 [workspace.lints.clippy]
 all = "deny"
 pedantic = "deny"

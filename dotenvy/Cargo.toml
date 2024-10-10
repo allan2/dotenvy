@@ -1,6 +1,13 @@
 [package]
 name = "dotenvy"
-version = "0.15.7"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+categories.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
 authors = [
   "Noemi Lapresta <noemi.lapresta@gmail.com>",
   "Craig Hills <chills@gmail.com>",
@@ -12,14 +19,7 @@ authors = [
   "Allan Zhang <allanzhang7@gmail.com>",
 ]
 description = "A well-maintained fork of the dotenv crate"
-homepage = "https://github.com/allan2/dotenvy"
 readme = "../README.md"
-keywords = ["dotenv", "env", "environment", "settings", "config"]
-categories = ["configuration"]
-license = "MIT"
-repository = "https://github.com/allan2/dotenvy"
-edition = "2021"
-rust-version = "1.74.0"
 
 [[bin]]
 name = "dotenvy"

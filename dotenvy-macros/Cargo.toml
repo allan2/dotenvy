@@ -1,16 +1,16 @@
 [package]
 name = "dotenvy-macros"
-version = "0.1.0"
-authors = ["Allan"]
-readme = "README.md"
-keywords = ["dotenv", "env", "environment", "settings", "config"]
-categories = ["configuration"]
-license = "MIT"
-homepage = "https://github.com/allan2/dotenvy"
-repository = "https://github.com/allan2/dotenvy"
+publish = false # until 0.16 release
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+categories.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+authors = ["Allan Zhang <allanzhang7@gmail.com>"]
 description = "Runtime macros for dotenvy"
-edition = "2021"
-rust-version = "1.74.0"
 
 [lib]
 proc-macro = true
