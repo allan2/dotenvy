@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use std::env::{self, VarError};
-use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, Token};
+use syn::{parse::Parser, punctuated::Punctuated, spanned::Spanned, LitStr, Token};
 
 #[proc_macro]
 /// TODO: add safety warning
@@ -61,7 +61,7 @@ fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
                         format!("environment variable `{var_name}` was not valid Unicode: {s:?}",)
                     }
                 },
-                |lit| lit.value(),
+                LitStr::value,
             ),
         )),
     }
