@@ -1,4 +1,3 @@
-#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![deny(clippy::uninlined_format_args, clippy::wildcard_imports)]
 
 use proc_macro::TokenStream;

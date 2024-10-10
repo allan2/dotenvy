@@ -36,3 +36,6 @@ temp-env = "0.3.6"
 default = []
 cli = ["dep:clap"]
 macros = ["dep:dotenvy-macros"]
+
+[lints]
+workspace = true

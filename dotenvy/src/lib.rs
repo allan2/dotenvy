@@ -1,4 +1,3 @@
-#![deny(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
 #![allow(
     clippy::missing_errors_doc,
     clippy::too_many_lines,

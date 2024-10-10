@@ -27,3 +27,6 @@ proc-macro2 = "1"
 quote = "1"
 syn = "2"
 dotenvy = { path = "../dotenvy" }
+
+[lints]
+workspace = true

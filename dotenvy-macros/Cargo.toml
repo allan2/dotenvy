@@ -22,3 +22,6 @@ syn = { version = "2", features = ["full"] }
 
 [dev-dependencies]
 dotenvy = { path = "../dotenvy" }
+
+[lints]
+workspace = true
