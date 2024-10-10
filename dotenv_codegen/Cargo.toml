@@ -23,10 +23,10 @@ readme = "README.md"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1"
-quote = "1"
-syn = "2"
 dotenvy = { path = "../dotenvy" }
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
 
 [lints]
 workspace = true

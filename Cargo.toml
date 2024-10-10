@@ -17,3 +17,8 @@ all = "deny"
 pedantic = "deny"
 nursery = "deny"
 cargo = "deny"
+
+[workspace.dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = "2"
