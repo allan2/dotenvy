@@ -176,7 +176,7 @@ fn parse_value(
                                 substitution_data,
                                 &std::mem::take(&mut substitution_name),
                                 &mut output,
-                            );
+                            )?;
                             if c == '$' {
                                 substitution_mode = if !strong_quote && !escaped {
                                     SubstitutionMode::Block
@@ -196,7 +196,7 @@ fn parse_value(
                                 substitution_data,
                                 &std::mem::take(&mut substitution_name),
                                 &mut output,
-                            );
+                            )?;
                         } else {
                             substitution_name.push(c);
                         }
@@ -246,7 +246,7 @@ fn parse_value(
             substitution_data,
             &std::mem::take(&mut substitution_name),
             &mut output,
-        );
+        )?;
         Ok(output)
     }
 }
@@ -255,16 +255,72 @@ fn apply_substitution(
     substitution_data: &HashMap<String, Option<String>>,
     substitution_name: &str,
     output: &mut String,
-) {
-    if let Ok(environment_value) = env::var(substitution_name) {
-        output.push_str(&environment_value);
-    } else {
-        let stored_value = substitution_data
-            .get(substitution_name)
-            .unwrap_or(&None)
-            .to_owned();
-        output.push_str(&stored_value.unwrap_or_default());
+) -> Result<(), ParseBufError> {
+    // Refer to https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_06_02
+    // for replacement rules
+    enum SubstitutionModifier {
+        ColonMinus,
+        Minus,
+        ColonQuestionMark,
+        QuestionMark,
+        ColonPlus,
+        Plus,
+        NoModifier,
+    }
+
+    let (parameter, modifier, word) =
+        if let Some((parameter, word)) = substitution_name.split_once(":-") {
+            (parameter, SubstitutionModifier::ColonMinus, word)
+        } else if let Some((parameter, word)) = substitution_name.split_once("-") {
+            (parameter, SubstitutionModifier::Minus, word)
+        } else if let Some((parameter, word)) = substitution_name.split_once(":?") {
+            (parameter, SubstitutionModifier::ColonQuestionMark, word)
+        } else if let Some((parameter, word)) = substitution_name.split_once("?") {
+            (parameter, SubstitutionModifier::QuestionMark, word)
+        } else if let Some((parameter, word)) = substitution_name.split_once(":+") {
+            (parameter, SubstitutionModifier::ColonPlus, word)
+        } else if let Some((parameter, word)) = substitution_name.split_once("+") {
+            (parameter, SubstitutionModifier::Plus, word)
+        } else {
+            (substitution_name, SubstitutionModifier::NoModifier, "")
+        };
+
+    let substitution_value = env::var(parameter)
+        .ok()
+        .or_else(|| substitution_data.get(parameter).cloned().flatten());
+
+    let replacement = match (modifier, &substitution_value) {
+        (SubstitutionModifier::ColonMinus, None) => word,
+        (SubstitutionModifier::ColonMinus, Some(value)) if value.is_empty() => word,
+        (SubstitutionModifier::ColonMinus, Some(value)) => &value,
+        (SubstitutionModifier::Minus, None) => word,
+        (SubstitutionModifier::Minus, Some(value)) if value.is_empty() => "",
+        (SubstitutionModifier::Minus, Some(value)) => &value,
+        (SubstitutionModifier::ColonQuestionMark, None) => {
+            return Err(ParseBufError::MissingVariable(parameter.to_string()))
+        }
+        (SubstitutionModifier::ColonQuestionMark, Some(value)) if value.is_empty() => {
+            return Err(ParseBufError::MissingVariable(parameter.to_string()))
+        }
+        (SubstitutionModifier::ColonQuestionMark, Some(value)) => &value,
+        (SubstitutionModifier::QuestionMark, None) => {
+            return Err(ParseBufError::MissingVariable(parameter.to_string()))
+        }
+        (SubstitutionModifier::QuestionMark, Some(value)) if value.is_empty() => "",
+        (SubstitutionModifier::QuestionMark, Some(value)) => &value,
+        (SubstitutionModifier::ColonPlus, None) => "",
+        (SubstitutionModifier::ColonPlus, Some(value)) if value.is_empty() => "",
+        (SubstitutionModifier::ColonPlus, Some(_value)) => word,
+        (SubstitutionModifier::Plus, None) => "",
+        (SubstitutionModifier::Plus, Some(value)) if value.is_empty() => word,
+        (SubstitutionModifier::Plus, Some(_value)) => word,
+        (SubstitutionModifier::NoModifier, None) => "",
+        (SubstitutionModifier::NoModifier, Some(value)) => &value,
     };
+
+    output.push_str(replacement);
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -334,7 +390,7 @@ export   SHELL_LOVER=1
         // Note 4 spaces after 'invalid' below
         let actual_iter = Iter::new(
             r"
-  invalid    
+  invalid
 very bacon = yes indeed
 =value"
                 .as_bytes(),
@@ -553,6 +609,134 @@ mod substitution_tests {
     ",
             vec![("KEY2", "_2"), ("KEY", "><>_2<")],
         )
+    }
+
+    #[test]
+    fn parameter_substitution_modifiers() -> Result<(), ParseBufError> {
+        temp_env::with_vars(
+            [
+                ("ENV_NOTNULL", Some("env_nonempty")),
+                ("ENV_NULL", Some("")),
+                ("ENV_UNSET", None),
+            ],
+            || {
+                assert_str(
+                    r#"
+                    LOCAL_NOTNULL=local_nonempty
+                    LOCAL_NULL=""
+
+                    CM_ENV_NOTNULL=${ENV_NOTNULL:-replacement}
+                    CM_ENV_NULL=${ENV_NULL:-replacement}
+                    CM_ENV_UNSET=${ENV_UNSET:-replacement}
+                    M_ENV_NOTNULL=${ENV_NOTNULL-replacement}
+                    M_ENV_NULL=${ENV_NULL-replacement}
+                    M_ENV_UNSET=${ENV_UNSET-replacement}
+                    CQ_ENV_NOTNULL=${ENV_NOTNULL:?}
+                    Q_ENV_NOTNULL=${ENV_NOTNULL?}
+                    Q_ENV_NULL=${ENV_NULL?}
+                    CP_ENV_NOTNULL=${ENV_NOTNULL:+replacement}
+                    CP_ENV_NULL=${ENV_NULL:+replacement}
+                    CP_ENV_UNSET=${ENV_UNSET:+replacement}
+                    P_ENV_NOTNULL=${ENV_NOTNULL+replacement}
+                    P_ENV_NULL=${ENV_NULL+replacement}
+                    P_ENV_UNSET=${ENV_UNSET+replacement}
+
+                    CM_LOCAL_NOTNULL=${LOCAL_NOTNULL:-replacement}
+                    CM_LOCAL_NULL=${LOCAL_NULL:-replacement}
+                    M_LOCAL_NOTNULL=${LOCAL_NOTNULL-replacement}
+                    M_LOCAL_NULL=${LOCAL_NULL-replacement}
+                    CQ_LOCAL_NOTNULL=${LOCAL_NOTNULL:?}
+                    Q_LOCAL_NOTNULL=${LOCAL_NOTNULL?}
+                    Q_LOCAL_NULL=${LOCAL_NULL?}
+                    CP_LOCAL_NOTNULL=${LOCAL_NOTNULL:+replacement}
+                    CP_LOCAL_NULL=${LOCAL_NULL:+replacement}
+                    P_LOCAL_NOTNULL=${LOCAL_NOTNULL+replacement}
+                    P_LOCAL_NULL=${LOCAL_NULL+replacement}
+                    "#,
+                    vec![
+                        ("LOCAL_NOTNULL", "local_nonempty"),
+                        ("LOCAL_NULL", ""),
+                        ("CM_ENV_NOTNULL", "env_nonempty"),
+                        ("CM_ENV_NULL", "replacement"),
+                        ("CM_ENV_UNSET", "replacement"),
+                        ("M_ENV_NOTNULL", "env_nonempty"),
+                        ("M_ENV_NULL", ""),
+                        ("M_ENV_UNSET", "replacement"),
+                        ("CQ_ENV_NOTNULL", "env_nonempty"),
+                        ("Q_ENV_NOTNULL", "env_nonempty"),
+                        ("Q_ENV_NULL", ""),
+                        ("CP_ENV_NOTNULL", "replacement"),
+                        ("CP_ENV_NULL", ""),
+                        ("CP_ENV_UNSET", ""),
+                        ("P_ENV_NOTNULL", "replacement"),
+                        ("P_ENV_NULL", "replacement"),
+                        ("P_ENV_UNSET", ""),
+                        ("CM_LOCAL_NOTNULL", "local_nonempty"),
+                        ("CM_LOCAL_NULL", "replacement"),
+                        ("M_LOCAL_NOTNULL", "local_nonempty"),
+                        ("M_LOCAL_NULL", ""),
+                        ("CQ_LOCAL_NOTNULL", "local_nonempty"),
+                        ("Q_LOCAL_NOTNULL", "local_nonempty"),
+                        ("Q_LOCAL_NULL", ""),
+                        ("CP_LOCAL_NOTNULL", "replacement"),
+                        ("CP_LOCAL_NULL", ""),
+                        ("P_LOCAL_NOTNULL", "replacement"),
+                        ("P_LOCAL_NULL", "replacement"),
+                    ],
+                )
+            },
+        )
+    }
+
+    #[test]
+    fn parameter_substitution_modifier_errors() {
+        temp_env::with_vars([("ENV_NULL", Some("")), ("ENV_UNSET", None)], || {
+            {
+                let result = assert_str(
+                    r#"
+                    CQ_ENV_NULL=${ENV_NULL:?}
+                    "#,
+                    vec![("CQ_ENV_NULL", "<error>")],
+                );
+                assert!(
+                    matches!(result, Err(ParseBufError::MissingVariable(name)) if name == "ENV_NULL")
+                );
+            }
+            {
+                let result = assert_str(
+                    r#"
+                    CQ_ENV_UNSET=${ENV_UNSET:?}
+                    "#,
+                    vec![("CQ_ENV_UNSET", "<error>")],
+                );
+                assert!(
+                    matches!(result, Err(ParseBufError::MissingVariable(name)) if name == "ENV_UNSET")
+                );
+            }
+            {
+                let result = assert_str(
+                    r#"
+                    Q_ENV_UNSET=${ENV_UNSET?}
+                    "#,
+                    vec![("Q_ENV_UNSET", "<error>")],
+                );
+                assert!(
+                    matches!(result, Err(ParseBufError::MissingVariable(name)) if name == "ENV_UNSET")
+                );
+            }
+            {
+                let result = assert_str(
+                    r#"
+                    LOCAL_NULL=""
+                    CQ_LOCAL_NULL=${LOCAL_NULL:?}
+                    "#,
+                    vec![("LOCAL_NULL", ""), ("CQ_LOCAL_NULL", "<error>")],
+                );
+                assert!(
+                    matches!(result, Err(ParseBufError::MissingVariable(name)) if name == "LOCAL_NULL")
+                );
+            }
+        })
     }
 }
 
