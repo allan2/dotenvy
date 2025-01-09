@@ -79,6 +79,7 @@ impl From<(ParseBufError, Option<PathBuf>)> for Error {
         match e {
             ParseBufError::LineParse(line, index) => Self::LineParse(line, index),
             ParseBufError::Io(e) => Self::Io(e, path),
+            ParseBufError::MissingVariable(name) => Self::NotPresent(name),
         }
     }
 }

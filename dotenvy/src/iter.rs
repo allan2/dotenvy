@@ -205,6 +205,7 @@ impl<B: BufRead> Iterator for Iter<B> {
 pub enum ParseBufError {
     LineParse(String, usize),
     Io(io::Error),
+    MissingVariable(String),
 }
 
 impl From<io::Error> for ParseBufError {
