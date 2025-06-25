@@ -115,6 +115,7 @@ enum SubstitutionMode {
     EscapedBlock,
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn parse_value(
     input: &str,
     substitution_data: &HashMap<String, Option<String>>,
@@ -123,12 +124,23 @@ fn parse_value(
     let mut weak_quote = false; // "
     let mut escaped = false;
     let mut expecting_end = false;
+    let mut brace_depth = 0; // track depth of curly braces for JSON objects
+    let mut bracket_depth = 0; // track depth of square brackets for JSON arrays
+    let mut json_literal_mode = false; // when true, treat everything as literal until braces/brackets are balanced
 
     //FIXME can this be done without yet another allocation per line?
     let mut output = String::new();
 
     let mut substitution_mode = SubstitutionMode::None;
     let mut substitution_name = String::new();
+
+    // Check if the value starts with a brace or bracket to enable JSON literal mode
+    let trimmed = input.trim_start();
+    if (trimmed.starts_with('{') && trimmed.ends_with('}'))
+        || (trimmed.starts_with('[') && trimmed.ends_with(']'))
+    {
+        json_literal_mode = true;
+    }
 
     for (index, c) in input.chars().enumerate() {
         //the regex _should_ already trim whitespace off the end
@@ -203,6 +215,8 @@ fn parse_value(
                     }
                 }
             }
+        } else if c == '\\' {
+            escaped = true;
         } else if c == '$' {
             substitution_mode = if !strong_quote && !escaped {
                 SubstitutionMode::Block
@@ -217,12 +231,30 @@ fn parse_value(
             } else {
                 output.push(c);
             }
+        } else if json_literal_mode {
+            // In JSON literal mode, track braces and brackets and almost everything as a literal
+            // Substitution and escapes are still supported.
+            if c == '{' {
+                brace_depth += 1;
+            } else if c == '}' && brace_depth > 0 {
+                brace_depth -= 1;
+            } else if c == '[' {
+                bracket_depth += 1;
+            } else if c == ']' && bracket_depth > 0 {
+                bracket_depth -= 1;
+            }
+
+            output.push(c);
+
+            // Exit JSON literal mode when all braces and brackets are balanced
+            if brace_depth == 0 && bracket_depth == 0 {
+                json_literal_mode = false;
+                expecting_end = true; // After JSON literal, expect end of value
+            }
         } else if c == '\'' {
             strong_quote = true;
         } else if c == '"' {
             weak_quote = true;
-        } else if c == '\\' {
-            escaped = true;
         } else if c == ' ' || c == '\t' {
             expecting_end = true;
         } else {
@@ -397,6 +429,62 @@ KEY4=h\8u
         for actual in actual_iter {
             assert!(actual.is_err());
         }
+    }
+
+    #[test]
+    fn test_parse_json() -> Result<(), ParseBufError> {
+        let input = r#"
+        JSON={ "foo": "bar" }
+        ACCOUNT={ "r": "1", "a": "2" }
+        NESTED={ "config": { "nested": true, "value": 42 } }
+        ARRAY={ "items": [1, 2, 3] }
+        SIMPLE_ARRAY=[1, 2, 3]
+        STRING_ARRAY=["foo", "bar", "baz"]
+        NESTED_ARRAY=[[1, 2], [3, 4]]
+        OBJECT_ARRAY=[{"name": "Alice"}, {"name": "Bob"}]
+        MIXED_WITH_SPACES=  [ "spaced" , "array" ]
+        NAME=red
+        SUBSTITUTIONS={"name":"${NAME}"}
+        ESCAPES={"name":"\${NAME}"}
+        NOT_JSON={"name"
+        NOT_JSON_2=[{"name"
+        "#;
+        let actual_iter = Iter::new(input.as_bytes());
+
+        let expected = vec![
+            ("JSON", "{ \"foo\": \"bar\" }"),
+            ("ACCOUNT", "{ \"r\": \"1\", \"a\": \"2\" }"),
+            (
+                "NESTED",
+                "{ \"config\": { \"nested\": true, \"value\": 42 } }",
+            ),
+            ("ARRAY", "{ \"items\": [1, 2, 3] }"),
+            ("SIMPLE_ARRAY", "[1, 2, 3]"),
+            ("STRING_ARRAY", "[\"foo\", \"bar\", \"baz\"]"),
+            ("NESTED_ARRAY", "[[1, 2], [3, 4]]"),
+            (
+                "OBJECT_ARRAY",
+                "[{\"name\": \"Alice\"}, {\"name\": \"Bob\"}]",
+            ),
+            ("MIXED_WITH_SPACES", "[ \"spaced\" , \"array\" ]"),
+            ("NAME", "red"),
+            ("SUBSTITUTIONS", "{\"name\":\"red\"}"),
+            ("ESCAPES", "{\"name\":\"${NAME}\"}"),
+            ("NOT_JSON", "{name"),
+            ("NOT_JSON_2", "[{name"),
+        ];
+        let expected_count = expected.len();
+        let expected_iter = expected
+            .into_iter()
+            .map(|(key, value)| (key.to_owned(), value.to_owned()));
+
+        let mut count = 0;
+        for (expected, actual) in expected_iter.zip(actual_iter) {
+            assert_eq!(expected, actual?);
+            count += 1;
+        }
+        assert_eq!(count, expected_count);
+        Ok(())
     }
 }
 
@@ -618,6 +706,20 @@ mod error_tests {
         assert!(matches!(
             iter[0],
             Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_esc && idx == invalid_esc.find('\\').unwrap() + 1
+        ));
+    }
+
+    #[test]
+    fn should_not_parse_unquoted_json_with_other_string() {
+        let invalid_value = r#"{ "foo": "bar" } some other string"#;
+        let line = format!("KEY={invalid_value}");
+        let iter = Iter::new(line.as_bytes()).collect::<Vec<_>>();
+
+        let err_idx = invalid_value.find("\"").unwrap();
+
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_value && idx == err_idx
         ));
     }
 }
