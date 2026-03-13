@@ -107,7 +107,7 @@ For more advanced usage, `EnvLoader::load_and_modify` can be used.
 
 ## Compile-time loading
 
-The `dotenv!` macro provided by `dotenvy_macro` crate can be used.
+The `dotenv!` and `option_dotenv!` macros' provided by `dotenvy_macro` crate can be used.
 
 ## Minimum Supported Rust Version
 

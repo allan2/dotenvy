@@ -9,6 +9,9 @@ on:
     branches:
       - master
 
+env:
+  CODEGEN_TEST_VAR1: goodbye!
+
 jobs:
   tests:
     strategy:

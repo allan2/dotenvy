@@ -3,6 +3,9 @@ set -e
 
 MSRV="1.74.0"
 
+# For dotenvy_macro tests
+export CODEGEN_TEST_VAR1="goodbye!"
+
 echo "MSRV set to $MSRV"
 
 echo "cargo fmt"

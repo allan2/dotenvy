@@ -7,6 +7,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+### Added
+
+- added `path` and `override_` to `dotenvy_macro::dotenv` ([PR #159](https://github.com/allan2/dotenvy/pull/159))
+- added `dotenvy_macro::option_dotenv` that evaluates to an `Option<&'static str>` ([PR #159](https://github.com/allan2/dotenvy/pull/159))
+
 ### Changed
 - update to 2021 edition
 - update MSRV to 1.74.0
