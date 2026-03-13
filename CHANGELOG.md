@@ -22,6 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **breaking**: dotenvy CLI exits with code 2 instead of code 1 if the external command is omitted
 - Fix doctests on windows not compiling ([PR #79](https://github.com/allan2/dotenvy/pull/79) by [vallentin](https://github.com/vallentin).
 - MSRV updated to 1.68.0
+- special handling for JSON values ([#84](https://github.com/allan2/dotenvy/issues/84) by [ansel1](https://github.com/ansel1))
 
 ## [0.15.7] - 2023-03-22
 
