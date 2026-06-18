@@ -1,0 +1,22 @@
+BASE_URL=http://localhost
+PORT=8080
+
+# ${VAR} syntax works for all variable names
+API_URL=${BASE_URL}:${PORT}/api
+HEALTH_URL=${BASE_URL}:${PORT}/health
+
+# $VAR syntax works when the name contains only alphanumeric characters
+GREETING=hello
+MESSAGE=$GREETING world
+
+# Variables defined earlier in the file can be referenced
+DB_HOST=db.local
+DB_PORT=5432
+DB_NAME=myapp
+DATABASE_URL=postgres://${DB_HOST}:${DB_PORT}/${DB_NAME}
+
+# Single quotes prevent substitution
+LITERAL='${BASE_URL} is not expanded here'
+
+# Escaped dollar sign is treated literally
+ESCAPED=\$BASE_URL
