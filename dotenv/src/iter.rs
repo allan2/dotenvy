@@ -9,6 +9,7 @@ use crate::parse;
 pub struct Iter<R> {
     lines: QuotedLines<BufReader<R>>,
     substitution_data: HashMap<String, Option<String>>,
+    bom_checked: bool,
 }
 
 impl<R: Read> Iter<R> {
@@ -18,6 +19,7 @@ impl<R: Read> Iter<R> {
                 buf: BufReader::new(reader),
             },
             substitution_data: HashMap::new(),
+            bom_checked: false,
         }
     }
 
@@ -26,9 +28,7 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the first occurrence is applied.
-    pub fn load(mut self) -> Result<()> {
-        self.remove_bom()?;
-
+    pub fn load(self) -> Result<()> {
         for item in self {
             let (key, value) = item?;
             if env::var(&key).is_err() {
@@ -44,24 +44,12 @@ impl<R: Read> Iter<R> {
     ///
     /// If a variable is specified multiple times within the reader's data,
     /// then the last occurrence is applied.
-    pub fn load_override(mut self) -> Result<()> {
-        self.remove_bom()?;
-
+    pub fn load_override(self) -> Result<()> {
         for item in self {
             let (key, value) = item?;
             env::set_var(key, value);
         }
 
-        Ok(())
-    }
-
-    fn remove_bom(&mut self) -> Result<()> {
-        let buffer = self.lines.buf.fill_buf().map_err(Error::Io)?;
-        // https://www.compart.com/en/unicode/U+FEFF
-        if buffer.starts_with(&[0xEF, 0xBB, 0xBF]) {
-            // remove the BOM from the bufreader
-            self.lines.buf.consume(3);
-        }
         Ok(())
     }
 }
@@ -188,8 +176,14 @@ impl<R: Read> Iterator for Iter<R> {
                 Some(Err(err)) => return Some(Err(err)),
                 None => return None,
             };
+            let line = if self.bom_checked {
+                line.as_str()
+            } else {
+                self.bom_checked = true;
+                line.strip_prefix('\u{feff}').unwrap_or(&line)
+            };
 
-            match parse::parse_line(&line, &mut self.substitution_data) {
+            match parse::parse_line(line, &mut self.substitution_data) {
                 Ok(Some(result)) => return Some(Ok(result)),
                 Ok(None) => {}
                 Err(err) => return Some(Err(err)),
