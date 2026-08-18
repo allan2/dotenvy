@@ -104,7 +104,7 @@ The expansion of this macro is [here](https://github.com/allan2/dotenvy/blob/mas
 `load` is configurable. The default configuration expands to:
 
 ```rs
-#[dotenvy::load(path = "./env", required = true, override_ = false)]
+#[dotenvy::load(path = "./.env", required = true, override_ = false)]
 ```
 
 For more advanced usage, `EnvLoader::load_and_modify` can be used.
