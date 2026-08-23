@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **breaking**: Variable substitution is disabled by default; enable it with
   `EnvLoader::substitution(true)` ([PR #172](https://github.com/allan2/dotenvy/pull/172)) by
   [yhuikzdtguioaert](https://github.com/yhuikzdtguioaert)
+- `#[dotenvy::load]` now reports and exits on non-IO errors (such as parse errors) instead of silently ignoring them
 - update to 2021 edition
 - update MSRV to 1.74.0
 
