@@ -124,12 +124,24 @@ pub enum EnvSequence {
     InputThenEnv,
 }
 
-#[derive(Default)]
 pub struct EnvLoader<'a> {
     path: Option<PathBuf>,
     reader: Option<Box<dyn Read + 'a>>,
     sequence: EnvSequence,
     substitution: bool,
+    multiline: bool,
+}
+
+impl Default for EnvLoader<'_> {
+    fn default() -> Self {
+        Self {
+            path: None,
+            reader: None,
+            sequence: EnvSequence::default(),
+            substitution: false,
+            multiline: true,
+        }
+    }
 }
 
 impl<'a> EnvLoader<'a> {
@@ -186,6 +198,17 @@ impl<'a> EnvLoader<'a> {
         self
     }
 
+    /// Sets whether values may span multiple lines, e.g. within a quoted value.
+    ///
+    /// Defaults to `true`. When disabled, each line is parsed on its own, so a
+    /// value with an unterminated quote is a parse error rather than continuing
+    /// onto the following lines.
+    #[must_use]
+    pub const fn multiline(mut self, multiline: bool) -> Self {
+        self.multiline = multiline;
+        self
+    }
+
     fn buf(self) -> Result<BufReader<Box<dyn Read + 'a>>, crate::Error> {
         let rdr = if let Some(rdr) = self.reader {
             rdr
@@ -202,21 +225,30 @@ impl<'a> EnvLoader<'a> {
     fn load_input(self) -> Result<EnvMap, crate::Error> {
         let path = self.path.clone();
         let substitution = self.substitution;
-        let iter = Iter::new(self.buf()?).substitution(substitution);
+        let multiline = self.multiline;
+        let iter = Iter::new(self.buf()?)
+            .substitution(substitution)
+            .multiline(multiline);
         iter.load().map_err(|e| (e, path).into())
     }
 
     unsafe fn load_input_and_modify(self) -> Result<EnvMap, crate::Error> {
         let path = self.path.clone();
         let substitution = self.substitution;
-        let iter = Iter::new(self.buf()?).substitution(substitution);
+        let multiline = self.multiline;
+        let iter = Iter::new(self.buf()?)
+            .substitution(substitution)
+            .multiline(multiline);
         unsafe { iter.load_and_modify() }.map_err(|e| (e, path).into())
     }
 
     unsafe fn load_input_and_modify_override(self) -> Result<EnvMap, crate::Error> {
         let path = self.path.clone();
         let substitution = self.substitution;
-        let iter = Iter::new(self.buf()?).substitution(substitution);
+        let multiline = self.multiline;
+        let iter = Iter::new(self.buf()?)
+            .substitution(substitution)
+            .multiline(multiline);
         unsafe { iter.load_and_modify_override() }.map_err(|e| (e, path).into())
     }
 
@@ -408,6 +440,27 @@ mod tests {
         );
         assert_eq!(env_map.var("WEAK")?, weak);
         assert_eq!(env_map.var("STRONG")?, value);
+        Ok(())
+    }
+
+    #[test]
+    fn test_multiline_disabled() -> Result<(), crate::Error> {
+        let s = "KEY1=\"line1\nline2\"\nKEY2=value2\n";
+
+        // Multiline is enabled by default, so the quoted value spans both lines.
+        let env_map = EnvLoader::with_reader(Cursor::new(s))
+            .sequence(EnvSequence::InputOnly)
+            .load()?;
+        assert_eq!(env_map.var("KEY1")?, "line1\nline2");
+        assert_eq!(env_map.var("KEY2")?, "value2");
+
+        // With multiline disabled, the unterminated quote on the first line is a
+        // parse error rather than consuming the following lines.
+        let res = EnvLoader::with_reader(Cursor::new(s))
+            .sequence(EnvSequence::InputOnly)
+            .multiline(false)
+            .load();
+        assert!(res.is_err());
         Ok(())
     }
 

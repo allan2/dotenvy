@@ -14,7 +14,10 @@ pub struct Iter<B> {
 impl<B: BufRead> Iter<B> {
     pub fn new(buf: B) -> Self {
         Self {
-            lines: Lines(buf),
+            lines: Lines {
+                buf,
+                multiline: true,
+            },
             substitution_data: HashMap::new(),
             substitution: false,
         }
@@ -23,6 +26,12 @@ impl<B: BufRead> Iter<B> {
     /// Sets whether variable substitution is performed on values.
     pub const fn substitution(mut self, substitution: bool) -> Self {
         self.substitution = substitution;
+        self
+    }
+
+    /// Sets whether values may span multiple lines.
+    pub const fn multiline(mut self, multiline: bool) -> Self {
+        self.lines.multiline = multiline;
         self
     }
 
@@ -65,16 +74,19 @@ impl<B: BufRead> Iter<B> {
     ///
     /// For more info, see the [Unicode BOM character](https://www.compart.com/en/unicode/U+FEFF).
     fn remove_bom(&mut self) -> io::Result<()> {
-        let buf = self.lines.0.fill_buf()?;
+        let buf = self.lines.buf.fill_buf()?;
 
         if buf.starts_with(&[0xEF, 0xBB, 0xBF]) {
-            self.lines.0.consume(3);
+            self.lines.buf.consume(3);
         }
         Ok(())
     }
 }
 
-struct Lines<B>(B);
+struct Lines<B> {
+    buf: B,
+    multiline: bool,
+}
 
 enum ParseState {
     Complete,
@@ -140,7 +152,7 @@ impl<B: BufRead> Iterator for Lines<B> {
         let mut cur_pos;
         loop {
             buf_pos = buf.len();
-            match self.0.read_line(&mut buf) {
+            match self.buf.read_line(&mut buf) {
                 Ok(0) => {
                     if matches!(cur_state, ParseState::Complete) {
                         return None;
@@ -173,7 +185,21 @@ impl<B: BufRead> Iterator for Lines<B> {
                         | ParseState::StrongOpenEscape
                         | ParseState::WeakOpen
                         | ParseState::WeakOpenEscape
-                        | ParseState::WhiteSpace => {}
+                        | ParseState::WhiteSpace => {
+                            // When multiline is disabled, do not consume the
+                            // following lines to close an open quote. The line
+                            // is returned as-is so an unterminated value fails
+                            // to parse instead of spilling onto later lines.
+                            if !self.multiline {
+                                if buf.ends_with('\n') {
+                                    buf.pop();
+                                    if buf.ends_with('\r') {
+                                        buf.pop();
+                                    }
+                                }
+                                return Some(Ok(buf));
+                            }
+                        }
                         ParseState::Comment => {
                             buf.truncate(buf_pos + cur_pos);
                             return Some(Ok(buf));

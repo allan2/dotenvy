@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 
+- `EnvLoader::multiline` to enable or disable values spanning multiple lines ([PR #173](https://github.com/allan2/dotenvy/pull/173))
 - `EnvLoader::substitution` to enable or disable variable substitution ([PR #167](https://github.com/allan2/dotenvy/pull/167)) by [entangle2giraffe](https://github.com/entangle2giraffe)
 
 ### Changed
