@@ -58,7 +58,7 @@ fn expand_env(input_raw: TokenStream2) -> syn::Result<TokenStream2> {
                     }
 
                     VarError::NotUnicode(s) => {
-                        format!("environment variable `{var_name}` was not valid Unicode: {s:?}",)
+                        format!("environment variable `{var_name}` was not valid Unicode: {s:?}")
                     }
                 },
                 LitStr::value,

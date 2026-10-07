@@ -11,6 +11,7 @@
 //!
 //! This library allows for loading environment variables from an env file or a reader.
 use crate::iter::Iter;
+pub use crate::iter::LineParseErrorKind;
 use std::{
     collections::HashMap,
     env::{self, VarError},

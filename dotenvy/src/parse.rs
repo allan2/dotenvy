@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, env};
 
-use crate::iter::ParseBufError;
+use crate::iter::{LineParseErrorKind, ParseBufError};
 
 pub fn parse_line(
     line: &str,
@@ -36,8 +36,8 @@ impl<'a> LineParser<'a> {
         }
     }
 
-    fn err(&self) -> ParseBufError {
-        ParseBufError::LineParse(self.original_line.into(), self.pos)
+    fn err(&self, kind: LineParseErrorKind) -> ParseBufError {
+        ParseBufError::LineParse(self.original_line.into(), self.pos, kind)
     }
 
     fn parse_line(&mut self) -> Result<Option<(String, String)>, ParseBufError> {
@@ -80,7 +80,7 @@ impl<'a> LineParser<'a> {
             .line
             .starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
         {
-            return Err(self.err());
+            return Err(self.err(LineParseErrorKind::InvalidKeyStart));
         }
         let index = match self
             .line
@@ -97,7 +97,7 @@ impl<'a> LineParser<'a> {
 
     fn expect_equal(&mut self) -> Result<(), ParseBufError> {
         if !self.line.starts_with('=') {
-            return Err(self.err());
+            return Err(self.err(LineParseErrorKind::MissingEquals));
         }
         self.line = &self.line[1..];
         self.pos += 1;
@@ -149,7 +149,11 @@ fn parse_value(
             } else if c == '#' {
                 break;
             }
-            return Err(ParseBufError::LineParse(input.to_owned(), index));
+            return Err(ParseBufError::LineParse(
+                input.to_owned(),
+                index,
+                LineParseErrorKind::UnquotedWhitespace,
+            ));
         } else if escaped {
             //TODO I tried handling literal \r but various issues
             //imo not worth worrying about until there's a use case
@@ -159,7 +163,11 @@ fn parse_value(
                 '\\' | '\'' | '"' | '$' | ' ' => output.push(c),
                 'n' => output.push('\n'), // handle \n case
                 _ => {
-                    return Err(ParseBufError::LineParse(input.to_owned(), index));
+                    return Err(ParseBufError::LineParse(
+                        input.to_owned(),
+                        index,
+                        LineParseErrorKind::InvalidEscape,
+                    ));
                 }
             }
 
@@ -239,24 +247,28 @@ fn parse_value(
     }
 
     //XXX also fail if escaped? or...
-    if substitution_mode == SubstitutionMode::EscapedBlock || strong_quote || weak_quote {
-        let value_length = input.len();
-        Err(ParseBufError::LineParse(
-            input.to_owned(),
-            if value_length == 0 {
-                0
-            } else {
-                value_length - 1
-            },
-        ))
+    let kind = if substitution_mode == SubstitutionMode::EscapedBlock {
+        Some(LineParseErrorKind::UnterminatedSubstitution)
+    } else if strong_quote || weak_quote {
+        Some(LineParseErrorKind::UnterminatedQuote)
     } else {
-        apply_substitution(
-            substitution_data,
-            &std::mem::take(&mut substitution_name),
-            &mut output,
-        );
-        Ok(output)
-    }
+        None
+    };
+
+    kind.map_or_else(
+        || {
+            apply_substitution(
+                substitution_data,
+                &std::mem::take(&mut substitution_name),
+                &mut output,
+            );
+            Ok(output)
+        },
+        |kind| {
+            let index = input.len().saturating_sub(1);
+            Err(ParseBufError::LineParse(input.to_owned(), index, kind))
+        },
+    )
 }
 
 fn apply_substitution(
@@ -272,7 +284,7 @@ fn apply_substitution(
             .unwrap_or(&None)
             .to_owned();
         output.push_str(&stored_value.unwrap_or_default());
-    };
+    }
 }
 
 #[cfg(test)]
@@ -566,7 +578,8 @@ mod substitution_tests {
 
 #[cfg(test)]
 mod error_tests {
-    use crate::iter::{Iter, ParseBufError};
+    use super::parse_line;
+    use crate::iter::{Iter, LineParseErrorKind, ParseBufError};
 
     #[test]
     fn should_not_parse_unfinished_subs() {
@@ -574,10 +587,10 @@ mod error_tests {
 
         let iter = Iter::new(
             format!(
-                r#"
+                r"
     FOO=bar
     BAR={invalid_value}
-    "#
+    "
             )
             .as_bytes(),
         )
@@ -592,7 +605,7 @@ mod error_tests {
         // second line error
         assert!(matches!(
             iter[1],
-            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_value && idx == invalid_value.len() - 1
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnterminatedSubstitution)) if v == invalid_value && idx == invalid_value.len() - 1
         ));
     }
 
@@ -604,7 +617,7 @@ mod error_tests {
 
         assert!(matches!(
             iter[0],
-            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_key && idx == 0
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::InvalidKeyStart)) if v == invalid_key && idx == 0
         ));
     }
 
@@ -615,7 +628,7 @@ mod error_tests {
 
         assert!(matches!(
             iter[0],
-            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_fmt && idx == 0
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::InvalidKeyStart)) if v == invalid_fmt && idx == 0
         ));
     }
 
@@ -626,7 +639,81 @@ mod error_tests {
 
         assert!(matches!(
             iter[0],
-            Err(ParseBufError::LineParse(ref v, idx)) if v == invalid_esc && idx == invalid_esc.find('\\').unwrap() + 1
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::InvalidEscape)) if v == invalid_esc && idx == invalid_esc.find('\\').unwrap() + 1
+        ));
+    }
+
+    #[test]
+    fn should_report_missing_equals() {
+        let invalid_line = "KEY value";
+        let iter = Iter::new(invalid_line.as_bytes()).collect::<Vec<_>>();
+
+        // `KEY` is parsed, whitespace skipped, then `=` is expected at index 4
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::MissingEquals))
+                if v == invalid_line && idx == 4
+        ));
+    }
+
+    #[test]
+    fn should_report_unquoted_whitespace() {
+        let iter = Iter::new("KEY=John Doe".as_bytes()).collect::<Vec<_>>();
+
+        // value-level error: reports the value and the index of `D`
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnquotedWhitespace))
+                if v == "John Doe" && idx == 5
+        ));
+    }
+
+    #[test]
+    fn should_allow_comment_after_unquoted_whitespace() {
+        let iter = Iter::new("KEY=value   # comment".as_bytes()).collect::<Vec<_>>();
+
+        assert_eq!(
+            iter[0].as_ref().unwrap(),
+            &("KEY".to_owned(), "value".to_owned())
+        );
+    }
+
+    #[test]
+    fn should_report_unterminated_quote_at_end_of_input() {
+        let invalid_line = r#"KEY="never closed"#;
+        let iter = Iter::new(invalid_line.as_bytes()).collect::<Vec<_>>();
+
+        // `Lines` keeps reading for a multi-line value and hits EOF
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnterminatedQuote))
+                if v == invalid_line && idx == invalid_line.len()
+        ));
+    }
+
+    #[test]
+    fn should_report_unterminated_multiline_quote() {
+        let input = "KEY=\"line one\nline two";
+        let iter = Iter::new(input.as_bytes()).collect::<Vec<_>>();
+
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, _, LineParseErrorKind::UnterminatedQuote))
+                if v == input
+        ));
+    }
+
+    #[test]
+    fn should_report_unterminated_quote_in_value() {
+        use std::collections::HashMap;
+        // Calls `parse_line` directly: through `Iter`, `Lines` catches the
+        // open quote first, so this checks the `parse_value` path on its own.
+        let result = parse_line(r#"KEY="never closed"#, &mut HashMap::new(), false);
+
+        assert!(matches!(
+            result,
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnterminatedQuote))
+                if v == r#""never closed"# && idx == 12
         ));
     }
 }
