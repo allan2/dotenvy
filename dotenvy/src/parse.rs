@@ -139,7 +139,6 @@ fn parse_value(
     let mut substitution_name = String::new();
 
     for (index, c) in input.chars().enumerate() {
-        //the regex _should_ already trim whitespace off the end
         //expecting_end is meant to permit: k=v #comment
         //without affecting: k=v#comment
         //and throwing on: k=v w
