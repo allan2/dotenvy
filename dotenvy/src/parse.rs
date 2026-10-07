@@ -133,7 +133,7 @@ fn parse_value(
     let mut expecting_end = false;
 
     //FIXME can this be done without yet another allocation per line?
-    let mut output = String::new();
+    let mut output = String::with_capacity(input.len());
 
     let mut substitution_mode = SubstitutionMode::None;
     let mut substitution_name = String::new();
