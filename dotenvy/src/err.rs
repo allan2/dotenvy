@@ -57,12 +57,11 @@ impl fmt::Display for Error {
             }
             Self::LineParse(line, index, kind) => write!(
                 f,
-                "error parsing line: '{line}', error at line index: {index}, reason: {}",
-                kind
+                "error parsing line: '{line}', error at line index: {index}, reason: {kind}",
             ),
             Self::NotPresent(s) => write!(f, "{s} is not set"),
             Self::NotUnicode(os_str, s) => {
-                write!(f, "{s} is not valid Unicode: {os_str:?}",)
+                write!(f, "{s} is not valid Unicode: {os_str:?}")
             }
             Self::InvalidOp => write!(f, "modify is not permitted with `EnvSequence::EnvOnly`"),
             Self::NoInput => write!(f, "no input provided"),

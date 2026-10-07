@@ -255,17 +255,20 @@ fn parse_value(
         None
     };
 
-    if let Some(kind) = kind {
-        let index = input.len().saturating_sub(1);
-        Err(ParseBufError::LineParse(input.to_owned(), index, kind))
-    } else {
-        apply_substitution(
-            substitution_data,
-            &std::mem::take(&mut substitution_name),
-            &mut output,
-        );
-        Ok(output)
-    }
+    kind.map_or_else(
+        || {
+            apply_substitution(
+                substitution_data,
+                &std::mem::take(&mut substitution_name),
+                &mut output,
+            );
+            Ok(output)
+        },
+        |kind| {
+            let index = input.len().saturating_sub(1);
+            Err(ParseBufError::LineParse(input.to_owned(), index, kind))
+        },
+    )
 }
 
 fn apply_substitution(
@@ -281,7 +284,7 @@ fn apply_substitution(
             .unwrap_or(&None)
             .to_owned();
         output.push_str(&stored_value.unwrap_or_default());
-    };
+    }
 }
 
 #[cfg(test)]
@@ -583,10 +586,10 @@ mod error_tests {
 
         let iter = Iter::new(
             format!(
-                r#"
+                r"
     FOO=bar
     BAR={invalid_value}
-    "#
+    "
             )
             .as_bytes(),
         )

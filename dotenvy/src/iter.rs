@@ -156,7 +156,7 @@ impl<B: BufRead> Iterator for Lines<B> {
                     // Skip lines which start with a `#` before iteration
                     // This optimizes parsing a bit.
                     if buf.trim_start().starts_with('#') {
-                        return Some(Ok(String::with_capacity(0)));
+                        return Some(Ok(String::new()));
                     }
                     let result = cur_state.eval_end(&buf[buf_pos..]);
                     cur_pos = result.0;
@@ -225,6 +225,7 @@ impl From<io::Error> for ParseBufError {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LineParseErrorKind {
     InvalidKeyStart,
