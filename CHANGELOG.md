@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 
 - `EnvLoader::substitution` to enable or disable variable substitution ([PR #167](https://github.com/allan2/dotenvy/pull/167)) by [entangle2giraffe](https://github.com/entangle2giraffe)
+- `LineParseErrorKind`, describing why a line failed to parse, re-exported from the crate root ([PR #175](https://github.com/allan2/dotenvy/pull/175)) by [Tobias Baumgarten](https://github.com/tobiasbaumgarten)
 
 ### Changed
 - **breaking**: Variable substitution is disabled by default; enable it with
@@ -29,6 +30,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - **breaking**: dotenvy CLI exits with code 2 instead of code 1 if the external command is omitted
 - Fix doctests on windows not compiling ([PR #79](https://github.com/allan2/dotenvy/pull/79) by [vallentin](https://github.com/vallentin).
 - MSRV updated to 1.68.0
+- **breaking**: `Error::LineParse` now carries a `LineParseErrorKind` as a third field, and its `Display` output includes the reason ([PR #175](https://github.com/allan2/dotenvy/pull/175)) by [Tobias Baumgarten](https://github.com/tobiasbaumgarten)
+- **breaking**: Variable substitution is disabled by default; ...
 
 ## [0.15.7] - 2023-03-22
 
