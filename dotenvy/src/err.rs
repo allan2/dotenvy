@@ -1,10 +1,10 @@
 use std::{error, ffi::OsString, fmt, io, path::PathBuf};
 
-use crate::iter::ParseBufError;
+use crate::iter::{LineParseErrorKind, ParseBufError};
 
 #[derive(Debug)]
 pub enum Error {
-    LineParse(String, usize),
+    LineParse(String, usize, LineParseErrorKind),
     /// An IO error may be encountered when reading from a file or reader.
     Io(io::Error, Option<PathBuf>),
     /// The variable was not found in the environment. The `String` is the name of the variable.
@@ -36,7 +36,7 @@ impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
             Self::Io(e, _) => Some(e),
-            Self::LineParse(_, _)
+            Self::LineParse(_, _, _)
             | Self::NotPresent(_)
             | Self::NotUnicode(_, _)
             | Self::InvalidOp
@@ -55,9 +55,10 @@ impl fmt::Display for Error {
                     e.fmt(f)
                 }
             }
-            Self::LineParse(line, index) => write!(
+            Self::LineParse(line, index, kind) => write!(
                 f,
-                "error parsing line: '{line}', error at line index: {index}",
+                "error parsing line: '{line}', error at line index: {index}, reason: {}",
+                kind
             ),
             Self::NotPresent(s) => write!(f, "{s} is not set"),
             Self::NotUnicode(os_str, s) => {
@@ -77,7 +78,7 @@ impl From<(io::Error, PathBuf)> for Error {
 impl From<(ParseBufError, Option<PathBuf>)> for Error {
     fn from((e, path): (ParseBufError, Option<PathBuf>)) -> Self {
         match e {
-            ParseBufError::LineParse(line, index) => Self::LineParse(line, index),
+            ParseBufError::LineParse(line, index, kind) => Self::LineParse(line, index, kind),
             ParseBufError::Io(e) => Self::Io(e, path),
         }
     }

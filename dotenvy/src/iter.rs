@@ -146,7 +146,11 @@ impl<B: BufRead> Iterator for Lines<B> {
                         return None;
                     }
                     let len = buf.len();
-                    return Some(Err(ParseBufError::LineParse(buf, len)));
+                    return Some(Err(ParseBufError::LineParse(
+                        buf,
+                        len,
+                        LineParseErrorKind::UnterminatedQuote,
+                    )));
                 }
                 Ok(_n) => {
                     // Skip lines which start with a `#` before iteration
@@ -211,13 +215,41 @@ impl<B: BufRead> Iterator for Iter<B> {
 /// This is necessary so we can handle IO errors without knowing the path.
 #[derive(Debug)]
 pub enum ParseBufError {
-    LineParse(String, usize),
+    LineParse(String, usize, LineParseErrorKind),
     Io(io::Error),
 }
 
 impl From<io::Error> for ParseBufError {
     fn from(e: io::Error) -> Self {
         Self::Io(e)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LineParseErrorKind {
+    InvalidKeyStart,
+    MissingEquals,
+    InvalidEscape,
+    UnterminatedSubstitution,
+    UnquotedWhitespace,
+    UnterminatedQuote,
+}
+
+impl std::fmt::Display for LineParseErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let msg = match self {
+            Self::InvalidKeyStart => "key must start with an ASCII letter or underscore",
+            Self::MissingEquals => "expected `=` after key",
+            Self::UnterminatedQuote => "quoted value is never closed",
+            Self::InvalidEscape => {
+                r#"invalid escape sequence (supported: \\, \', \", \$, \n and escaped space)"#
+            }
+            Self::UnterminatedSubstitution => "`${` substitution is never closed with `}`",
+            Self::UnquotedWhitespace => {
+                "unquoted value contains whitespace; quote the value or escape the space"
+            }
+        };
+        f.write_str(msg)
     }
 }
 
