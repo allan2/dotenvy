@@ -578,6 +578,7 @@ mod substitution_tests {
 
 #[cfg(test)]
 mod error_tests {
+    use super::parse_line;
     use crate::iter::{Iter, LineParseErrorKind, ParseBufError};
 
     #[test]
@@ -639,6 +640,80 @@ mod error_tests {
         assert!(matches!(
             iter[0],
             Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::InvalidEscape)) if v == invalid_esc && idx == invalid_esc.find('\\').unwrap() + 1
+        ));
+    }
+
+    #[test]
+    fn should_report_missing_equals() {
+        let invalid_line = "KEY value";
+        let iter = Iter::new(invalid_line.as_bytes()).collect::<Vec<_>>();
+
+        // `KEY` is parsed, whitespace skipped, then `=` is expected at index 4
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::MissingEquals))
+                if v == invalid_line && idx == 4
+        ));
+    }
+
+    #[test]
+    fn should_report_unquoted_whitespace() {
+        let iter = Iter::new("KEY=John Doe".as_bytes()).collect::<Vec<_>>();
+
+        // value-level error: reports the value and the index of `D`
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnquotedWhitespace))
+                if v == "John Doe" && idx == 5
+        ));
+    }
+
+    #[test]
+    fn should_allow_comment_after_unquoted_whitespace() {
+        let iter = Iter::new("KEY=value   # comment".as_bytes()).collect::<Vec<_>>();
+
+        assert_eq!(
+            iter[0].as_ref().unwrap(),
+            &("KEY".to_owned(), "value".to_owned())
+        );
+    }
+
+    #[test]
+    fn should_report_unterminated_quote_at_end_of_input() {
+        let invalid_line = r#"KEY="never closed"#;
+        let iter = Iter::new(invalid_line.as_bytes()).collect::<Vec<_>>();
+
+        // `Lines` keeps reading for a multi-line value and hits EOF
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnterminatedQuote))
+                if v == invalid_line && idx == invalid_line.len()
+        ));
+    }
+
+    #[test]
+    fn should_report_unterminated_multiline_quote() {
+        let input = "KEY=\"line one\nline two";
+        let iter = Iter::new(input.as_bytes()).collect::<Vec<_>>();
+
+        assert!(matches!(
+            iter[0],
+            Err(ParseBufError::LineParse(ref v, _, LineParseErrorKind::UnterminatedQuote))
+                if v == input
+        ));
+    }
+
+    #[test]
+    fn should_report_unterminated_quote_in_value() {
+        use std::collections::HashMap;
+        // Calls `parse_line` directly: through `Iter`, `Lines` catches the
+        // open quote first, so this checks the `parse_value` path on its own.
+        let result = parse_line(r#"KEY="never closed"#, &mut HashMap::new(), false);
+
+        assert!(matches!(
+            result,
+            Err(ParseBufError::LineParse(ref v, idx, LineParseErrorKind::UnterminatedQuote))
+                if v == r#""never closed"# && idx == 12
         ));
     }
 }
