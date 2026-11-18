@@ -282,18 +282,21 @@ mod tests {
 
     #[test]
     fn test_substitution() -> Result<(), crate::Error> {
-        unsafe {
-            env::set_var("KEY", "value");
-            env::set_var("KEY1", "value1");
-        }
+        temp_env::with_vars(
+            [
+                ("KEY", Some("value")),
+                ("KEY1", Some("value1")),
+                ("KEY_U", None),
+                ("ZZZ", None),
+            ],
+            || {
+                let subs = [
+                    "$ZZZ", "$KEY", "$KEY1", "${KEY}1", "$KEY_U", "${KEY_U}", "\\$KEY",
+                ];
 
-        let subs = [
-            "$ZZZ", "$KEY", "$KEY1", "${KEY}1", "$KEY_U", "${KEY_U}", "\\$KEY",
-        ];
-
-        let common_string = subs.join(">>");
-        let s = format!(
-            r#"
+                let common_string = subs.join(">>");
+                let s = format!(
+                    r#"
     KEY1=new_value1
     KEY_U=$KEY+valueU
 
@@ -301,52 +304,51 @@ mod tests {
     WEAK_QUOTES="{common_string}"
     NO_QUOTES={common_string}
     "#,
-        );
-        let env_map = EnvLoader::with_reader(Cursor::new(s))
-            .sequence(EnvSequence::InputThenEnv)
-            .substitution(true)
-            .load()?;
+                );
+                let env_map = EnvLoader::with_reader(Cursor::new(s))
+                    .sequence(EnvSequence::InputThenEnv)
+                    .substitution(true)
+                    .load()?;
 
-        assert_eq!(env_map.var("KEY")?, "value");
-        assert_eq!(env_map.var("KEY1")?, "value1");
-        assert_eq!(env_map.var("KEY_U")?, "value+valueU");
-        assert_eq!(env_map.var("STRONG_QUOTES")?, common_string);
-        assert_eq!(
-            env_map.var("WEAK_QUOTES")?,
-            [
-                "",
-                "value",
-                "value1",
-                "value1",
-                "value_U",
-                "value+valueU",
-                "$KEY"
-            ]
-            .join(">>")
-        );
-        assert_eq!(
-            env_map.var("NO_QUOTES")?,
-            [
-                "",
-                "value",
-                "value1",
-                "value1",
-                "value_U",
-                "value+valueU",
-                "$KEY"
-            ]
-            .join(">>")
-        );
-        Ok(())
+                assert_eq!(env_map.var("KEY")?, "value");
+                assert_eq!(env_map.var("KEY1")?, "value1");
+                assert_eq!(env_map.var("KEY_U")?, "value+valueU");
+                assert_eq!(env_map.var("STRONG_QUOTES")?, common_string);
+                assert_eq!(
+                    env_map.var("WEAK_QUOTES")?,
+                    [
+                        "",
+                        "value",
+                        "value1",
+                        "value1",
+                        "value_U",
+                        "value+valueU",
+                        "$KEY"
+                    ]
+                    .join(">>")
+                );
+                assert_eq!(
+                    env_map.var("NO_QUOTES")?,
+                    [
+                        "",
+                        "value",
+                        "value1",
+                        "value1",
+                        "value_U",
+                        "value+valueU",
+                        "$KEY"
+                    ]
+                    .join(">>")
+                );
+                Ok(())
+            },
+        )
     }
 
     #[test]
     fn test_substitution_disabled_by_default() -> Result<(), crate::Error> {
-        unsafe {
-            env::set_var("SUB_KEY", "value");
-        }
-
-        let s = r#"
+        temp_env::with_var("SUB_KEY", Some("value"), || {
+            let s = r#"
     PASSWORD=pa$$word
     HASH='$2b$10$abcdefghijklmnopqrstuv'
     WEAK="$SUB_KEY and ${SUB_KEY}"
@@ -356,19 +358,20 @@ mod tests {
     SPECIAL_WEAK="\"!@#$%^&*()_+-=[]{}|;:\",.<>/?"
     "#;
 
-        let env_map = EnvLoader::with_reader(Cursor::new(s))
-            .sequence(EnvSequence::InputOnly)
-            .load()?;
+            let env_map = EnvLoader::with_reader(Cursor::new(s))
+                .sequence(EnvSequence::InputOnly)
+                .load()?;
 
-        let special = r#""!@#$%^&*()_+-=[]{}|;:",.<>/?"#;
-        assert_eq!(env_map.var("PASSWORD")?, "pa$$word");
-        assert_eq!(env_map.var("HASH")?, "$2b$10$abcdefghijklmnopqrstuv");
-        assert_eq!(env_map.var("WEAK")?, "$SUB_KEY and ${SUB_KEY}");
-        assert_eq!(env_map.var("NO_QUOTES")?, "$SUB_KEY");
-        assert_eq!(env_map.var("ESCAPED")?, "$SUB_KEY");
-        assert_eq!(env_map.var("SPECIAL_STRONG")?, special);
-        assert_eq!(env_map.var("SPECIAL_WEAK")?, special);
-        Ok(())
+            let special = r#""!@#$%^&*()_+-=[]{}|;:",.<>/?"#;
+            assert_eq!(env_map.var("PASSWORD")?, "pa$$word");
+            assert_eq!(env_map.var("HASH")?, "$2b$10$abcdefghijklmnopqrstuv");
+            assert_eq!(env_map.var("WEAK")?, "$SUB_KEY and ${SUB_KEY}");
+            assert_eq!(env_map.var("NO_QUOTES")?, "$SUB_KEY");
+            assert_eq!(env_map.var("ESCAPED")?, "$SUB_KEY");
+            assert_eq!(env_map.var("SPECIAL_STRONG")?, special);
+            assert_eq!(env_map.var("SPECIAL_WEAK")?, special);
+            Ok(())
+        })
     }
 
     #[test]
@@ -455,7 +458,7 @@ Line 6
 
     #[test]
     fn test_non_modify() -> Result<(), crate::Error> {
-        temp_env::with_var("SRC", Some("env"), || {
+        temp_env::with_vars([("SRC", Some("env")), ("FOO", None)], || {
             let s = "SRC=envfile\nFOO=bar";
             let env_map = EnvLoader::with_reader(Cursor::new(s))
                 .sequence(EnvSequence::EnvThenInput)
@@ -476,7 +479,7 @@ Line 6
         let s = "SRC=envfile\nFOO=bar";
         let cursor = Cursor::new(s);
 
-        temp_env::with_var("SRC", Some("env"), || {
+        temp_env::with_vars([("SRC", Some("env")), ("FOO", None)], || {
             let loader = EnvLoader::with_reader(cursor.clone()).sequence(EnvSequence::InputThenEnv);
             unsafe { loader.load_and_modify() }?;
             assert_eq!("env", env::var("SRC")?);
@@ -485,12 +488,40 @@ Line 6
         })?;
 
         // override
-        temp_env::with_var("SRC", Some("env"), || {
+        temp_env::with_vars([("SRC", Some("env")), ("FOO", None)], || {
             let loader = EnvLoader::with_reader(cursor).sequence(EnvSequence::EnvThenInput);
             unsafe { loader.load_and_modify() }?;
             assert_eq!("envfile", env::var("SRC")?);
             assert_eq!("bar", env::var("FOO")?);
             Ok(())
         })
+    }
+
+    #[test]
+    fn test_substitution_does_not_leak_env() -> Result<(), crate::Error> {
+        test_substitution()?;
+
+        temp_env::with_vars(
+            [("KEY", None::<&str>), ("KEY1", None), ("KEY2", None)],
+            || {
+                let missing_map =
+                    EnvLoader::with_reader(Cursor::new("KEY2=$KEY1_2\nKEY=>${KEY1}<>${KEY2}<\n"))
+                        .sequence(EnvSequence::InputOnly)
+                        .substitution(true)
+                        .load()?;
+                assert_eq!(missing_map.var("KEY2")?, "_2");
+                assert_eq!(missing_map.var("KEY")?, "><>_2<");
+
+                let recursive_map = EnvLoader::with_reader(Cursor::new(
+                    "KEY=${KEY1}+KEY_VALUE\nKEY1=${KEY}+KEY1_VALUE\n",
+                ))
+                .sequence(EnvSequence::InputOnly)
+                .substitution(true)
+                .load()?;
+                assert_eq!(recursive_map.var("KEY")?, "+KEY_VALUE");
+                assert_eq!(recursive_map.var("KEY1")?, "+KEY_VALUE+KEY1_VALUE");
+                Ok(())
+            },
+        )
     }
 }
