@@ -413,13 +413,13 @@ mod substitution_tests {
     use crate::iter::{Iter, ParseBufError};
 
     /// Asserts the parsed string is equal to the expected string.
-    fn assert_str(actual: &str, expected: Vec<(&str, &str)>) -> Result<(), ParseBufError> {
+    fn assert_parsed(actual: &str, expected: &[(&str, &str)]) -> Result<(), ParseBufError> {
         let actual_iter = Iter::new(actual.as_bytes()).substitution(true);
         let expected_count = expected.len();
 
         let expected_iter = expected
-            .into_iter()
-            .map(|(k, v)| (k.to_owned(), v.to_owned()));
+            .iter()
+            .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()));
 
         let mut count = 0;
         for (expected, actual) in expected_iter.zip(actual_iter) {
@@ -430,6 +430,18 @@ mod substitution_tests {
         Ok(())
     }
 
+    fn assert_str(actual: &str, expected: &[(&str, &str)]) -> Result<(), ParseBufError> {
+        temp_env::with_vars(
+            [
+                ("KEY", None::<&str>),
+                ("KEY1", None),
+                ("KEY2", None),
+                ("KEY1_1", None),
+            ],
+            || assert_parsed(actual, expected),
+        )
+    }
+
     #[test]
     fn variable_in_parenthesis_surrounded_by_quotes() -> Result<(), ParseBufError> {
         assert_str(
@@ -437,34 +449,31 @@ mod substitution_tests {
             KEY=test
             KEY1="${KEY}"
             "#,
-            vec![("KEY", "test"), ("KEY1", "test")],
+            &[("KEY", "test"), ("KEY1", "test")],
         )
     }
 
     #[test]
     fn sub_undefined_variables_to_empty_string() -> Result<(), ParseBufError> {
-        assert_str(r#"KEY=">$KEY1<>${KEY2}<""#, vec![("KEY", "><><")])
+        assert_str(r#"KEY=">$KEY1<>${KEY2}<""#, &[("KEY", "><><")])
     }
 
     #[test]
     fn do_not_sub_with_dollar_escaped() -> Result<(), ParseBufError> {
-        assert_str(
-            "KEY=>\\$KEY1<>\\${KEY2}<",
-            vec![("KEY", ">$KEY1<>${KEY2}<")],
-        )
+        assert_str("KEY=>\\$KEY1<>\\${KEY2}<", &[("KEY", ">$KEY1<>${KEY2}<")])
     }
 
     #[test]
     fn do_not_sub_in_weak_quotes_with_dollar_escaped() -> Result<(), ParseBufError> {
         assert_str(
             r#"KEY=">\$KEY1<>\${KEY2}<""#,
-            vec![("KEY", ">$KEY1<>${KEY2}<")],
+            &[("KEY", ">$KEY1<>${KEY2}<")],
         )
     }
 
     #[test]
     fn do_not_sub_in_strong_quotes() -> Result<(), ParseBufError> {
-        assert_str("KEY='>${KEY1}<>$KEY2<'", vec![("KEY", ">${KEY1}<>$KEY2<")])
+        assert_str("KEY='>${KEY1}<>$KEY2<'", &[("KEY", ">${KEY1}<>$KEY2<")])
     }
 
     #[test]
@@ -474,7 +483,7 @@ mod substitution_tests {
     KEY=VALUE
     KEY1=$KEY$KEY
     ",
-            vec![("KEY", "VALUE"), ("KEY1", "VALUEVALUE")],
+            &[("KEY", "VALUE"), ("KEY1", "VALUEVALUE")],
         )
     }
 
@@ -484,7 +493,7 @@ mod substitution_tests {
             r"
     KEY.Value=VALUE
     ",
-            vec![("KEY.Value", "VALUE")],
+            &[("KEY.Value", "VALUE")],
         )
     }
 
@@ -495,7 +504,7 @@ mod substitution_tests {
             KEY=${KEY1}+KEY_VALUE
             KEY1=${KEY}+KEY1_VALUE
             ",
-            vec![("KEY", "+KEY_VALUE"), ("KEY1", "+KEY_VALUE+KEY1_VALUE")],
+            &[("KEY", "+KEY_VALUE"), ("KEY1", "+KEY_VALUE+KEY1_VALUE")],
         )
     }
 
@@ -507,7 +516,7 @@ mod substitution_tests {
             KEY1_1=test_user_with_separator
             KEY=">$KEY1_1<>$KEY1}<>$KEY1{<"
             "#,
-            vec![
+            &[
                 ("KEY1", "test_user"),
                 ("KEY1_1", "test_user_with_separator"),
                 ("KEY", ">test_user_1<>test_user}<>test_user{<"),
@@ -517,21 +526,21 @@ mod substitution_tests {
 
     #[test]
     fn sub_var_from_env_var() -> Result<(), ParseBufError> {
-        temp_env::with_var("KEY11", Some("test_user_env"), || {
-            assert_str(r#"KEY=">${KEY11}<""#, vec![("KEY", ">test_user_env<")])
+        temp_env::with_vars([("KEY", None), ("KEY11", Some("test_user_env"))], || {
+            assert_parsed(r#"KEY=">${KEY11}<""#, &[("KEY", ">test_user_env<")])
         })
     }
 
     #[test]
     fn substitute_variable_env_variable_overrides_dotenv_in_substitution(
     ) -> Result<(), ParseBufError> {
-        temp_env::with_var("KEY11", Some("test_user_env"), || {
-            assert_str(
+        temp_env::with_vars([("KEY", None), ("KEY11", Some("test_user_env"))], || {
+            assert_parsed(
                 r#"
     KEY11=test_user
     KEY=">${KEY11}<"
     "#,
-                vec![("KEY11", "test_user"), ("KEY", ">test_user_env<")],
+                &[("KEY11", "test_user"), ("KEY", ">test_user_env<")],
             )
         })
     }
@@ -544,7 +553,7 @@ mod substitution_tests {
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
     ",
-            vec![
+            &[
                 ("KEY1", "test_user"),
                 ("KEY2", "test_user_2"),
                 ("KEY", ">test_user<>test_user_2<"),
@@ -559,7 +568,7 @@ mod substitution_tests {
     KEY2=$KEY1_2
     KEY=>${KEY1}<>${KEY2}<
     ",
-            vec![("KEY2", "_2"), ("KEY", "><>_2<")],
+            &[("KEY2", "_2"), ("KEY", "><>_2<")],
         )
     }
 }
